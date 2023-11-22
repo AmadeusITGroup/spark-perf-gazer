@@ -1,0 +1,6 @@
+-Duser.country=US
+-Duser.language=en
+-Duser.timezone=UTC
+-Dsbt.override.build.repos=true
+-Dsbt.repository.config=.repositories
+-J-Xss16M

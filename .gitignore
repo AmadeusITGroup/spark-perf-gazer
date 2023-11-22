@@ -1,0 +1,60 @@
+# IntelliJ
+.idea
+
+# issue with coursier cache directory
+null/
+
+# CMake
+cmake-build-*/
+
+# Mongo Explorer plugin
+.idea/**/mongoSettings.xml
+
+# File-based project format
+*.iws
+
+# IntelliJ
+out/
+
+# mpeltonen/sbt-idea plugin
+.idea_modules/
+
+# JIRA plugin
+atlassian-ide-plugin.xml
+
+# Crashlytics plugin (for Android Studio and IntelliJ)
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
+
+# Sonarlint plugin
+.idea/sonarlint
+
+### Scala ###
+*.class
+*.log
+.bsp/
+
+# Eclipse
+.cache-main
+.cache-tests
+.classpath
+.project
+.settings/
+
+# VS code
+.metals/
+.vscode/
+
+# Sonar
+.scannerwork/
+
+# Project
+target
+project/target
+/bin/
+src/test/resources/checkpoint
+src/test/resources/checkpoints/
+metastore_db/
+spark-warehouse-tests/
