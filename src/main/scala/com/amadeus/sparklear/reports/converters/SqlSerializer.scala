@@ -1,5 +1,6 @@
 package com.amadeus.sparklear.reports.converters
 
+import com.amadeus.sparklear.reports.SqlReport
 import com.amadeus.sparklear.wrappers.SqlWrapper
 import org.apache.spark.sql.execution.SparkPlanInfo
 import org.apache.spark.sql.execution.metric.SQLMetricInfo
@@ -7,7 +8,7 @@ import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.{write => asJson}
 
 sealed trait SqlSerializer {
-  def output(p: SqlWrapper, m: Map[Long, Long]): String
+  def output(p: SqlReport): String
 }
 
 case object SqlJson extends SqlSerializer {
@@ -28,7 +29,9 @@ case object SqlJson extends SqlSerializer {
     )
   }
 
-  override def output(p: SqlWrapper, m: Map[Long, Long]): String = {
+  override def output(r: SqlReport): String = {
+    val m = r.m
+    val p = r.w
     val newP = SqlWrapper(
       id = p.id,
       p = convert(p.p, m)
@@ -38,6 +41,6 @@ case object SqlJson extends SqlSerializer {
 }
 
 case object SqlPretty extends SqlSerializer {
-  override def output(p: SqlWrapper, m: Map[Long, Long]): String =
-    SparkPlanInfoPrettifier.prettify(p.p, m)
+  override def output(r: SqlReport): String =
+    SparkPlanInfoPrettifier.prettify(r.w.p, r.m)
 }

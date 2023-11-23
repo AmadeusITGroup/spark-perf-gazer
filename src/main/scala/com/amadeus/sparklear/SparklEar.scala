@@ -2,6 +2,7 @@ package com.amadeus.sparklear
 
 import com.amadeus.sparklear.reports.Report.StringReport
 import com.amadeus.sparklear.reports.{JobReport, Report, SqlReport, StageReport}
+import com.amadeus.sparklear.wrappers.JobWrapper.EndUpdate
 import com.amadeus.sparklear.wrappers.{JobWrapper, SqlWrapper, StageWrapper}
 import org.apache.spark.scheduler._
 import org.apache.spark.sql.execution.ui._
@@ -29,6 +30,13 @@ class SparklEar(c: Config) extends SparkListener {
 
   def reports: List[Report] = {
     sqlReports ++ jobReports ++ stageReports
+  }
+
+  def purge(): Unit = {
+    sqlWrappers.clear()
+    jobWrappers.clear()
+    stageWrappers.clear()
+    metrics.clear()
   }
 
   def stringReports: List[StringReport] = {
@@ -61,7 +69,7 @@ class SparklEar(c: Config) extends SparkListener {
     */
 
   override def onJobStart(jobStart: SparkListenerJobStart): Unit = {
-    jobWrappers.put(jobStart.jobId, JobWrapper.from(jobStart.stageInfos, jobStart.properties))
+    jobWrappers.put(jobStart.jobId, JobWrapper.from(jobStart))
   }
 
   override def onStageCompleted(stageCompleted: SparkListenerStageCompleted): Unit = {
@@ -70,42 +78,15 @@ class SparklEar(c: Config) extends SparkListener {
 
   override def onJobEnd(jobEnd: SparkListenerJobEnd): Unit = {
     val jobId = jobEnd.jobId
-    val jobDesc = jobWrappers.get(jobId)
-    val stagesIdAndStats = jobDesc.stages.map { sd =>
+    val jobWrap = jobWrappers.get(jobId)
+    val stagesIdAndStats = jobWrap.initialStages.map { sd =>
       (sd, Option(stageWrappers.get(sd.id)))
     }
-    val totalExecCpuTimeSec = stagesIdAndStats.collect { case (_, Some(stgStats)) => stgStats.execCpuSecs }.sum
-
-    val spillMb = stagesIdAndStats.collect { case (_, Some(stgStats)) => stgStats.spillMb }.flatten.sum
-    val spillReport = if (spillMb != 0) s"SPILL_MB=$spillMb" else ""
-
-    val header =
-      s"JOB ID=${jobEnd.jobId} GROUP='${jobDesc.group}' NAME='${jobDesc.name}' SQL_ID=${jobDesc.sqlId} ${spillReport}"
-    val jobStats =
-      s"STAGES=${jobDesc.stages.size} TOTAL_CPU_SEC=${totalExecCpuTimeSec}"
-    val stagesStats =
-      if (!c.reportStageDetails) ""
-      else
-        "\n" + stagesIdAndStats
-          .map { case (id, stgStats) =>
-            s"- STAGE JOB=${jobId} ${id}: ${stgStats.mkString}"
-          }
-          .mkString("\n")
-
-    //display(s"$header $jobStats $stagesStats")
-
-    // Keep maps small
-    jobWrappers.remove(jobId)
-    jobDesc.stages.foreach(sd => stageWrappers.remove(sd.id))
+    val updatedJobWrap = jobWrap.copy(endUpdate = Some(EndUpdate(finalStages = stagesIdAndStats, jobEnd = jobEnd)))
+    jobWrappers.put(jobId, updatedJobWrap)
   }
 
   override def onOtherEvent(event: SparkListenerEvent): Unit = {
-    // https://docs.databricks.com/en/clusters/configure.html#cluster-log-delivery
-    //For example, if the log path is dbfs:/cluster-logs, the log files for a specific cluster will be stored in dbfs:/cluster-logs/<cluster-name> and the individual event logs will be stored in dbfs:/cluster-logs/<cluster-name>/eventlog/<cluster-name-cluster-ip>/<log-id>/.
-    // spark.eventLog.enabled true
-    // spark.eventLog.dir dbfs:/databricks/unravel/eventLogs/
-    // spark.eventLog.enabled true
-    // spark.eventLog.dir hdfs://namenode/shared/spark-logs
     import scala.collection.JavaConverters._
     event match {
       case event: SparkListenerSQLExecutionStart =>

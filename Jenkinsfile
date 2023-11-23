@@ -114,5 +114,23 @@ pipeline {
       }
     }
 
+    stage("Publish PR Snapshots") {
+      when {
+        expression { isPullRequest() }
+      }
+      stages{
+        stage("Publish PR Snapshots to artifactory") {
+          steps {
+            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'IZ_USER', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+              script {
+                def generatedVersion = "${getProjectVersion()}.PR${CHANGE_ID}.COMMIT${env.GIT_COMMIT.take(8)}"
+                currentBuild.displayName = generatedVersion
+                sh "sbt 'set every version := \"${generatedVersion}\"' ${sbtOptions} publish"
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }

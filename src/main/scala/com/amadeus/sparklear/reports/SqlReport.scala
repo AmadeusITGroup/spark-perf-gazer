@@ -6,6 +6,6 @@ import com.amadeus.sparklear.wrappers.SqlWrapper
 
 case class SqlReport(w: SqlWrapper, m: Map[Long, Long]) extends Report {
   override def toStringReport(c: Config): StringReport = {
-    s"${c.prefix} ${c.sqlSerializer.output(w, m)}"
+    s"${c.prefix} ${c.sqlSerializer.output(this)}"
   }
 }
