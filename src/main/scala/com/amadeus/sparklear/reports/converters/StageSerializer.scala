@@ -17,9 +17,9 @@ case object StageJson extends StageSerializer {
 case object StagePretty extends StageSerializer {
   override def output(r: StageReport): String = {
     val p = r.w
-    val spillRep = p.spillMb.map(i => s"SPILL_MB=$i").mkString
+    val spillRep = p.spillMb.map(i => s" SPILL_MB=$i").mkString
     val attemptRep = if (p.attempt != 0) s"${p.attempt}" else ""
-    s"READ_MB=${p.inputReadMb} WRITE_MB=${p.outputWriteMb} SHUFFLE_READ_MB=${p.shuffleReadMb}" +
-      s"SHUFFLE_WRITE_MB=${p.shuffleWriteMb} EXEC_CPU_SECS=${p.execCpuSecs} $spillRep $attemptRep"
+    s"STAGE ID=${r.w.stageInfo.stageId} READ_MB=${p.inputReadMb} WRITE_MB=${p.outputWriteMb} SHUFFLE_READ_MB=${p.shuffleReadMb}" +
+      s"SHUFFLE_WRITE_MB=${p.shuffleWriteMb} EXEC_CPU_SECS=${p.execCpuSecs} ATTEMPT=${p.attempt}$spillRep"
   }
 }
