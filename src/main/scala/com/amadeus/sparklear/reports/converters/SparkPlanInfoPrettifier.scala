@@ -7,7 +7,7 @@ import org.apache.spark.sql.execution.ui.SparkPlanGraph
 object SparkPlanInfoPrettifier {
 
   private def resolveMetric(i: SQLMetricInfo, metrics: Map[Long, Long]) = {
-    s"'${i.name.replace(" ", "_")}'=${metrics.get(i.accumulatorId)}(type=${i.metricType},id=${i.accumulatorId})"
+    s"'${i.name.replace(" ", "_")}'=${metrics.get(i.accumulatorId).mkString}"
   }
 
   def prettify(planInfo: SparkPlanInfo, metrics: Map[Long, Long], indent: String = ""): String = {
