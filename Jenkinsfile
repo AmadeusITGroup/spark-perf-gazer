@@ -30,8 +30,9 @@ def fetchMasterTags = {
 }
 
 def getProjectVersion() {
-  return sh(script: "sbt -no-colors -error \"print utils/version \"", returnStdout: true).trim()
+  return sh(script: "sbt -no-colors -error \"print version \"", returnStdout: true).trim()
 }
+
 
 pipeline {
   agent {
