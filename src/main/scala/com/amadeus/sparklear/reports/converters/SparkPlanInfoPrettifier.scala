@@ -14,18 +14,17 @@ object SparkPlanInfoPrettifier {
     val builder = new StringBuilder()
     builder.append(s"${indent}Operator ${planInfo.nodeName} | ${planInfo.simpleString}\n")
     if (planInfo.metadata.nonEmpty) {
-      builder.append(s"${indent}Metadata: ${planInfo.metadata}\n")
+      builder.append(s"${indent}- Metadata: ${planInfo.metadata}\n")
     }
     if (planInfo.metrics.nonEmpty) {
       builder.append(s"${indent}- Metrics: ${planInfo.metrics.map(i => resolveMetric(i, metrics)).mkString(",")}\n")
     }
     // Recursively prettify children
     planInfo.children.foreach { childInfo =>
-      builder.append(prettify(childInfo, metrics, s"$indent  "))
+      builder.append(prettify(childInfo, metrics, s"$indent      "))
     }
     val s1 = builder.toString()
-    val planGraph = SparkPlanGraph(planInfo)
-    s1 + planGraph
+    s1
   }
 }
 
