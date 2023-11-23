@@ -10,6 +10,7 @@ trait ConfigSupport {
     def withSqlSerializer(s: SqlSerializer): Config = c.copy(sqlSerializer = s)
     def withJobSerializer(s: JobSerializer): Config = c.copy(jobSerializer = s)
     def withStageSerializer(s: StageSerializer): Config = c.copy(stageSerializer = s)
+    def withAllEnabled: Config = c.copy(showSqls = true, showJobs = true, showStages = true)
   }
 
   def defaultTestConfig: Config = {

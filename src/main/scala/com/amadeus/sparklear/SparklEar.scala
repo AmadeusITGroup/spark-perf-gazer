@@ -29,7 +29,10 @@ class SparklEar(c: Config) extends SparkListener {
   private val metrics = new ConcurrentHashMap[MetricKey, MetricValue]()
 
   def reports: List[Report] = {
-    sqlReports ++ jobReports ++ stageReports
+    def enabled(f: Boolean, r: List[Report]): List[Report] = if (f) r else List.empty[Report]
+    enabled(c.showSqls, sqlReports) ++
+      enabled(c.showJobs, jobReports) ++
+      enabled(c.showStages, stageReports)
   }
 
   def purge(): Unit = {

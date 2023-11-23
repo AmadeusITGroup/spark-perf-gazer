@@ -9,7 +9,7 @@ class SparklEarSpec extends SparkSpecification with OptdSupport with JsonSupport
 
   "The listener" should "generate a basic SQL report" in withSpark() { spark =>
     val df = readOptd(spark)
-    val cfg = defaultTestConfig
+    val cfg = defaultTestConfig.withAllEnabled
     val eventsListener = new SparklEar(cfg)
     spark.sparkContext.addSparkListener(eventsListener)
     df.write.format("noop").mode("overwrite").save()

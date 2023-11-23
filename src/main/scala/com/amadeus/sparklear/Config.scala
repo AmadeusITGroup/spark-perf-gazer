@@ -5,7 +5,9 @@ import com.amadeus.sparklear.reports.converters.{JobJson, JobSerializer, SqlJson
 
 case class Config(
   prefix: String = DefaultPrefix,
-  reportStageDetails: Boolean = false,
+  showSqls: Boolean = true,
+  showJobs: Boolean = true,
+  showStages: Boolean = false,
   output: Output = OutputStdout,
   sqlSerializer: SqlSerializer = SqlJson,
   jobSerializer: JobSerializer = JobJson,
