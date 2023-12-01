@@ -2,17 +2,17 @@
 
 This repository contains the SparklEar Spark Listener.
 
-SparklEar is a configurable Spark Listener that allows to retrieve important stats about Spark SQL queries and jobs, post-mortem.
-Users should attach it as a listener to the `SparkSession`. It will cause to report certain lines in the logs, which can be
-interpreted afterwards.
+SparklEar is a configurable Spark Listener that allows to retrieve important stats about Spark SQL queries, jobs and stages in a post-mortem way.
+Users should attach it as a listener to the `SparkSession`. It will cause to report certain lines in the logs, which can be interpreted afterwards.
 
 The use-cases that this library is intended to address:
 
-- allow to do post-mortem analysis of SQL queries, jobs and stages programmatically
-- measure Spark jobs accumulated in-executor durations
+- allow to do post-mortem analysis of Spark SQL queries, jobs and stages programmatically
+- measure Spark jobs / stages accumulated in-executor durations
 - identify jobs that take the longer cumulated execution time (as measured in executors)
 - identify Spark jobs that have spill
-- monitor certain SQL metrics like amount of files read
+- monitor certain SQL metrics like amount of files read, pruned, ...
+- investigate predicate pushdowns
 - ...
 
 Why not using the regular Spark UI? 
@@ -23,12 +23,34 @@ There are some problems with the analysis of execution stats from the Spark UI:
 
 https://docs.databricks.com/en/_extras/notebooks/source/kb/clusters/event-log-replay.html
 
-
 ## Developers
 
-Using `sbt` you can run tests locally: `sbt test`
+### Contributor guide
 
-### Intellij
+#### Overview
+
+The core class is `SparklEar`.
+It can be registered as `Spark` listener via `spark.sparkContext.addSparkListener(spe)`
+
+It will from then on listen to multiple events coming from `Spark`.
+
+The method `def reports: List[Report]` will return a list of reports representing either an: 
+
+- SQL query (a `SqlReport`)
+- job (a `JobReport`)
+- stage (a `StageReport`)
+
+The instance of `SparklEar` listens to `Spark` events, and collects the status objects 
+in the form of `Wrappers` (objects coming from Spark like `StageInfo`, `SparkListenerJobEnd`, Metrics, ...).
+
+When the reports are requested, all collected `Wrapper`s are inspected and transformed into `Report`s according
+to the type of `Wrapper`. A `Report` knows how to get serialized so that a `StringReport` is generated from it.
+
+#### Sbt
+
+The project uses `sbt`. You can run tests locally with `sbt test`.
+
+#### Intellij
 Using IntelliJ IDEA, you can update the ScalaTest Configuration Template to avoid manual settings.
 
 ```
@@ -40,7 +62,7 @@ For code formatting setup:
 ```
 Settings -> Editor -> Code Style -> Scala -> Formatter: ScalaFMT
 ```
-# Todo
+# To Do
 
 // TODO make clear with the type names at which level we are
 // SqlWrapper => put in Map, allows to build SqlSummary
