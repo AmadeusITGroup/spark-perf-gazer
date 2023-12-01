@@ -1,7 +1,6 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.reports.Report.StringReport
-import com.amadeus.sparklear.reports.{JobReport, Report, SqlReport, StageReport}
+import com.amadeus.sparklear.input.{JobInput, Input, SqlInput, StageInput}
 import com.amadeus.sparklear.wrappers.JobWrapper.EndUpdate
 import com.amadeus.sparklear.wrappers.{JobWrapper, SqlWrapper, StageWrapper}
 import org.apache.spark.scheduler._
@@ -31,43 +30,38 @@ class SparklEar(c: Config) extends SparkListener {
   private val stageWrappers = new ConcurrentHashMap[StageKey, StageWrapper]()
   private val metrics = new ConcurrentHashMap[MetricKey, MetricWrapper]()
 
-  def reports: List[Report] = {
-    def enabled(f: Boolean, r: List[Report]): List[Report] = if (f) r else List.empty[Report]
-    enabled(c.showSqls, sqlReports) ++
-      enabled(c.showJobs, jobReports) ++
-      enabled(c.showStages, stageReports)
+  def inputs: List[Input] = {
+    def enabled(f: Boolean, r: List[Input]): List[Input] = if (f) r else List.empty[Input]
+    enabled(c.showSqls, sqlInputs) ++
+      enabled(c.showJobs, jobInputs) ++
+      enabled(c.showStages, stageInputs)
   }
 
-  def purge(): Unit = {
+  def purgeWrappers(): Unit = {
     sqlWrappers.clear()
     jobWrappers.clear()
     stageWrappers.clear()
     metrics.clear()
   }
 
-  def stringReports: List[StringReport] = {
-    val stringReports = reports.map(_.toStringReport(c))
-    stringReports
-  }
-
-  private def sqlReports: List[SqlReport] = {
+  private def sqlInputs: List[SqlInput] = {
     sqlWrappers.asScala.toList.map {
       case (_, sqlWrapper) =>
-        SqlReport(sqlWrapper, metrics.asScala.toMap)
+        SqlInput(sqlWrapper, metrics.asScala.toMap)
     }
   }
 
-  private def jobReports: List[JobReport] = {
+  private def jobInputs: List[JobInput] = {
     jobWrappers.asScala.toList.map {
       case (_, jobWrapper) =>
-        JobReport(jobWrapper)
+        JobInput(jobWrapper)
     }
   }
 
-  private def stageReports: List[StageReport] = {
+  private def stageInputs: List[StageInput] = {
     stageWrappers.asScala.toList.map {
       case (_, stageWrapper) =>
-        StageReport(stageWrapper)
+        StageInput(stageWrapper)
     }
   }
 

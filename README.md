@@ -29,22 +29,18 @@ https://docs.databricks.com/en/_extras/notebooks/source/kb/clusters/event-log-re
 
 #### Overview
 
-The core class is `SparklEar`.
-It can be registered as `Spark` listener via `spark.sparkContext.addSparkListener(spe)`
+The core class is `SparklEar`, which can be instantiated easily when providing a `Config`.
 
-It will from then on listen to multiple events coming from `Spark`.
+It can be registered as `Spark` listener via `spark.sparkContext.addSparkListener(...)`.
+It will then listen to multiple events coming from `Spark`.
 
-The method `def reports: List[Report]` will return a list of reports representing either an: 
+The event objects are collected in the form of `Wrappers` (classes like `StageInfo`, `SparkListenerJobEnd`, ...).
 
-- SQL query (a `SqlReport`)
-- job (a `JobReport`)
-- stage (a `StageReport`)
+When the inputs are requested to `SparklEar`, all collected `Wrapper`s are inspected and transformed into `Input`s according
+to the type of `Wrapper`. 
 
-The instance of `SparklEar` listens to `Spark` events, and collects the status objects 
-in the form of `Wrappers` (objects coming from Spark like `StageInfo`, `SparkListenerJobEnd`, Metrics, ...).
-
-When the reports are requested, all collected `Wrapper`s are inspected and transformed into `Report`s according
-to the type of `Wrapper`. A `Report` knows how to get serialized so that a `StringReport` is generated from it.
+Then, all `Input` objects are transformed into multiple `Output` objects. A given `Input` can be transformed into 
+multiple `Output`s using a `Serializer`. An `Output` is a type that represents the report unit shared with the end-user.
 
 #### Sbt
 

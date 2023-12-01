@@ -1,7 +1,7 @@
 package com.amadeus.sparklear
 
 import com.amadeus.sparklear.Config.{DefaultPrefix, Output, OutputStdout}
-import com.amadeus.sparklear.reports.converters.{JobJson, JobSerializer, SqlJson, SqlSerializer, StageJson, StageSerializer}
+import com.amadeus.sparklear.input.converters.{JobJson, JobSerializer, SqlJson, SqlSerializer, StageJson, StageSerializer}
 
 case class Config(
   prefix: String = DefaultPrefix,
@@ -9,7 +9,7 @@ case class Config(
   showJobs: Boolean = true,
   showStages: Boolean = false,
   output: Output = OutputStdout,
-  sqlSerializer: SqlSerializer[_] = SqlJson,
+  sqlSerializer: SqlSerializer[_ <: input.Output] = SqlJson,
   jobSerializer: JobSerializer = JobJson,
   stageSerializer: StageSerializer = StageJson
   //sqlGlass: SqlGlass = SqlGlass.Default

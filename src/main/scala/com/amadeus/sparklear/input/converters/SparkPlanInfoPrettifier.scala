@@ -1,4 +1,4 @@
-package com.amadeus.sparklear.reports.converters
+package com.amadeus.sparklear.input.converters
 
 import org.apache.spark.sql.execution.SparkPlanInfo
 import org.apache.spark.sql.execution.metric.SQLMetricInfo

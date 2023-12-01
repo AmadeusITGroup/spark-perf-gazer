@@ -1,6 +1,6 @@
 package com.amadeus.sparklear.wrappers
 
-import com.amadeus.sparklear.reports.JobReport
+import com.amadeus.sparklear.input.JobInput
 import com.amadeus.sparklear.wrappers.JobWrapper.EndUpdate
 import org.apache.spark.scheduler.{SparkListenerJobEnd, SparkListenerJobStart, StageInfo}
 
@@ -12,8 +12,8 @@ case class JobWrapper(
   sqlId: String,
   initialStages: Seq[StageRef],
   endUpdate: Option[EndUpdate] = None
-) extends Wrapper[JobReport] {
-  override def toReport(): JobReport = JobReport(this)
+) extends Wrapper[JobInput] {
+  override def toReport(): JobInput = JobInput(this)
 }
 
 object JobWrapper {

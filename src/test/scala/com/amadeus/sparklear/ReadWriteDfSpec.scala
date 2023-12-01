@@ -1,8 +1,8 @@
 package com.amadeus.sparklear
 
 import com.amadeus.airbi.SparkSpecification
-import com.amadeus.sparklear.reports.{JobReport, SqlReport, StageReport}
-import com.amadeus.sparklear.reports.converters.{JobJson, JobPretty, SqlJson, SqlPretty, SqlSingleLine, StagePretty}
+import com.amadeus.sparklear.input.{JobInput, SqlInput, StageInput}
+import com.amadeus.sparklear.input.converters.{JobJson, JobPretty, SqlJson, SqlPretty, SqlSingleLine, StagePretty}
 import com.amadeus.testfwk.{ConfigSupport, JsonSupport, OptdSupport}
 
 class ReadWriteDfSpec extends SparkSpecification with OptdSupport with JsonSupport with ConfigSupport {
@@ -14,15 +14,15 @@ class ReadWriteDfSpec extends SparkSpecification with OptdSupport with JsonSuppo
     spark.sparkContext.addSparkListener(eventsListener)
     spark.sparkContext.setJobGroup("test group", "test job")
     df.write.format("noop").mode("overwrite").save()
-    val reports = eventsListener.reports
+    val inputs = eventsListener.inputs
     spark.sparkContext.removeSparkListener(eventsListener)
-    reports.size shouldBe 3
+    inputs.size shouldBe 3
 
     // SQL
     {
       // with JSON serializer
-      val reportSql = reports.collect { case s: SqlReport => s }.head
-      val rSqlJson = reportSql.toStringReport(cfg.withSqlSerializer(SqlJson))
+      val inputSql = inputs.collect { case s: SqlInput => s }.head
+      val rSqlJson = SqlJson.toStringReport(cfg, inputSql)
       query(rSqlJson, ".id") shouldEqual Array(1)
       query(rSqlJson, ".p.nodeName") shouldEqual Array("OverwriteByExpression")
       query(rSqlJson, ".p.children[0].nodeName") shouldEqual Array("Scan csv ")
@@ -32,7 +32,7 @@ class ReadWriteDfSpec extends SparkSpecification with OptdSupport with JsonSuppo
       query(rSqlJson, ".p.children[0].metrics[*].accumulatorId") shouldEqual Array(-1, 1, 0, 44662949) // scalastyle:ignore magic.number
 
       // with PRETTY serializer
-      val rSqlPretty = reportSql.toStringReport(cfg.withSqlSerializer(SqlPretty))
+      val rSqlPretty = SqlPretty.toStringReport(cfg, inputSql)
       rSqlPretty should include regex ("Operator OverwriteByExpression | OverwriteByExpression")
       // scalastyle:off line.size.limit
       rSqlPretty should include regex ("  Operator Scan csv  | FileScan csv \\[iata_code#17,icao_code#18,faa_code#19,is_geonames#20,geoname_id#21,envelope_id#22,name#23,asciiname#24,latitude#25,longitude#26,fclass#27,fcode#28,page_rank#29,date_from#30,date_until#31,comment#32,country_code#33,cc2#34,country_name#35,continent_name#36,adm1_code#37,adm1_name_utf#38,adm1_name_ascii#39,adm2_code#40,... 27 more fields\\] Batched: false, DataFilters: \\[\\], Format: CSV, Location: InMemoryFileIndex\\(1 paths\\)\\[file:.*/src/test/resources/optd_por_publi..., PartitionFilters: \\[\\], PushedFilters: \\[\\], ReadSchema: struct<iata_code:string,icao_code:string,faa_code:string,is_geonames:string,geoname_id:string,env...")
@@ -41,23 +41,23 @@ class ReadWriteDfSpec extends SparkSpecification with OptdSupport with JsonSuppo
       // scalastyle:on line.size.limit
 
       // with SINGLE LINE serializer
-      val rSqlSingleLine = reportSql.toStringReport(cfg.withSqlSerializer(SqlSingleLine))
+      val rSqlSingleLine = SqlSingleLine.toStringReport(cfg, inputSql)
       rSqlSingleLine should equal(" SQL_ID=1")
     }
 
     // JOB
     {
       // with PRETTY serializer
-      val reportJob = reports.collect { case s: JobReport => s }.head
-      val rJobPretty = reportJob.toStringReport(cfg.withJobSerializer(JobPretty))
+      val inputJob = inputs.collect { case s: JobInput => s }.head
+      val rJobPretty = JobPretty.toStringReport(cfg, inputJob)
       rJobPretty should include regex ("JOB ID=1 GROUP='test group' NAME='test job' SQL_ID=1  STAGES=1 TOTAL_CPU_SEC=.*")
     }
 
     // STAGE
     {
       // with PRETTY serializer
-      val reportStage = reports.collect { case s: StageReport => s }.head
-      val rStagePretty = reportStage.toStringReport(cfg.withStageSerializer(StagePretty))
+      val inputStage = inputs.collect { case s: StageInput => s }.head
+      val rStagePretty = StagePretty.toStringReport(cfg, inputStage)
       rStagePretty should include regex ("STAGE ID=1 READ_MB=42 WRITE_MB=0 SHUFFLE_READ_MB=0SHUFFLE_WRITE_MB=0 EXEC_CPU_SECS=.* ATTEMPT=0")
     }
 
