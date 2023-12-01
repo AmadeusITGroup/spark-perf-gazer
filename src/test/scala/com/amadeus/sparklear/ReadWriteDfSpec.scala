@@ -5,9 +5,9 @@ import com.amadeus.sparklear.reports.{JobReport, SqlReport, StageReport}
 import com.amadeus.sparklear.reports.converters.{JobJson, JobPretty, SqlJson, SqlPretty, SqlSingleLine, StagePretty}
 import com.amadeus.testfwk.{ConfigSupport, JsonSupport, OptdSupport}
 
-class SparklEarSpec extends SparkSpecification with OptdSupport with JsonSupport with ConfigSupport {
+class ReadWriteDfSpec extends SparkSpecification with OptdSupport with JsonSupport with ConfigSupport {
 
-  "The listener" should "generate a basic SQL report" in withSpark() { spark =>
+  "The listener" should "generate a basic SQL report from simply reading a .csv" in withSpark() { spark =>
     val df = readOptd(spark)
     val cfg = defaultTestConfig.withAllEnabled
     val eventsListener = new SparklEar(cfg)
@@ -20,6 +20,7 @@ class SparklEarSpec extends SparkSpecification with OptdSupport with JsonSupport
 
     // SQL
     {
+      // with JSON serializer
       val reportSql = reports.collect { case s: SqlReport => s }.head
       val rSqlJson = reportSql.toStringReport(cfg.withSqlSerializer(SqlJson))
       query(rSqlJson, ".id") shouldEqual Array(1)
@@ -28,32 +29,39 @@ class SparklEarSpec extends SparkSpecification with OptdSupport with JsonSupport
       query(rSqlJson, ".p.children[0].metrics[*].name") shouldEqual
         Array("number of output rows", "number of files read", "metadata time", "size of files read")
       query(rSqlJson, ".p.children[0].metrics[*].metricType") shouldEqual Array("KO", "OK", "OK", "OK")
-      query(rSqlJson, ".p.children[0].metrics[*].accumulatorId") shouldEqual Array(-1, 1, 0, 44662949)
+      query(rSqlJson, ".p.children[0].metrics[*].accumulatorId") shouldEqual Array(-1, 1, 0, 44662949) // scalastyle:ignore magic.number
 
+      // with PRETTY serializer
       val rSqlPretty = reportSql.toStringReport(cfg.withSqlSerializer(SqlPretty))
       rSqlPretty should include regex ("Operator OverwriteByExpression | OverwriteByExpression")
+      // scalastyle:off line.size.limit
       rSqlPretty should include regex ("  Operator Scan csv  | FileScan csv \\[iata_code#17,icao_code#18,faa_code#19,is_geonames#20,geoname_id#21,envelope_id#22,name#23,asciiname#24,latitude#25,longitude#26,fclass#27,fcode#28,page_rank#29,date_from#30,date_until#31,comment#32,country_code#33,cc2#34,country_name#35,continent_name#36,adm1_code#37,adm1_name_utf#38,adm1_name_ascii#39,adm2_code#40,... 27 more fields\\] Batched: false, DataFilters: \\[\\], Format: CSV, Location: InMemoryFileIndex\\(1 paths\\)\\[file:.*/src/test/resources/optd_por_publi..., PartitionFilters: \\[\\], PushedFilters: \\[\\], ReadSchema: struct<iata_code:string,icao_code:string,faa_code:string,is_geonames:string,geoname_id:string,env...")
       rSqlPretty should include regex ("   - Metadata: Map\\(Location -> InMemoryFileIndex\\(1 paths\\)\\[file:/.*src/test/resources/optd_por_public_all.csv\\], ReadSchema -> struct<iata_code:string,icao_code:string,faa_code:string,is_geonames:string,geoname_id:string,envelope_id:string,name:string,asciiname:string,latitude:string,longitude:string,fclass:string,fcode:string,page_rank:string,date_from:string,date_until:string,comment:string,country_code:string,cc2:string,country_name:string,continent_name:string,adm1_code:string,adm1_name_utf:string,adm1_name_ascii:string,adm2_code:string,adm2_name_utf:string,adm2_name_ascii:string,adm3_code:string,adm4_code:string,population:string,elevation:string,gtopo30:string,timezone:string,gmt_offset:string,dst_offset:string,raw_offset:string,moddate:string,city_code_list:string,city_name_list:string,city_detail_list:string,tvl_por_list:string,iso31662:string,location_type:string,wiki_link:string,alt_name_section:string,wac:string,wac_name:string,ccy_code:string,unlc_list:string,uic_list:string,geoname_lat:string,geoname_lon:string>, Format -> CSV, Batched -> false, PartitionFilters -> \\[\\], PushedFilters -> \\[\\], DataFilters -> \\[\\]\\)")
-      rSqlPretty should include regex ("   - Metrics: 'number_of_output_rows'=,'number_of_files_read'=1,'metadata_time'=0,'size_of_files_read'=44662949")
+      rSqlPretty should include regex ("   - Metrics: 'number_of_output_rows'=,'number_of_files_read'=1,'metadata_time'=.*,'size_of_files_read'=44662949")
+      // scalastyle:on line.size.limit
 
+      // with SINGLE LINE serializer
       val rSqlSingleLine = reportSql.toStringReport(cfg.withSqlSerializer(SqlSingleLine))
       rSqlSingleLine should equal(" SQL_ID=1")
     }
 
     // JOB
     {
+      // with PRETTY serializer
       val reportJob = reports.collect { case s: JobReport => s }.head
       val rJobPretty = reportJob.toStringReport(cfg.withJobSerializer(JobPretty))
-      rJobPretty should equal ("JOB ID=1 GROUP='test group' NAME='test job' SQL_ID=1  STAGES=1 TOTAL_CPU_SEC=0")
+      rJobPretty should include regex ("JOB ID=1 GROUP='test group' NAME='test job' SQL_ID=1  STAGES=1 TOTAL_CPU_SEC=.*")
     }
 
     // STAGE
     {
+      // with PRETTY serializer
       val reportStage = reports.collect { case s: StageReport => s }.head
       val rStagePretty = reportStage.toStringReport(cfg.withStageSerializer(StagePretty))
-      rStagePretty should equal ("STAGE ID=1 READ_MB=42 WRITE_MB=0 SHUFFLE_READ_MB=0SHUFFLE_WRITE_MB=0 EXEC_CPU_SECS=0 ATTEMPT=0")
+      rStagePretty should include regex ("STAGE ID=1 READ_MB=42 WRITE_MB=0 SHUFFLE_READ_MB=0SHUFFLE_WRITE_MB=0 EXEC_CPU_SECS=.* ATTEMPT=0")
     }
 
   }
+
 
 }

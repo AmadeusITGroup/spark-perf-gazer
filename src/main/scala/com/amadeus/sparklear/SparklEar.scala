@@ -19,14 +19,17 @@ import scala.collection.JavaConverters.mapAsScalaConcurrentMapConverter
   */
 class SparklEar(c: Config) extends SparkListener {
 
+  type SqlKey = Long
+  type JobKey = Int
+  type StageKey = Int
   type MetricKey = Long
-  type MetricValue = Long
+  type MetricWrapper = Long
 
   // Maps to keep sqls + jobs + stages wrappers (initial information) until job is completed
-  private val sqlWrappers = new ConcurrentHashMap[Long, SqlWrapper]()
-  private val jobWrappers = new ConcurrentHashMap[Int, JobWrapper]()
-  private val stageWrappers = new ConcurrentHashMap[Int, StageWrapper]()
-  private val metrics = new ConcurrentHashMap[MetricKey, MetricValue]()
+  private val sqlWrappers = new ConcurrentHashMap[SqlKey, SqlWrapper]()
+  private val jobWrappers = new ConcurrentHashMap[JobKey, JobWrapper]()
+  private val stageWrappers = new ConcurrentHashMap[StageKey, StageWrapper]()
+  private val metrics = new ConcurrentHashMap[MetricKey, MetricWrapper]()
 
   def reports: List[Report] = {
     def enabled(f: Boolean, r: List[Report]): List[Report] = if (f) r else List.empty[Report]

@@ -8,6 +8,8 @@ import com.amadeus.sparklear.wrappers.SqlWrapper
 @Unstable
 case class SqlReport(w: SqlWrapper, m: Map[Long, Long]) extends Report {
   override def toStringReport(c: Config): StringReport = {
-    s"${c.prefix} ${c.sqlSerializer.output(this)}"
+    s"${c.prefix} ${c.sqlSerializer.output(c, this)}"
   }
+
+  def debug(c: Config) = c.sqlSerializer.prepare(c, this)
 }

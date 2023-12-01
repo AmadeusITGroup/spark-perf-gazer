@@ -1,13 +1,11 @@
 package com.amadeus.airbi
 
+import com.amadeus.testfwk.SimpleSpec
 import com.typesafe.scalalogging.Logger
 import org.apache.spark.sql.SparkSession
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should
 import org.slf4j.LoggerFactory
 
-trait SparkSpecification extends AnyFlatSpec with should.Matchers with BeforeAndAfterAll {
+trait SparkSpecification extends SimpleSpec {
   lazy val logger: Logger = Logger(LoggerFactory.getLogger(getClass.getName))
 
   val DefaultConfigs: List[(String, String)] =
@@ -19,7 +17,7 @@ trait SparkSpecification extends AnyFlatSpec with should.Matchers with BeforeAnd
       ("spark.sql.adaptive.enabled", "false"),
       ("spark.ui.enabled", "true")
     )
-  def newSparkSession(conf: List[(String, String)] = DefaultConfigs): SparkSession = {
+  def getOrCreateSparkSession(conf: List[(String, String)] = DefaultConfigs): SparkSession = {
     val builder = SparkSession.builder
       .appName("SparkSession for tests")
       .master("local[1]")
@@ -30,7 +28,7 @@ trait SparkSpecification extends AnyFlatSpec with should.Matchers with BeforeAnd
   }
 
   def withSpark[T](conf: List[(String, String)] = DefaultConfigs)(testCode: SparkSession => T): T = {
-    val spark = newSparkSession(conf)
+    val spark = getOrCreateSparkSession(conf)
     try {
       testCode(spark)
     } finally {

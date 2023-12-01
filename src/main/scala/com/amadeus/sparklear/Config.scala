@@ -9,9 +9,10 @@ case class Config(
   showJobs: Boolean = true,
   showStages: Boolean = false,
   output: Output = OutputStdout,
-  sqlSerializer: SqlSerializer = SqlJson,
+  sqlSerializer: SqlSerializer[_] = SqlJson,
   jobSerializer: JobSerializer = JobJson,
   stageSerializer: StageSerializer = StageJson
+  //sqlGlass: SqlGlass = SqlGlass.Default
 )
 
 object Config {
