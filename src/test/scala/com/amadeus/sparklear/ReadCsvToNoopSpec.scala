@@ -6,7 +6,7 @@ import com.amadeus.sparklear.output.glasses.SqlNodeGlass
 import com.amadeus.sparklear.output.{OutputString, SqlNode}
 import com.amadeus.testfwk.{ConfigSupport, JsonSupport, OptdSupport, SimpleSpec, SparkSupport}
 
-class ReadWriteDfSpec extends SimpleSpec with SparkSupport with OptdSupport with JsonSupport with ConfigSupport {
+class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport with JsonSupport with ConfigSupport {
 
   describe("The listener when reading a .csv") {
     withSpark() { spark =>
