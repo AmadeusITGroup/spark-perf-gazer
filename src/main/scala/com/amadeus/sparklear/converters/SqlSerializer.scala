@@ -1,8 +1,8 @@
-package com.amadeus.sparklear.input.converters
+package com.amadeus.sparklear.converters
 
 import com.amadeus.sparklear.Config
-import com.amadeus.sparklear.input.{Output, SqlInput}
-import com.amadeus.sparklear.input.converters.Serializer.{OutputString, StringReport}
+import com.amadeus.sparklear.input.SqlInput
+import com.amadeus.sparklear.output.{Output, OutputString, SqlNode}
 import com.amadeus.sparklear.wrappers.SqlWrapper
 import org.apache.spark.sql.execution.SparkPlanInfo
 import org.apache.spark.sql.execution.metric.SQLMetricInfo
@@ -11,12 +11,9 @@ import org.json4s.jackson.Serialization.{write => asJson}
 
 sealed trait SqlSerializer[T <: Output] extends Serializer[SqlInput, T]
 
-case class SqlJsonFlatNode(sqlId: Long, name: String, level: Int, coord: String, metrics: Seq[(String, String)]) extends Output {
-  override def asString(): String = s"SQL_ID=$sqlId NAME=${name} L=${level}, COORD=${coord} METRICS=${metrics.mkString(",")}"
-}
-case object SqlJsonFlat extends SqlSerializer[SqlJsonFlatNode] {
-  private def convert(baseCoord: String, level: Int, sqlId: Long, p: SparkPlanInfo, m: Map[Long, Long]): Seq[SqlJsonFlatNode] = {
-    val currNode = SqlJsonFlatNode(
+case object SqlJsonFlat extends SqlSerializer[SqlNode] {
+  private def convert(baseCoord: String, level: Int, sqlId: Long, p: SparkPlanInfo, m: Map[Long, Long]): Seq[SqlNode] = {
+    val currNode = SqlNode(
       sqlId = sqlId,
       name = p.nodeName,
       level = level,
@@ -32,11 +29,12 @@ case object SqlJsonFlat extends SqlSerializer[SqlJsonFlatNode] {
     (m.name, v.getOrElse(-1).toString)
   }
 
-  override def toOutput(c: Config, r: SqlInput): Seq[SqlJsonFlatNode] = {
-    val m = r.m
-    val id = r.w.id
-    val p = r.w.p
-    convert("0", 1, id, p, m)
+  override def toOutput(c: Config, r: SqlInput): Seq[SqlNode] = {
+    val metrics = r.m
+    val sqlId = r.w.id
+    val plan = r.w.p
+    val nodes = convert("0", 1, sqlId, plan, metrics)
+    nodes.filter(n => c.glasses.forall(g => n.eligible(g)))
   }
 }
 

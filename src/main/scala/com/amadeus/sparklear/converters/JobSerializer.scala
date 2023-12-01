@@ -1,8 +1,8 @@
-package com.amadeus.sparklear.input.converters
+package com.amadeus.sparklear.converters
 
 import com.amadeus.sparklear.Config
 import com.amadeus.sparklear.input.JobInput
-import com.amadeus.sparklear.input.converters.Serializer.OutputString
+import com.amadeus.sparklear.output.OutputString
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.{write => asJson}
 

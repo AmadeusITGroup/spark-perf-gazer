@@ -1,14 +1,12 @@
-package com.amadeus.sparklear.input.converters
+package com.amadeus.sparklear.converters
 
 import com.amadeus.sparklear.Config
-import com.amadeus.sparklear.input.{Input, Output}
-import com.amadeus.sparklear.input.converters.Serializer.StringReport
+import com.amadeus.sparklear.input.Input
+import Serializer.StringReport
+import com.amadeus.sparklear.output.Output
 
 object Serializer {
   type StringReport = String
-  case class OutputString(s: String) extends Output {
-    override def asString(): String = s
-  }
 }
 
 trait Serializer[I <: Input, K <: Output] {

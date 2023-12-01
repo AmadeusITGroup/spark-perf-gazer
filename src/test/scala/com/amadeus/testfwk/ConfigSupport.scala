@@ -1,8 +1,9 @@
 package com.amadeus.testfwk
 
 import com.amadeus.sparklear.Config
-import com.amadeus.sparklear.input.Output
-import com.amadeus.sparklear.input.converters.{JobSerializer, SqlSerializer, StageSerializer}
+import com.amadeus.sparklear.converters.{JobSerializer, SqlSerializer, StageSerializer}
+import com.amadeus.sparklear.output.Output
+import com.amadeus.sparklear.output.glasses.{Glass, SqlNodeGlass}
 
 trait ConfigSupport {
 
@@ -12,6 +13,7 @@ trait ConfigSupport {
     def withJobSerializer(s: JobSerializer): Config = c.copy(jobSerializer = s)
     def withStageSerializer(s: StageSerializer): Config = c.copy(stageSerializer = s)
     def withAllEnabled: Config = c.copy(showSqls = true, showJobs = true, showStages = true)
+    def withGlasses(g: Seq[Glass]): Config = c.copy(glasses = g)
   }
 
   def defaultTestConfig: Config = {

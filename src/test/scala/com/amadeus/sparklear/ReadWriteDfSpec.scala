@@ -1,8 +1,9 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.input.converters.Serializer.OutputString
+import com.amadeus.sparklear.converters.{JobPretty, SqlJson, SqlJsonFlat, SqlPretty, SqlSingleLine, StagePretty}
 import com.amadeus.sparklear.input.{JobInput, SqlInput, StageInput}
-import com.amadeus.sparklear.input.converters.{JobPretty, SqlJson, SqlJsonFlat, SqlJsonFlatNode, SqlPretty, SqlSingleLine, StagePretty}
+import com.amadeus.sparklear.output.glasses.SqlNodeGlass
+import com.amadeus.sparklear.output.{OutputString, SqlNode}
 import com.amadeus.testfwk.{ConfigSupport, JsonSupport, OptdSupport, SimpleSpec, SparkSupport}
 
 class ReadWriteDfSpec extends SimpleSpec with SparkSupport with OptdSupport with JsonSupport with ConfigSupport {
@@ -19,9 +20,9 @@ class ReadWriteDfSpec extends SimpleSpec with SparkSupport with OptdSupport with
       spark.sparkContext.removeSparkListener(eventsListener)
       inputs.size shouldBe 3
 
-      describe ("should generate a basic SQL report") {
-          // with JSON serializer
-          val inputSql = inputs.collect { case s: SqlInput => s }.head
+      describe("should generate a basic SQL report") {
+        // with JSON serializer
+        val inputSql = inputs.collect { case s: SqlInput => s }.head
         it("with json serializer") {
           val r = SqlJson.toStringReport(cfg, inputSql)
           query(r, ".id") shouldEqual Array(1)
@@ -30,32 +31,38 @@ class ReadWriteDfSpec extends SimpleSpec with SparkSupport with OptdSupport with
           query(r, ".p.children[0].metrics[*].name") shouldEqual
             Array("number of output rows", "number of files read", "metadata time", "size of files read")
           query(r, ".p.children[0].metrics[*].metricType") shouldEqual Array("KO", "OK", "OK", "OK")
-          query(r, ".p.children[0].metrics[*].accumulatorId") shouldEqual Array(-1, 1, 0, 44662949) // scalastyle:ignore magic.number
+          query(r, ".p.children[0].metrics[*].accumulatorId") shouldEqual Array(
+            -1,
+            1,
+            0,
+            44662949
+          ) // scalastyle:ignore magic.number
         }
         it("with jsonflat serializer") {
           val r = SqlJsonFlat.toOutput(cfg, inputSql)
-          r.size should be (2)
-          r.head should be (SqlJsonFlatNode(1, "OverwriteByExpression", 1, "0", Seq.empty[(String, String)]))
+          r.size should be(2)
+          r.head should be(SqlNode(1, "OverwriteByExpression", 1, "0", Seq.empty[(String, String)]))
           val m = Seq(
             ("number of output rows", "-1"),
             ("number of files read", "1"),
             ("metadata time", "0"),
             ("size of files read", "44662949")
           )
-          r.last should be (SqlJsonFlatNode(1, "Scan csv ", 2, "0.0", m))
+          r.last should be(SqlNode(1, "Scan csv ", 2, "0.0", m))
         }
-        it("with jsonflat serializer filtered") {
-          val cfg = defaultTestConfig.withAllEnabled
-          val r = SqlJsonFlat.toOutput(cfg, inputSql)
-          r.size should be (2)
-          r.head should be (SqlJsonFlatNode(1, "OverwriteByExpression", 1, "0", Seq.empty[(String, String)]))
-          val m = Seq(
-            ("number of output rows", "-1"),
-            ("number of files read", "1"),
-            ("metadata time", "0"),
-            ("size of files read", "44662949")
-          )
-          r.last should be (SqlJsonFlatNode(1, "Scan csv ", 2, "0.0", m))
+        describe("with jsonflat serializer filtered") {
+          it ("by nodename") {
+            val g = Seq(SqlNodeGlass(nodeNameRegex = Some(".*ByExpr.*")))
+            val cfg = defaultTestConfig.withAllEnabled.withGlasses(g)
+            val r = SqlJsonFlat.toOutput(cfg, inputSql)
+            r should be(Seq(SqlNode(1, "OverwriteByExpression", 1, "0", Seq.empty[(String, String)])))
+          }
+          it ("by metric number_of_files_read") {
+            val g = Seq(SqlNodeGlass(metricRegex = Some("number of files read")))
+            val cfg = defaultTestConfig.withAllEnabled.withGlasses(g)
+            val r = SqlJsonFlat.toOutput(cfg, inputSql)
+            r.map(_.name) should be(Seq("Scan csv "))
+          }
         }
         it("with pretty serializer") {
           val r = SqlPretty.toStringReport(cfg, inputSql)

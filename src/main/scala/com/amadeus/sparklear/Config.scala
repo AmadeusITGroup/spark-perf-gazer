@@ -1,31 +1,34 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.Config.{DefaultPrefix, Output, OutputStdout}
-import com.amadeus.sparklear.input.converters.{JobJson, JobSerializer, SqlJson, SqlSerializer, StageJson, StageSerializer}
+import com.amadeus.sparklear.Config.{Sink, SinkStdout}
+import com.amadeus.sparklear.converters.{JobJson, JobSerializer, SqlJson, SqlSerializer, StageJson, StageSerializer}
+import com.amadeus.sparklear.output.Output
+import com.amadeus.sparklear.output.glasses.Glass
 
 case class Config(
-  prefix: String = DefaultPrefix,
+  prefix: String = Config.DefaultPrefix,
   showSqls: Boolean = true,
   showJobs: Boolean = true,
   showStages: Boolean = false,
-  output: Output = OutputStdout,
-  sqlSerializer: SqlSerializer[_ <: input.Output] = SqlJson,
+  output: Sink = SinkStdout,
+  sqlSerializer: SqlSerializer[_ <: Output] = SqlJson,
   jobSerializer: JobSerializer = JobJson,
-  stageSerializer: StageSerializer = StageJson
-  //sqlGlass: SqlGlass = SqlGlass.Default
-)
+  stageSerializer: StageSerializer = StageJson,
+  glasses: Seq[Glass] = Seq.empty[Glass]
+) {
+}
 
 object Config {
   val DefaultPrefix = "SPARKLEAR"
   val DefaultConfig = Config()
 
-  sealed trait Output {
+  sealed trait Sink {
     def output(m: String): Unit
   }
-  case object OutputStdout extends Output {
+  case object SinkStdout extends Sink {
     override def output(m: String): Unit = System.out.println(m) // scalastyle:ignore
   }
-  case object OutputStderr extends Output {
+  case object SinkStderr extends Sink {
     override def output(m: String): Unit = System.err.println(m) // scalastyle:ignore
   }
 }
