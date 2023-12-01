@@ -6,7 +6,6 @@ import com.amadeus.sparklear.wrappers.{JobWrapper, SqlWrapper, StageWrapper}
 import org.apache.spark.scheduler._
 import org.apache.spark.sql.execution.ui._
 
-import scala.collection.JavaConverters
 import java.util.concurrent.ConcurrentHashMap
 import scala.collection.JavaConverters.mapAsScalaConcurrentMapConverter
 

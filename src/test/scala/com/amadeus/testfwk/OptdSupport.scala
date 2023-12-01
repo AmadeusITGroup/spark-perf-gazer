@@ -10,5 +10,4 @@ trait OptdSupport {
       .option("header", "true")
       .csv("src/test/resources/optd_por_public_all.csv")
   }
-
 }

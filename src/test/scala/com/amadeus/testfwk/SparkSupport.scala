@@ -1,11 +1,10 @@
-package com.amadeus.airbi
+package com.amadeus.testfwk
 
-import com.amadeus.testfwk.SimpleSpec
 import com.typesafe.scalalogging.Logger
 import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
 
-trait SparkSpecification extends SimpleSpec {
+trait SparkSupport {
   lazy val logger: Logger = Logger(LoggerFactory.getLogger(getClass.getName))
 
   val DefaultConfigs: List[(String, String)] =
