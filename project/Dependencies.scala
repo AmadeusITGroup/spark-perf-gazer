@@ -10,24 +10,19 @@ object Dependencies {
     }
   }
 
-  val sparkCore      = "org.apache.spark"           %% "spark-core"                % "3.3.0"
-  val sparkSql       = "org.apache.spark"           %% "spark-sql"                 % "3.3.0"
-  val scalaLogging   = "com.typesafe.scala-logging" %% "scala-logging"             % "3.9.2"
-  val slf4jLog4j     = "org.slf4j"                   % "slf4j-log4j12"             % "1.7.16"
-  val scalaTest      = "org.scalatest"              %% "scalatest"                 % "3.2.10"
-  val jsonpath       = "com.jayway.jsonpath"         % "json-path"                 % "2.8.0"
-
+  val sparkVersion = "3.4.1"
   val coreDeps = Seq(
-    sparkCore      % compileIfLocalOtherwiseProvided,
-    sparkSql       % compileIfLocalOtherwiseProvided,
-    scalaLogging   % Compile
+    "org.apache.spark"           %% "spark-core"    % sparkVersion % compileIfLocalOtherwiseProvided,
+    "org.apache.spark"           %% "spark-sql"     % sparkVersion % compileIfLocalOtherwiseProvided,
+    "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2" % Compile
   )
 
   val testDeps = Seq(
-    slf4jLog4j     % Test,
-    sparkCore      % Test classifier "tests",
-    sparkSql       % Test classifier "tests",
-    scalaTest      % Test,
-    jsonpath       % Test
+    "org.slf4j"           % "slf4j-log4j12" % "1.7.16" % Test,
+    "org.apache.spark"   %% "spark-core"    % sparkVersion  % Test classifier "tests",
+    "org.apache.spark"   %% "spark-sql"     % sparkVersion  % Test classifier "tests",
+    "org.scalatest"      %% "scalatest"     % "3.2.10" % Test,
+    "com.jayway.jsonpath" % "json-path"     % "2.8.0"  % Test,
+    "io.delta"           %% "delta-core"    % "2.4.0"  % Test
   )
 }
