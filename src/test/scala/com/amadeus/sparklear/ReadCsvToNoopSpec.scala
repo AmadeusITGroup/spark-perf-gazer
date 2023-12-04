@@ -3,7 +3,7 @@ package com.amadeus.sparklear
 import com.amadeus.sparklear.converters.{JobPretty, SqlJson, SqlJsonFlat, SqlPretty, SqlSingleLine, StagePretty}
 import com.amadeus.sparklear.input.{Input, JobInput, SqlInput, StageInput}
 import com.amadeus.sparklear.report.glasses.SqlNodeGlass
-import com.amadeus.sparklear.report.{OutputString, SqlNode}
+import com.amadeus.sparklear.report.{StrReport, SqlNodeReport}
 import com.amadeus.testfwk.{ConfigSupport, JsonSupport, OptdSupport, SimpleSpec, SparkSupport}
 
 import scala.collection.mutable.ListBuffer
@@ -45,21 +45,21 @@ class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport wi
         it("with jsonflat serializer") {
           val r = SqlJsonFlat.toReport(cfg, inputSql)
           r.size should be(2)
-          r.head should be(SqlNode(1, "OverwriteByExpression", 1, "0", Seq.empty[(String, String)]))
+          r.head should be(SqlNodeReport(1, "OverwriteByExpression", 1, "0", Seq.empty[(String, String)]))
           val m = Seq(
             ("number of output rows", "124189"),
             ("number of files read", "1"),
             ("metadata time", "0"),
             ("size of files read", "44662949")
           )
-          r.last should be(SqlNode(1, "Scan csv ", 2, "0.0", m))
+          r.last should be(SqlNodeReport(1, "Scan csv ", 2, "0.0", m))
         }
         describe("with jsonflat serializer filtered") {
           it ("by nodename ...ByExpr...") {
             val g = Seq(SqlNodeGlass(nodeNameRegex = Some(".*ByExpr.*")))
             val cfg = defaultTestConfig.withAllEnabled.withGlasses(g)
             val r = SqlJsonFlat.toReport(cfg, inputSql)
-            r should be(Seq(SqlNode(1, "OverwriteByExpression", 1, "0", Seq.empty[(String, String)])))
+            r should be(Seq(SqlNodeReport(1, "OverwriteByExpression", 1, "0", Seq.empty[(String, String)])))
           }
           it ("by metric number_of_files_read") {
             val g = Seq(SqlNodeGlass(metricRegex = Some("number of files read")))
@@ -80,7 +80,7 @@ class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport wi
 
         it("with singleline serializer") {
           val r = SqlSingleLine.toReport(cfg, inputSql)
-          r should equal(Seq(OutputString("SQL_ID=1")))
+          r should equal(Seq(StrReport("SQL_ID=1")))
         }
       }
 

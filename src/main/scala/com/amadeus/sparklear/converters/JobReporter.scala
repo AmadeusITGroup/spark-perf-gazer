@@ -2,20 +2,20 @@ package com.amadeus.sparklear.converters
 
 import com.amadeus.sparklear.Config
 import com.amadeus.sparklear.input.JobInput
-import com.amadeus.sparklear.report.OutputString
+import com.amadeus.sparklear.report.StrReport
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.{write => asJson}
 
-sealed trait JobReporter extends Reporter[JobInput, OutputString]
+sealed trait JobReporter extends Reporter[JobInput, StrReport]
 
 case object JobJson extends JobReporter {
-  override def toReport(c: Config, r: JobInput): Seq[OutputString] = {
-    Seq(OutputString(asJson(r)(DefaultFormats)))
+  override def toReport(c: Config, r: JobInput): Seq[StrReport] = {
+    Seq(StrReport(asJson(r)(DefaultFormats)))
   }
 }
 
 case object JobPretty extends JobReporter {
-  override def toReport(c: Config, ji: JobInput): Seq[OutputString] = {
+  override def toReport(c: Config, ji: JobInput): Seq[StrReport] = {
     val w = ji.w
     val v = {
       val u = ji.e
@@ -27,6 +27,6 @@ case object JobPretty extends JobReporter {
       val jobStats = s"STAGES=${w.initialStages.size} TOTAL_CPU_SEC=${totalExecCpuTimeSec}"
       s"$header $jobStats"
     }
-    Seq(OutputString(v))
+    Seq(StrReport(v))
   }
 }

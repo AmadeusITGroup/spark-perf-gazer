@@ -11,5 +11,5 @@ object Reporter {
 trait Reporter[I <: Input, K <: Report] {
   def toReport(c: Config, p: I): Seq[K]
   def toStringReport(c: Config, p: I): Reporter.StringReport =
-    toReport(c, p).map(_.asString).mkString("\n")
+    toReport(c, p).map(_.asStringReport).mkString("\n")
 }

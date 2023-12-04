@@ -2,7 +2,7 @@ package com.amadeus.sparklear.converters
 
 import com.amadeus.sparklear.Config
 import com.amadeus.sparklear.input.SqlInput
-import com.amadeus.sparklear.report.{Report, OutputString, SqlNode}
+import com.amadeus.sparklear.report.{Report, StrReport, SqlNodeReport}
 import com.amadeus.sparklear.collects.SqlCollect
 import org.apache.spark.sql.execution.SparkPlanInfo
 import org.apache.spark.sql.execution.metric.SQLMetricInfo
@@ -11,9 +11,9 @@ import org.json4s.jackson.Serialization.{write => asJson}
 
 sealed trait SqlReporter[T <: Report] extends Reporter[SqlInput, T]
 
-case object SqlJsonFlat extends SqlReporter[SqlNode] {
-  private def convert(baseCoord: String, level: Int, sqlId: Long, p: SparkPlanInfo, m: Map[Long, Long]): Seq[SqlNode] = {
-    val currNode = SqlNode(
+case object SqlJsonFlat extends SqlReporter[SqlNodeReport] {
+  private def convert(baseCoord: String, level: Int, sqlId: Long, p: SparkPlanInfo, m: Map[Long, Long]): Seq[SqlNodeReport] = {
+    val currNode = SqlNodeReport(
       sqlId = sqlId,
       name = p.nodeName,
       level = level,
@@ -29,7 +29,7 @@ case object SqlJsonFlat extends SqlReporter[SqlNode] {
     (m.name, v.getOrElse(-1).toString)
   }
 
-  override def toReport(c: Config, r: SqlInput): Seq[SqlNode] = {
+  override def toReport(c: Config, r: SqlInput): Seq[SqlNodeReport] = {
     val metrics = r.m
     val sqlId = r.w.id
     val plan = r.w.p
@@ -38,7 +38,7 @@ case object SqlJsonFlat extends SqlReporter[SqlNode] {
   }
 }
 
-case object SqlJson extends SqlReporter[OutputString] {
+case object SqlJson extends SqlReporter[StrReport] {
 
   private def convert(p: SparkPlanInfo, m: Map[Long, Long]): SparkPlanInfo = new SparkPlanInfo(
     nodeName = p.nodeName,
@@ -56,23 +56,23 @@ case object SqlJson extends SqlReporter[OutputString] {
     )
   }
 
-  override def toReport(c: Config, r: SqlInput): Seq[OutputString] = {
+  override def toReport(c: Config, r: SqlInput): Seq[StrReport] = {
     val m = r.m
     val p = r.w
     val newP = SqlCollect(
       id = p.id,
       p = convert(p.p, m)
     )
-    Seq(OutputString(asJson(newP)(DefaultFormats)))
+    Seq(StrReport(asJson(newP)(DefaultFormats)))
   }
 }
 
-case object SqlPretty extends SqlReporter[OutputString] {
-  override def toReport(c: Config, r: SqlInput): Seq[OutputString] =
-    Seq(OutputString(SparkPlanInfoPrettifier.prettify(r.w.p, r.m)))
+case object SqlPretty extends SqlReporter[StrReport] {
+  override def toReport(c: Config, r: SqlInput): Seq[StrReport] =
+    Seq(StrReport(SparkPlanInfoPrettifier.prettify(r.w.p, r.m)))
 }
 
-case object SqlSingleLine extends SqlReporter[OutputString] {
-  override def toReport(c: Config, r: SqlInput): Seq[OutputString] =
-    Seq(OutputString(SparkPlanInfoPrettifier.prettifySingleLine(r.w.id, r.w.p)))
+case object SqlSingleLine extends SqlReporter[StrReport] {
+  override def toReport(c: Config, r: SqlInput): Seq[StrReport] =
+    Seq(StrReport(SparkPlanInfoPrettifier.prettifySingleLine(r.w.id, r.w.p)))
 }

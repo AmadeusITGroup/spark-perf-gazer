@@ -2,14 +2,14 @@ package com.amadeus.sparklear.report
 
 import com.amadeus.sparklear.report.glasses.{Glass, SqlNodeGlass}
 
-case class SqlNode(
+case class SqlNodeReport(
   sqlId: Long,
   name: String,
   level: Int,
   coord: String,
   metrics: Seq[(String, String)]
 ) extends Report {
-  override def asString(): String =
+  override def asStringReport(): String =
     s"SQL_ID=$sqlId NAME=${name} L=${level}, COORD=${coord} METRICS=${metrics.mkString(",")}"
 
   private def check(g: SqlNodeGlass): Boolean = {
