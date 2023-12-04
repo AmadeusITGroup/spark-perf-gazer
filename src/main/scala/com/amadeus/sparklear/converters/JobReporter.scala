@@ -2,22 +2,23 @@ package com.amadeus.sparklear.converters
 
 import com.amadeus.sparklear.Config
 import com.amadeus.sparklear.input.JobInput
-import com.amadeus.sparklear.output.OutputString
+import com.amadeus.sparklear.report.OutputString
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.{write => asJson}
 
-sealed trait JobSerializer extends Serializer[JobInput, OutputString]
+sealed trait JobReporter extends Reporter[JobInput, OutputString]
 
-case object JobJson extends JobSerializer {
-  override def toOutput(c: Config, r: JobInput): Seq[OutputString] = {
+case object JobJson extends JobReporter {
+  override def toReport(c: Config, r: JobInput): Seq[OutputString] = {
     Seq(OutputString(asJson(r)(DefaultFormats)))
   }
 }
 
-case object JobPretty extends JobSerializer {
-  override def toOutput(c: Config, r: JobInput): Seq[OutputString] = {
-    val w = r.w
-    val v = w.endUpdate.map { u =>
+case object JobPretty extends JobReporter {
+  override def toReport(c: Config, ji: JobInput): Seq[OutputString] = {
+    val w = ji.w
+    val v = {
+      val u = ji.e
       val totalExecCpuTimeSec = u.finalStages.collect { case (_, Some(stgStats)) => stgStats.execCpuSecs }.sum
       val spillMb = u.finalStages.collect { case (_, Some(stgStats)) => stgStats.spillMb }.flatten.sum
       val spillReport = if (spillMb != 0) s"SPILL_MB=$spillMb" else ""
@@ -26,6 +27,6 @@ case object JobPretty extends JobSerializer {
       val jobStats = s"STAGES=${w.initialStages.size} TOTAL_CPU_SEC=${totalExecCpuTimeSec}"
       s"$header $jobStats"
     }
-    v.map(OutputString.apply).toSeq
+    Seq(OutputString(v))
   }
 }

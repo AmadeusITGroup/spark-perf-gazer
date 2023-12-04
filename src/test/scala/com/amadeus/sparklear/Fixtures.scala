@@ -3,7 +3,7 @@ package com.amadeus.sparklear
 import com.amadeus.sparklear.input.SqlInput
 import org.apache.spark.sql.execution.SparkPlanInfo
 import org.apache.spark.sql.execution.metric.SQLMetricInfo
-import com.amadeus.sparklear.wrappers.SqlWrapper
+import com.amadeus.sparklear.collects.SqlCollect
 
 object Fixtures {
 
@@ -39,7 +39,7 @@ object Fixtures {
     )
 
     val rootSqlReport = SqlInput(
-      w = SqlWrapper(
+      w = SqlCollect(
         id  = 1,
         p = p1
       ),

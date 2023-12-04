@@ -2,8 +2,8 @@ package com.amadeus.sparklear
 
 import com.amadeus.sparklear.converters._
 import com.amadeus.sparklear.input.{Input, SqlInput}
-import com.amadeus.sparklear.output.Output
-import com.amadeus.sparklear.output.glasses.SqlNodeGlass
+import com.amadeus.sparklear.report.Report
+import com.amadeus.sparklear.report.glasses.SqlNodeGlass
 import com.amadeus.testfwk._
 
 import scala.collection.mutable.ListBuffer
@@ -41,7 +41,7 @@ class ReadCsvToDeltaSpec
             it("by nodename") {
               val g = Seq(SqlNodeGlass(nodeNameRegex = Some(".*Scan .*")))
               val cfg = defaultTestConfig.withAllEnabled.withGlasses(g)
-              val r = inputSqls.flatMap(i => SqlJsonFlat.toOutput(cfg, i))
+              val r = inputSqls.flatMap(i => SqlJsonFlat.toReport(cfg, i))
               r.map(i => i.name).distinct should contain allOf (
                 "Scan csv ",
                 "Scan ExistingRDD",

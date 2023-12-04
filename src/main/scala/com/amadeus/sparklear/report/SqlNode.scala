@@ -1,6 +1,6 @@
-package com.amadeus.sparklear.output
+package com.amadeus.sparklear.report
 
-import com.amadeus.sparklear.output.glasses.{Glass, SqlNodeGlass}
+import com.amadeus.sparklear.report.glasses.{Glass, SqlNodeGlass}
 
 case class SqlNode(
   sqlId: Long,
@@ -8,7 +8,7 @@ case class SqlNode(
   level: Int,
   coord: String,
   metrics: Seq[(String, String)]
-) extends Output {
+) extends Report {
   override def asString(): String =
     s"SQL_ID=$sqlId NAME=${name} L=${level}, COORD=${coord} METRICS=${metrics.mkString(",")}"
 

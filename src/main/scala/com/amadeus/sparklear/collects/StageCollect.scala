@@ -1,10 +1,9 @@
-package com.amadeus.sparklear.wrappers
+package com.amadeus.sparklear.collects
 
 import com.amadeus.sparklear.input.StageInput
 import org.apache.spark.scheduler.StageInfo
 
-case class StageWrapper(stageInfo: StageInfo) extends Wrapper[StageInput] {
-  override def toReport(): StageInput = StageInput(this)
+case class StageCollect(stageInfo: StageInfo) extends Collect[StageInput] {
   val spillMb = if (stageInfo.taskMetrics.memoryBytesSpilled > 0) {
     Some(stageInfo.taskMetrics.memoryBytesSpilled / 1024 / 1024)
   } else {

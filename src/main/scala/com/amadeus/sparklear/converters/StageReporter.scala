@@ -2,20 +2,20 @@ package com.amadeus.sparklear.converters
 
 import com.amadeus.sparklear.Config
 import com.amadeus.sparklear.input.StageInput
-import com.amadeus.sparklear.output.OutputString
+import com.amadeus.sparklear.report.OutputString
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.{write => asJson}
 
-sealed trait StageSerializer extends Serializer[StageInput, OutputString]
+sealed trait StageReporter extends Reporter[StageInput, OutputString]
 
-case object StageJson extends StageSerializer {
-  override def toOutput(c: Config, p: StageInput): Seq[OutputString] = {
+case object StageJson extends StageReporter {
+  override def toReport(c: Config, p: StageInput): Seq[OutputString] = {
     Seq(OutputString(asJson(p)(DefaultFormats)))
   }
 }
 
-case object StagePretty extends StageSerializer {
-  override def toOutput(c: Config, r: StageInput): Seq[OutputString] = {
+case object StagePretty extends StageReporter {
+  override def toReport(c: Config, r: StageInput): Seq[OutputString] = {
     val p = r.w
     val spillRep = p.spillMb.map(i => s" SPILL_MB=$i").mkString
     val attemptRep = s""

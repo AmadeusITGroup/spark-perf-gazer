@@ -2,8 +2,8 @@ package com.amadeus.sparklear
 
 import com.amadeus.sparklear.input.{Input, JobInput, SqlInput, StageInput}
 import com.amadeus.sparklear.utils.CappedConcurrentHashMap
-import com.amadeus.sparklear.wrappers.JobWrapper.EndUpdate
-import com.amadeus.sparklear.wrappers.{JobWrapper, SqlWrapper, StageWrapper}
+import com.amadeus.sparklear.collects.JobCollect.EndUpdate
+import com.amadeus.sparklear.collects.{JobCollect, SqlCollect, StageCollect}
 import org.apache.spark.scheduler._
 import org.apache.spark.sql.execution.ui._
 
@@ -21,14 +21,14 @@ class SparklEar(c: Config) extends SparkListener {
   type JobKey = Int
   type StageKey = Int
   type MetricKey = Long
-  type MetricWrapper = Long
+  type MetricCollect = Long
 
 
-  // Maps to keep sqls + jobs + stages wrappers (initial information) until some completion
-  private val sqlWrappers = new CappedConcurrentHashMap[SqlKey, SqlWrapper](c.maxCacheSize)
-  private val jobWrappers = new CappedConcurrentHashMap[JobKey, JobWrapper](c.maxCacheSize)
-  private val stageWrappers = new CappedConcurrentHashMap[StageKey, StageWrapper](c.maxCacheSize)
-  private val metricWrappers = new CappedConcurrentHashMap[MetricKey, MetricWrapper](c.maxCacheSize)
+  // Maps to keep sqls + jobs + stages collects (initial information) until some completion
+  private val sqlCollects = new CappedConcurrentHashMap[SqlKey, SqlCollect](c.maxCacheSize)
+  private val jobCollects = new CappedConcurrentHashMap[JobKey, JobCollect](c.maxCacheSize)
+  private val stageCollects = new CappedConcurrentHashMap[StageKey, StageCollect](c.maxCacheSize)
+  private val metricCollects = new CappedConcurrentHashMap[MetricKey, MetricCollect](c.maxCacheSize)
 
   /** LISTENERS
     */
@@ -39,11 +39,11 @@ class SparklEar(c: Config) extends SparkListener {
     * It is NOT a trigger for automatic purge of stages (job end will purge stages).
     */
   override def onStageCompleted(stageCompleted: SparkListenerStageCompleted): Unit = {
-    // generate a stage wrapper
-    val sw = StageWrapper(stageCompleted.stageInfo)
+    // generate a stage collect
+    val sw = StageCollect(stageCompleted.stageInfo)
 
-    // store stage wrapper for the use in jobs
-    stageWrappers.put(stageCompleted.stageInfo.stageId, sw)
+    // store stage collect for the use in jobs
+    stageCollects.put(stageCompleted.stageInfo.stageId, sw)
 
     // generate the stage input
     val si = StageInput(sw)
@@ -53,15 +53,15 @@ class SparklEar(c: Config) extends SparkListener {
 
     // sink the stage input serialized (as string, and as objects)
     if (c.showStages) {
+      c.outputSink.foreach(ss => c.stageSerializer.toReport(c, si).map(ss))
       c.stringSink.foreach(ss => ss(c.stageSerializer.toStringReport(c, si)))
-      c.outputSink.foreach(ss => c.stageSerializer.toOutput(c, si).map(ss))
     }
 
     // nothing to purge
   }
 
   override def onJobStart(jobStart: SparkListenerJobStart): Unit = {
-    jobWrappers.put(jobStart.jobId, JobWrapper.from(jobStart))
+    jobCollects.put(jobStart.jobId, JobCollect.from(jobStart))
   }
 
   /**
@@ -71,50 +71,48 @@ class SparklEar(c: Config) extends SparkListener {
     */
   override def onJobEnd(jobEnd: SparkListenerJobEnd): Unit = {
     val jobId = jobEnd.jobId
-    val jobWrap = jobWrappers.get(jobId) // retrieve initial image of job
-    val stagesIdAndStats = jobWrap.initialStages.map { sd => // retrieve image of stages
-      (sd, Option(stageWrappers.get(sd.id)))
+    val jobCollect = jobCollects.get(jobId) // retrieve initial image of job
+    val stagesIdAndStats = jobCollect.initialStages.map { sd => // retrieve image of stages
+      (sd, Option(stageCollects.get(sd.id)))
     }
 
-    // generate an updated job wrapper with updated job info, and stages info
-    val updatedJobWrap = jobWrap.copy(endUpdate = Some(EndUpdate(finalStages = stagesIdAndStats, jobEnd = jobEnd)))
     // generate the job input
-    val ji = JobInput(updatedJobWrap)
+    val ji = JobInput(jobCollect, EndUpdate(finalStages = stagesIdAndStats, jobEnd = jobEnd))
 
     // sink the job input (for testing)
     c.inputSink.foreach(ss => ss(ji))
 
     // sink the job input serialized (as string, and as objects)
     if (c.showJobs) {
+      c.outputSink.foreach(ss => c.jobSerializer.toReport(c, ji).map(ss))
       c.stringSink.foreach(ss => ss(c.jobSerializer.toStringReport(c, ji)))
-      c.outputSink.foreach(ss => c.jobSerializer.toOutput(c, ji).map(ss))
     }
 
     // purge
-    jobWrappers.remove(jobId)
-    val stageIds = jobWrap.initialStages.map(_.id)
-    stageIds.foreach(i => stageWrappers.remove(i))
+    jobCollects.remove(jobId)
+    val stageIds = jobCollect.initialStages.map(_.id)
+    stageIds.foreach(i => stageCollects.remove(i))
   }
 
   override def onOtherEvent(event: SparkListenerEvent): Unit = {
     event match {
       case event: SparkListenerSQLExecutionStart =>
-        onSqlSTart(event)
+        onSqlStart(event)
       case event: SparkListenerDriverAccumUpdates =>
         // TODO: check if really needed
-        event.accumUpdates.foreach{case (k, v) => metricWrappers.put(k, v)}
+        event.accumUpdates.foreach{case (k, v) => metricCollects.put(k, v)}
       case _: SparkListenerSQLAdaptiveSQLMetricUpdates =>
         // TODO: ignored for now, maybe adds more metrics?
       case event: SparkListenerSQLAdaptiveExecutionUpdate =>
-        sqlWrappers.put(event.executionId, SqlWrapper(event.executionId, event.sparkPlanInfo))
+        sqlCollects.put(event.executionId, SqlCollect(event.executionId, event.sparkPlanInfo))
       case event: SparkListenerSQLExecutionEnd =>
         onSqlEnd(event)
       case _ =>
     }
   }
 
-  private def onSqlSTart(event: SparkListenerSQLExecutionStart): Unit = {
-    sqlWrappers.put(event.executionId, SqlWrapper(event.executionId, event.sparkPlanInfo))
+  private def onSqlStart(event: SparkListenerSQLExecutionStart): Unit = {
+    sqlCollects.put(event.executionId, SqlCollect(event.executionId, event.sparkPlanInfo))
   }
 
 
@@ -126,24 +124,24 @@ class SparklEar(c: Config) extends SparkListener {
   private def onSqlEnd(event: SparkListenerSQLExecutionEnd): Unit = {
     val m = SparkInternal.executedPlanMetrics(event)
 
-    // get the initial sql wrapper information
-    val sqlWrapper = sqlWrappers.get(event.executionId)
+    // get the initial sql collect information
+    val sqlCollect = sqlCollects.get(event.executionId)
 
     // generate the SQL input
-    val si = SqlInput(sqlWrapper, metricWrappers.toScalaMap ++ m)
+    val si = SqlInput(sqlCollect, metricCollects.toScalaMap ++ m)
 
     // sink the SQL input (for testing)
     c.inputSink.foreach(ss => ss(si))
 
     // sink the SQL input serialized (as string, and as objects)
     if (c.showSqls) {
+      c.outputSink.foreach(ss => c.sqlSerializer.toReport(c, si).map(ss))
       c.stringSink.foreach(ss => ss(c.sqlSerializer.toStringReport(c, si)))
-      c.outputSink.foreach(ss => c.sqlSerializer.toOutput(c, si).map(ss))
     }
 
     // purge
-    sqlWrappers.remove(event.executionId)
-    m.keys.foreach(metricWrappers.remove)
+    sqlCollects.remove(event.executionId)
+    m.keys.foreach(metricCollects.remove)
   }
 
 }
