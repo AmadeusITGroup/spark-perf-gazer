@@ -1,15 +1,14 @@
 package org.apache.spark.sql.execution.ui
 
-import org.apache.spark.sql.catalyst.plans.logical.{LogicalPlan, OverwriteByExpression}
 import org.apache.spark.sql.execution.{FileSourceScanExec, SparkPlan}
-import org.apache.spark.sql.execution.datasources.v2.OverwriteByExpressionExec
+import org.apache.spark.sql.execution.datasources.v2.V2ExistingTableWriteExec
 import org.apache.spark.sql.execution.metric.SQLMetric
 
 object SparkInternal {
   def executedPlanMetrics(event: SparkListenerSQLExecutionEnd): Map[Long, Long] = {
     val ep = event.qe.executedPlan
     val metrics = ep match {
-      case i: OverwriteByExpressionExec => resolvePlan(i.query)
+      case i: V2ExistingTableWriteExec => resolvePlan(i.query)
       case _ =>
         throw new IllegalStateException(s"Not supported executedPlanMetrics(${ep.getClass.getName})")
     }
