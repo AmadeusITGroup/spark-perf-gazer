@@ -13,14 +13,13 @@ trait SparkSupport {
       ("spark.ui.showConsoleProgress", "false"),
       ("spark.driver.host", "localhost"),
       ("spark.sql.session.timeZone", "UTC"),
-      ("spark.sql.adaptive.enabled", "false"),
-      ("spark.ui.enabled", "true")
+      ("spark.sql.adaptive.enabled", "false")
     )
   def getOrCreateSparkSession(conf: List[(String, String)] = DefaultConfigs): SparkSession = {
     val builder = SparkSession.builder
       .appName("SparkSession for tests")
       .master("local[1]")
-    val customized = DefaultConfigs.foldLeft(builder) { case (b, (k, v)) =>
+    val customized = conf.foldLeft(builder) { case (b, (k, v)) =>
       b.config(k, v)
     }
     customized.getOrCreate()

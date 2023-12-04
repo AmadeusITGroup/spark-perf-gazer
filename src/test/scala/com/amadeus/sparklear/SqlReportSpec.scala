@@ -1,6 +1,5 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.input.converters._
 import com.amadeus.testfwk.{ConfigSupport, SimpleSpec}
 
 class SqlReportSpec extends SimpleSpec with ConfigSupport {

@@ -8,7 +8,7 @@ import com.amadeus.testfwk.{ConfigSupport, JsonSupport, OptdSupport, SimpleSpec,
 
 class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport with JsonSupport with ConfigSupport {
 
-  describe("The listener when reading a .csv") {
+  describe("The listener when reading a .csv and writing to noop") {
     withSpark() { spark =>
       val df = readOptd(spark)
       val cfg = defaultTestConfig.withAllEnabled
@@ -80,7 +80,6 @@ class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport wi
         }
       }
 
-      // JOB
       it("should generate a basic JOB report (pretty)") {
         // with PRETTY serializer
         val inputJob = inputs.collect { case s: JobInput => s }.head
@@ -88,7 +87,6 @@ class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport wi
         r should include regex ("JOB ID=1 GROUP='test group' NAME='test job' SQL_ID=1  STAGES=1 TOTAL_CPU_SEC=.*")
       }
 
-      // STAGE
       it("should generate a basic STAGE report (pretty)") {
         // with PRETTY serializer
         val inputStage = inputs.collect { case s: StageInput => s }.head

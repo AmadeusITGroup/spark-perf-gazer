@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory
 import java.nio.file.{Files, Path}
 import scala.reflect.io.Directory
 
-trait TmpDir {
+trait TempDirSupport {
 
   lazy val tmpDirLogger: Logger = Logger(LoggerFactory.getLogger(getClass.getName))
   /**
