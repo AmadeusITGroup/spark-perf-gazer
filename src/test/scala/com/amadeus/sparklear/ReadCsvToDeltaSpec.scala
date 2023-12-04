@@ -1,9 +1,12 @@
 package com.amadeus.sparklear
 
 import com.amadeus.sparklear.converters._
-import com.amadeus.sparklear.input.SqlInput
+import com.amadeus.sparklear.input.{Input, SqlInput}
+import com.amadeus.sparklear.output.Output
 import com.amadeus.sparklear.output.glasses.SqlNodeGlass
 import com.amadeus.testfwk._
+
+import scala.collection.mutable.ListBuffer
 
 class ReadCsvToDeltaSpec
     extends SimpleSpec
@@ -22,14 +25,14 @@ class ReadCsvToDeltaSpec
     withSpark(DeltaSettings) { spark =>
       withTmpDir { tmpDir =>
         val df = readOptd(spark)
-        val cfg = defaultTestConfig.withAllEnabled
+        val inputs = new ListBuffer[Input]()
+        val cfg = defaultTestConfig.withAllEnabled.withInputSink(inputs.+=)
         val eventsListener = new SparklEar(cfg)
         spark.sparkContext.addSparkListener(eventsListener)
         spark.sparkContext.setJobGroup("test group", "test job")
         df.write.format("delta").mode("overwrite").save(tmpDir.toAbsolutePath.toFile.toString)
 
         spark.sparkContext.removeSparkListener(eventsListener)
-        val inputs = eventsListener.inputs
 
         describe("should generate a basic SQL report") {
           // with JSON serializer

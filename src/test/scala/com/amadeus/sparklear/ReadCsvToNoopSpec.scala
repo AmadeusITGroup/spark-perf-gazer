@@ -1,24 +1,28 @@
 package com.amadeus.sparklear
 
 import com.amadeus.sparklear.converters.{JobPretty, SqlJson, SqlJsonFlat, SqlPretty, SqlSingleLine, StagePretty}
-import com.amadeus.sparklear.input.{JobInput, SqlInput, StageInput}
+import com.amadeus.sparklear.input.{Input, JobInput, SqlInput, StageInput}
 import com.amadeus.sparklear.output.glasses.SqlNodeGlass
 import com.amadeus.sparklear.output.{OutputString, SqlNode}
 import com.amadeus.testfwk.{ConfigSupport, JsonSupport, OptdSupport, SimpleSpec, SparkSupport}
+
+import scala.collection.mutable.ListBuffer
 
 class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport with JsonSupport with ConfigSupport {
 
   describe("The listener when reading a .csv and writing to noop") {
     withSpark() { spark =>
       val df = readOptd(spark)
-      val cfg = defaultTestConfig.withAllEnabled
+      val inputs = new ListBuffer[Input]()
+      val cfg = defaultTestConfig.withAllEnabled.withInputSink(inputs.+=)
       val eventsListener = new SparklEar(cfg)
       spark.sparkContext.addSparkListener(eventsListener)
       spark.sparkContext.setJobGroup("test group", "test job")
       df.write.format("noop").mode("overwrite").save()
       spark.sparkContext.removeSparkListener(eventsListener)
-      val inputs = eventsListener.inputs
-      inputs.size shouldBe 3
+      it("should count a total of 3 inputs") {
+        inputs.size shouldBe 3
+      }
 
       describe("should generate a basic SQL report") {
         // with JSON serializer

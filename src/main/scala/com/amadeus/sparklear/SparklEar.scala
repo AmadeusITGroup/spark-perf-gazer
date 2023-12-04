@@ -29,21 +29,6 @@ class SparklEar(c: Config) extends SparkListener {
   private val stageWrappers = new ConcurrentHashMap[StageKey, StageWrapper]()
   private val metrics = new ConcurrentHashMap[MetricKey, MetricWrapper]()
 
-  def inputs: List[Input] = {
-    def enabled(f: Boolean, r: List[Input]): List[Input] = if (f) r else List.empty[Input]
-    Thread.sleep(c.waitBeforeReadMetricsMs)
-    enabled(c.showSqls, sqlInputs) ++
-      enabled(c.showJobs, jobInputs) ++
-      enabled(c.showStages, stageInputs)
-  }
-
-  def purgeWrappers(): Unit = {
-    sqlWrappers.clear()
-    jobWrappers.clear()
-    stageWrappers.clear()
-    metrics.clear()
-  }
-
   private def sqlInputs: List[SqlInput] = {
     sqlWrappers.asScala.toList.map {
       case (_, sqlWrapper) =>
@@ -72,18 +57,62 @@ class SparklEar(c: Config) extends SparkListener {
     jobWrappers.put(jobStart.jobId, JobWrapper.from(jobStart))
   }
 
+  /**
+    * This is the listener method for stage end
+    *
+    * It is NOT a trigger for automatic purge of stages (job end will purge stages).
+    */
   override def onStageCompleted(stageCompleted: SparkListenerStageCompleted): Unit = {
-    stageWrappers.put(stageCompleted.stageInfo.stageId, StageWrapper(stageCompleted.stageInfo))
+    // generate a stage wrapper
+    val sw = StageWrapper(stageCompleted.stageInfo)
+
+    // store stage wrapper for the use in jobs
+    stageWrappers.put(stageCompleted.stageInfo.stageId, sw)
+
+    // generate the stage input
+    val si = StageInput(sw)
+
+    // sink the stage input (for testing)
+    c.inputSink.foreach(ss => ss(si))
+
+    // sink the stage input serialized (as string, and as objects)
+    if (c.showStages) {
+      c.stringSink.foreach(ss => ss(c.stageSerializer.toStringReport(c, si)))
+      c.outputSink.foreach(ss => c.stageSerializer.toOutput(c, si).map(ss))
+    }
+
+    // nothing to purge
   }
 
+  /**
+    * This is the listener method for job end
+    *
+    * It is a trigger for automatic purge of job and stages.
+    */
   override def onJobEnd(jobEnd: SparkListenerJobEnd): Unit = {
     val jobId = jobEnd.jobId
-    val jobWrap = jobWrappers.get(jobId)
-    val stagesIdAndStats = jobWrap.initialStages.map { sd =>
+    val jobWrap = jobWrappers.get(jobId) // retrieve initial image of job
+    val stagesIdAndStats = jobWrap.initialStages.map { sd => // retrieve image of stages
       (sd, Option(stageWrappers.get(sd.id)))
     }
+
+    // generate an updated job wrapper with updated job info, and stages info
     val updatedJobWrap = jobWrap.copy(endUpdate = Some(EndUpdate(finalStages = stagesIdAndStats, jobEnd = jobEnd)))
-    jobWrappers.put(jobId, updatedJobWrap)
+    // generate the job input
+    val ji = JobInput(updatedJobWrap)
+
+    // sink the job input (for testing)
+    c.inputSink.foreach(ss => ss(ji))
+
+    // sink the job input serialized (as string, and as objects)
+    if (c.showJobs) {
+      c.stringSink.foreach(ss => ss(c.jobSerializer.toStringReport(c, ji)))
+      c.outputSink.foreach(ss => c.jobSerializer.toOutput(c, ji).map(ss))
+    }
+
+    // purge
+    jobWrappers.remove(jobId)
+    stagesIdAndStats.foreach(i => stageWrappers.remove(i))
   }
 
   override def onOtherEvent(event: SparkListenerEvent): Unit = {
@@ -98,10 +127,38 @@ class SparklEar(c: Config) extends SparkListener {
       case event: SparkListenerSQLAdaptiveExecutionUpdate =>
         sqlWrappers.put(event.executionId, SqlWrapper(event.executionId, event.sparkPlanInfo))
       case event: SparkListenerSQLExecutionEnd =>
-        val m = SparkInternal.executedPlanMetrics(event)
-        metrics.putAll(m.asJava)
+        onSqlEnd(event)
       case _ =>
     }
+  }
+
+  /**
+    * This is the listener method for SQL query end
+    *
+    * It is a trigger for automatic purge of SQL queries and involved metrics.
+    */
+  private def onSqlEnd(event: SparkListenerSQLExecutionEnd): Unit = {
+    import scala.collection.JavaConverters._
+    val m = SparkInternal.executedPlanMetrics(event)
+
+    // get the initial sql wrapper information
+    val sqlWrapper = sqlWrappers.get(event.executionId)
+
+    // generate the SQL input
+    val si = SqlInput(sqlWrapper, metrics.asScala.toMap ++ m)
+
+    // sink the SQL input (for testing)
+    c.inputSink.foreach(ss => ss(si))
+
+    // sink the SQL input serialized (as string, and as objects)
+    if (c.showSqls) {
+      c.stringSink.foreach(ss => ss(c.sqlSerializer.toStringReport(c, si)))
+      c.outputSink.foreach(ss => c.sqlSerializer.toOutput(c, si).map(ss))
+    }
+
+    // purge
+    sqlWrappers.remove(event.executionId)
+    m.keys.foreach(metrics.remove)
   }
 
 }
