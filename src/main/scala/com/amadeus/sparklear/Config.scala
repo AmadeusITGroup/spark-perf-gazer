@@ -17,8 +17,10 @@ case class Config(
   jobSerializer: JobSerializer = JobJson,
   stageSerializer: StageSerializer = StageJson,
   glasses: Seq[Glass] = Seq.empty[Glass],
+  maxCacheSize: Int = Config.DefaultCacheSize
 ) {}
 
 object Config {
-  val DefaultPrefix = "SPARKLEAR"
+  val DefaultPrefix: String = "SPARKLEAR"
+  val DefaultCacheSize: Int = 200
 }

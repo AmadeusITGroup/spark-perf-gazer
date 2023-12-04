@@ -42,7 +42,7 @@ class ReadCsvToDeltaSpec
               val g = Seq(SqlNodeGlass(nodeNameRegex = Some(".*Scan .*")))
               val cfg = defaultTestConfig.withAllEnabled.withGlasses(g)
               val r = inputSqls.flatMap(i => SqlJsonFlat.toOutput(cfg, i))
-              r.map(i => i.name).distinct should contain allOf(
+              r.map(i => i.name).distinct should contain allOf (
                 "Scan csv ",
                 "Scan ExistingRDD",
                 "Scan json "
@@ -50,6 +50,9 @@ class ReadCsvToDeltaSpec
               r.filter(_.name.matches("Scan ExistingRDD Delta Table State.*")).size should equal(1)
             }
           }
+        }
+        it("should purge correctly") {
+          eventsListener.unpurged.toInt should be <= cfg.maxCacheSize
         }
       }
     }

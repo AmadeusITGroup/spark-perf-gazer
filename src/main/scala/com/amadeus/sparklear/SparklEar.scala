@@ -7,7 +7,6 @@ import org.apache.spark.scheduler._
 import org.apache.spark.sql.execution.ui._
 
 import java.util.concurrent.ConcurrentHashMap
-import scala.collection.JavaConverters.mapAsScalaConcurrentMapConverter
 
 /** This listener displays in the Spark Driver STDOUT some
   * relevant information about the application, including:
@@ -23,38 +22,58 @@ class SparklEar(c: Config) extends SparkListener {
   type MetricKey = Long
   type MetricWrapper = Long
 
-  // Maps to keep sqls + jobs + stages wrappers (initial information) until job is completed
-  private val sqlWrappers = new ConcurrentHashMap[SqlKey, SqlWrapper]()
-  private val jobWrappers = new ConcurrentHashMap[JobKey, JobWrapper]()
-  private val stageWrappers = new ConcurrentHashMap[StageKey, StageWrapper]()
-  private val metrics = new ConcurrentHashMap[MetricKey, MetricWrapper]()
 
-  private def sqlInputs: List[SqlInput] = {
-    sqlWrappers.asScala.toList.map {
-      case (_, sqlWrapper) =>
-        SqlInput(sqlWrapper, metrics.asScala.toMap)
+  // Maps to keep sqls + jobs + stages wrappers (initial information) until some completion
+  private val sqlWrappers = new ConcurrentHashMap[SqlKey, SqlWrapper](c.maxCacheSize)
+  private val jobWrappers = new ConcurrentHashMap[JobKey, JobWrapper](c.maxCacheSize)
+  private val stageWrappers = new ConcurrentHashMap[StageKey, StageWrapper](c.maxCacheSize)
+  private val metricWrappers = new ConcurrentHashMap[MetricKey, MetricWrapper](c.maxCacheSize)
+
+  private def cappedSqlWrapperPut(k: SqlKey, v: SqlWrapper) = {
+    import scala.collection.JavaConverters._
+    if (sqlWrappers.size() - 1 > c.maxCacheSize) {
+      sqlWrappers.remove(sqlWrappers.keys().asScala.min)
     }
+    sqlWrappers.put(k, v)
   }
 
-  private def jobInputs: List[JobInput] = {
-    jobWrappers.asScala.toList.map {
-      case (_, jobWrapper) =>
-        JobInput(jobWrapper)
+  private def cappedJobWrapperPut(k: JobKey, v: JobWrapper) = {
+    import scala.collection.JavaConverters._
+    if (jobWrappers.size() - 1 > c.maxCacheSize) {
+      jobWrappers.remove(jobWrappers.keys().asScala.min)
     }
+    jobWrappers.put(k, v)
   }
 
-  private def stageInputs: List[StageInput] = {
-    stageWrappers.asScala.toList.map {
-      case (_, stageWrapper) =>
-        StageInput(stageWrapper)
+  private def cappedStageWrapperPut(k: StageKey, v: StageWrapper) = {
+    import scala.collection.JavaConverters._
+    if (stageWrappers.size() - 1 > c.maxCacheSize) {
+      stageWrappers.remove(stageWrappers.keys().asScala.min)
     }
+    stageWrappers.put(k, v)
+  }
+
+  private def cappedMetricWrapperPut(k: MetricKey, v: MetricWrapper) = {
+    import scala.collection.JavaConverters._
+    if (metricWrappers.size() - 1 > c.maxCacheSize) {
+      metricWrappers.remove(metricWrappers.keys().asScala.min)
+    }
+    metricWrappers.put(k, v)
+  }
+
+  /**
+    * Return the number of wrappers not purged from memory
+    */
+  def unpurged: Long = {
+    sqlWrappers.size() + jobWrappers.size() + stageWrappers.size() + metricWrappers.size()
   }
 
   /** LISTENERS
     */
 
   override def onJobStart(jobStart: SparkListenerJobStart): Unit = {
-    jobWrappers.put(jobStart.jobId, JobWrapper.from(jobStart))
+    cappedJobWrapperPut(jobStart.jobId, JobWrapper.from(jobStart))
+    println(s"job ${jobStart.jobId} has stages: ${jobStart.stageInfos.map(_.stageId).mkString(",")}")
   }
 
   /**
@@ -67,7 +86,7 @@ class SparklEar(c: Config) extends SparkListener {
     val sw = StageWrapper(stageCompleted.stageInfo)
 
     // store stage wrapper for the use in jobs
-    stageWrappers.put(stageCompleted.stageInfo.stageId, sw)
+    cappedStageWrapperPut(stageCompleted.stageInfo.stageId, sw)
 
     // generate the stage input
     val si = StageInput(sw)
@@ -112,20 +131,21 @@ class SparklEar(c: Config) extends SparkListener {
 
     // purge
     jobWrappers.remove(jobId)
-    stagesIdAndStats.foreach(i => stageWrappers.remove(i))
+    val stageIds = jobWrap.initialStages.map(_.id)
+    stageIds.foreach(i => stageWrappers.remove(i))
   }
 
   override def onOtherEvent(event: SparkListenerEvent): Unit = {
-    import scala.collection.JavaConverters._
     event match {
       case event: SparkListenerSQLExecutionStart =>
-        sqlWrappers.put(event.executionId, SqlWrapper(event.executionId, event.sparkPlanInfo))
+        cappedSqlWrapperPut(event.executionId, SqlWrapper(event.executionId, event.sparkPlanInfo))
       case event: SparkListenerDriverAccumUpdates =>
-        metrics.putAll(mapAsJavaMap(event.accumUpdates.toMap))
+        // TODO: check if really needed
+        event.accumUpdates.foreach{case (k, v) => cappedMetricWrapperPut(k, v)}
       case _: SparkListenerSQLAdaptiveSQLMetricUpdates =>
-      // TODO: ignored for now, maybe adds more metrics?
+        // TODO: ignored for now, maybe adds more metrics?
       case event: SparkListenerSQLAdaptiveExecutionUpdate =>
-        sqlWrappers.put(event.executionId, SqlWrapper(event.executionId, event.sparkPlanInfo))
+        cappedSqlWrapperPut(event.executionId, SqlWrapper(event.executionId, event.sparkPlanInfo))
       case event: SparkListenerSQLExecutionEnd =>
         onSqlEnd(event)
       case _ =>
@@ -145,7 +165,7 @@ class SparklEar(c: Config) extends SparkListener {
     val sqlWrapper = sqlWrappers.get(event.executionId)
 
     // generate the SQL input
-    val si = SqlInput(sqlWrapper, metrics.asScala.toMap ++ m)
+    val si = SqlInput(sqlWrapper, metricWrappers.asScala.toMap ++ m)
 
     // sink the SQL input (for testing)
     c.inputSink.foreach(ss => ss(si))
@@ -158,7 +178,7 @@ class SparklEar(c: Config) extends SparkListener {
 
     // purge
     sqlWrappers.remove(event.executionId)
-    m.keys.foreach(metrics.remove)
+    m.keys.foreach(metricWrappers.remove)
   }
 
 }

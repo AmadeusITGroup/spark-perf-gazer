@@ -98,6 +98,10 @@ class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport wi
         r should include regex ("STAGE ID=1 READ_MB=42 WRITE_MB=0 SHUFFLE_READ_MB=0 SHUFFLE_WRITE_MB=0 EXEC_CPU_SECS=.* ATTEMPT=0")
       }
 
+      it("should purge correctly") {
+        eventsListener.unpurged.toInt should be <= cfg.maxCacheSize
+      }
+
     }
   }
 
