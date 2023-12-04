@@ -3,10 +3,10 @@ package com.amadeus.sparklear.utils
 import java.util.concurrent.ConcurrentHashMap
 
 class CappedConcurrentHashMap[K, V](cap: Int) {
+  import scala.collection.JavaConverters._
   private val m = new ConcurrentHashMap[K, V](cap)
   def put(k: K, v: V)(implicit cmp: Ordering[K]): V = {
-    import scala.collection.JavaConverters._
-    if (m.size() - 1 > cap) {
+    if (m.size() >= cap) {
       m.remove(m.keys().asScala.min)
     }
     m.put(k, v)
@@ -14,7 +14,6 @@ class CappedConcurrentHashMap[K, V](cap: Int) {
   def remove(k: K): V = m.remove(k)
   def get(k: K): V = m.get(k)
   def size: Int = m.size()
-
-  import scala.collection.JavaConverters._
+  def keys: Iterator[K] = m.keys().asScala
   def toScalaMap: scala.collection.immutable.Map[K, V] = m.asScala.toMap
 }

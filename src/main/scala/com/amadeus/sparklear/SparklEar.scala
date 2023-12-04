@@ -30,14 +30,6 @@ class SparklEar(c: Config) extends SparkListener {
   private val stageWrappers = new CappedConcurrentHashMap[StageKey, StageWrapper](c.maxCacheSize)
   private val metricWrappers = new CappedConcurrentHashMap[MetricKey, MetricWrapper](c.maxCacheSize)
 
-
-  /**
-    * Return the number of wrappers not purged from memory
-    */
-  def unpurged: Long = {
-    sqlWrappers.size + jobWrappers.size + stageWrappers.size + metricWrappers.size
-  }
-
   /** LISTENERS
     */
 

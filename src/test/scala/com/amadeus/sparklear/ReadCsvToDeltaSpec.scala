@@ -51,9 +51,6 @@ class ReadCsvToDeltaSpec
             }
           }
         }
-        it("should purge correctly") {
-          eventsListener.unpurged.toInt should be <= cfg.maxCacheSize
-        }
       }
     }
   }
