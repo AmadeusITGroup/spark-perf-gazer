@@ -60,16 +60,16 @@ Settings -> Editor -> Code Style -> Scala -> Formatter: ScalaFMT
 ```
 # To Do
 
-// TODO make clear with the type names at which level we are
-// SqlWrapper => put in Map, allows to build SqlSummary
-// JobWrapper => put in Map, allows to build JobSummary
-// SqlSummary => thing that becomes json
-// JobSummary => thing that becomes json
-// SparkStuffInitial => Wrapper in map => end + Metrics resolution + Wrapper = Summary
+- // TODO make clear with the type names at which level we are
+- // SqlWrapper => put in Map, allows to build SqlSummary
+- // JobWrapper => put in Map, allows to build JobSummary
+- // SqlSummary => thing that becomes json
+- // JobSummary => thing that becomes json
+- // SparkStuffInitial => Wrapper in map => end + Metrics resolution + Wrapper = Summary
 
-// https://docs.databricks.com/en/clusters/configure.html#cluster-log-delivery
-//For example, if the log path is dbfs:/cluster-logs, the log files for a specific cluster will be stored in dbfs:/cluster-logs/<cluster-name> and the individual event logs will be stored in dbfs:/cluster-logs/<cluster-name>/eventlog/<cluster-name-cluster-ip>/<log-id>/.
-// spark.eventLog.enabled true
-// spark.eventLog.dir dbfs:/databricks/unravel/eventLogs/
-// spark.eventLog.enabled true
-// spark.eventLog.dir hdfs://namenode/shared/spark-logs
+- // https://docs.databricks.com/en/clusters/configure.html#cluster-log-delivery
+- //For example, if the log path is dbfs:/cluster-logs, the log files for a specific cluster will be stored in dbfs:/cluster-logs/<cluster-name> and the individual event logs will be stored in dbfs:/cluster-logs/<cluster-name>/eventlog/<cluster-name-cluster-ip>/<log-id>/.
+- // spark.eventLog.enabled true
+- // spark.eventLog.dir dbfs:/databricks/unravel/eventLogs/
+- // spark.eventLog.enabled true
+- // spark.eventLog.dir hdfs://namenode/shared/spark-logs
