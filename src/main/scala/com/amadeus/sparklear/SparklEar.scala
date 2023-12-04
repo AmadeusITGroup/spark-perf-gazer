@@ -71,11 +71,6 @@ class SparklEar(c: Config) extends SparkListener {
   /** LISTENERS
     */
 
-  override def onJobStart(jobStart: SparkListenerJobStart): Unit = {
-    cappedJobWrapperPut(jobStart.jobId, JobWrapper.from(jobStart))
-    println(s"job ${jobStart.jobId} has stages: ${jobStart.stageInfos.map(_.stageId).mkString(",")}")
-  }
-
   /**
     * This is the listener method for stage end
     *
@@ -101,6 +96,10 @@ class SparklEar(c: Config) extends SparkListener {
     }
 
     // nothing to purge
+  }
+
+  override def onJobStart(jobStart: SparkListenerJobStart): Unit = {
+    cappedJobWrapperPut(jobStart.jobId, JobWrapper.from(jobStart))
   }
 
   /**
