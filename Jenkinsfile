@@ -1,6 +1,5 @@
 #!/usr/bin/env groovy
 @Library(['pipeline-framework', 'pipeline-toolbox', 'faas']) _
-import com.amadeus.iss.faas.databricks.DatabricksRestHelper
 String dockerRepository = "dockerhub.rnd.amadeus.net:5005"
 String dockerImageFullName = "dihdlk-app:v2"
 
