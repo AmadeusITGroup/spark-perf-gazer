@@ -9,9 +9,7 @@ import com.amadeus.testfwk.{ConfigSupport, JsonSupport, OptdSupport, SimpleSpec,
 class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport with JsonSupport with ConfigSupport {
 
   describe("The listener when reading a .csv and writing to noop") {
-    withSpark(
-      //List(("spark.ui.enabled", "true"))
-    ) { spark =>
+    withSpark() { spark =>
       val df = readOptd(spark)
       val cfg = defaultTestConfig.withAllEnabled
       val eventsListener = new SparklEar(cfg)

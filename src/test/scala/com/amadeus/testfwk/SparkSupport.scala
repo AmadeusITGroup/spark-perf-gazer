@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory
 trait SparkSupport {
   lazy val logger: Logger = Logger(LoggerFactory.getLogger(getClass.getName))
 
+
   val DefaultConfigs: List[(String, String)] =
     List(
       ("spark.sql.shuffle.partitions", "1"),
@@ -14,6 +15,10 @@ trait SparkSupport {
       ("spark.driver.host", "localhost"),
       ("spark.sql.session.timeZone", "UTC"),
       ("spark.sql.adaptive.enabled", "false")
+    )
+  val UiConfigs: List[(String, String)] =
+    List(
+      ("spark.ui.enabled", "true")
     )
   def getOrCreateSparkSession(conf: List[(String, String)] = DefaultConfigs): SparkSession = {
     val builder = SparkSession.builder
@@ -33,4 +38,7 @@ trait SparkSupport {
       spark.stop()
     }
   }
+
+  def withSparkUi[T](conf: List[(String, String)] = DefaultConfigs)(testCode: SparkSession => T): T =
+    withSpark(conf ++ UiConfigs)(testCode)
 }
