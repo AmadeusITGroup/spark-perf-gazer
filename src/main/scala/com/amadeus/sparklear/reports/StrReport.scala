@@ -1,6 +1,6 @@
-package com.amadeus.sparklear.report
+package com.amadeus.sparklear.reports
 
-import com.amadeus.sparklear.report.glasses.Glass
+import com.amadeus.sparklear.reports.glasses.Glass
 
 case class StrReport(s: String) extends Report {
   override def asStringReport(): String = s

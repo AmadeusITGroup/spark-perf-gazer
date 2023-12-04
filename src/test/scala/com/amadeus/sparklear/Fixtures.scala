@@ -1,6 +1,6 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.input.SqlInput
+import com.amadeus.sparklear.prereports.SqlPreReport
 import org.apache.spark.sql.execution.SparkPlanInfo
 import org.apache.spark.sql.execution.metric.SQLMetricInfo
 import com.amadeus.sparklear.collects.SqlCollect
@@ -38,7 +38,7 @@ object Fixtures {
       metrics = Seq.empty[SQLMetricInfo]
     )
 
-    val rootSqlReport = SqlInput(
+    val rootSqlReport = SqlPreReport(
       w = SqlCollect(
         id  = 1,
         p = p1

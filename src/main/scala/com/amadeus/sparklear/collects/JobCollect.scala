@@ -1,6 +1,6 @@
 package com.amadeus.sparklear.collects
 
-import com.amadeus.sparklear.input.JobInput
+import com.amadeus.sparklear.prereports.JobPreReport
 import com.amadeus.sparklear.collects.JobCollect.EndUpdate
 import org.apache.spark.scheduler.{SparkListenerJobEnd, SparkListenerJobStart, StageInfo}
 
@@ -11,7 +11,7 @@ case class JobCollect(
   group: String,
   sqlId: String,
   initialStages: Seq[StageRef]
-) extends Collect[JobInput] {
+) extends Collect[JobPreReport] {
 }
 
 object JobCollect {

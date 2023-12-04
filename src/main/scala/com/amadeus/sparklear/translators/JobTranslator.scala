@@ -1,21 +1,21 @@
-package com.amadeus.sparklear.converters
+package com.amadeus.sparklear.translators
 
 import com.amadeus.sparklear.Config
-import com.amadeus.sparklear.input.JobInput
-import com.amadeus.sparklear.report.StrReport
+import com.amadeus.sparklear.prereports.JobPreReport
+import com.amadeus.sparklear.reports.StrReport
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.{write => asJson}
 
-sealed trait JobReporter extends Reporter[JobInput, StrReport]
+sealed trait JobTranslator extends Translator[JobPreReport, StrReport]
 
-case object JobJson extends JobReporter {
-  override def toReport(c: Config, r: JobInput): Seq[StrReport] = {
+case object JobJson extends JobTranslator {
+  override def toReport(c: Config, r: JobPreReport): Seq[StrReport] = {
     Seq(StrReport(asJson(r)(DefaultFormats)))
   }
 }
 
-case object JobPretty extends JobReporter {
-  override def toReport(c: Config, ji: JobInput): Seq[StrReport] = {
+case object JobPretty extends JobTranslator {
+  override def toReport(c: Config, ji: JobPreReport): Seq[StrReport] = {
     val w = ji.w
     val v = {
       val u = ji.e

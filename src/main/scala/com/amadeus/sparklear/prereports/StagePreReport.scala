@@ -1,7 +1,7 @@
-package com.amadeus.sparklear.input
+package com.amadeus.sparklear.prereports
 
 import com.amadeus.sparklear.annotations.Unstable
 import com.amadeus.sparklear.collects.StageCollect
 
 @Unstable
-case class StageInput(w: StageCollect) extends Input
+case class StagePreReport(w: StageCollect) extends PreReport

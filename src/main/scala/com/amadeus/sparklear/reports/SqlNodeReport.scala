@@ -1,6 +1,6 @@
-package com.amadeus.sparklear.report
+package com.amadeus.sparklear.reports
 
-import com.amadeus.sparklear.report.glasses.{Glass, SqlNodeGlass}
+import com.amadeus.sparklear.reports.glasses.{Glass, SqlNodeGlass}
 
 case class SqlNodeReport(
   sqlId: Long,

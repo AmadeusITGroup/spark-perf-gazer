@@ -1,6 +1,6 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.input.{Input, JobInput, SqlInput, StageInput}
+import com.amadeus.sparklear.prereports.{JobPreReport, PreReport, SqlPreReport, StagePreReport}
 import com.amadeus.sparklear.utils.CappedConcurrentHashMap
 import com.amadeus.sparklear.collects.JobCollect.EndUpdate
 import com.amadeus.sparklear.collects.{JobCollect, SqlCollect, StageCollect}
@@ -46,7 +46,7 @@ class SparklEar(c: Config) extends SparkListener {
     stageCollects.put(stageCompleted.stageInfo.stageId, sw)
 
     // generate the stage input
-    val si = StageInput(sw)
+    val si = StagePreReport(sw)
 
     // sink the stage input (for testing)
     c.inputSink.foreach(ss => ss(si))
@@ -77,7 +77,7 @@ class SparklEar(c: Config) extends SparkListener {
     }
 
     // generate the job input
-    val ji = JobInput(jobCollect, EndUpdate(finalStages = stagesIdAndStats, jobEnd = jobEnd))
+    val ji = JobPreReport(jobCollect, EndUpdate(finalStages = stagesIdAndStats, jobEnd = jobEnd))
 
     // sink the job input (for testing)
     c.inputSink.foreach(ss => ss(ji))
@@ -128,7 +128,7 @@ class SparklEar(c: Config) extends SparkListener {
     val sqlCollect = sqlCollects.get(event.executionId)
 
     // generate the SQL input
-    val si = SqlInput(sqlCollect, metricCollects.toScalaMap ++ m)
+    val si = SqlPreReport(sqlCollect, metricCollects.toScalaMap ++ m)
 
     // sink the SQL input (for testing)
     c.inputSink.foreach(ss => ss(si))

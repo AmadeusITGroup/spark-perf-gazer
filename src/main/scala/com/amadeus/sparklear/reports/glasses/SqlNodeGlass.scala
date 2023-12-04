@@ -1,4 +1,4 @@
-package com.amadeus.sparklear.report.glasses
+package com.amadeus.sparklear.reports.glasses
 
 case class SqlNodeGlass(
   nodeNameRegex: Option[String] = None,

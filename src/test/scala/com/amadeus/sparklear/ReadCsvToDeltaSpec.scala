@@ -1,9 +1,9 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.converters._
-import com.amadeus.sparklear.input.{Input, SqlInput}
-import com.amadeus.sparklear.report.Report
-import com.amadeus.sparklear.report.glasses.SqlNodeGlass
+import com.amadeus.sparklear.translators._
+import com.amadeus.sparklear.prereports.{PreReport, SqlPreReport}
+import com.amadeus.sparklear.reports.Report
+import com.amadeus.sparklear.reports.glasses.SqlNodeGlass
 import com.amadeus.testfwk._
 
 import scala.collection.mutable.ListBuffer
@@ -25,7 +25,7 @@ class ReadCsvToDeltaSpec
     withSpark(DeltaSettings) { spark =>
       withTmpDir { tmpDir =>
         val df = readOptd(spark)
-        val inputs = new ListBuffer[Input]()
+        val inputs = new ListBuffer[PreReport]()
         val cfg = defaultTestConfig.withAllEnabled.withInputSink(inputs.+=)
         val eventsListener = new SparklEar(cfg)
         spark.sparkContext.addSparkListener(eventsListener)
@@ -36,7 +36,7 @@ class ReadCsvToDeltaSpec
 
         describe("should generate a basic SQL report") {
           // with JSON serializer
-          val inputSqls = inputs.collect { case s: SqlInput => s }
+          val inputSqls = inputs.collect { case s: SqlPreReport => s }
           describe("with jsonflat serializer filtered") {
             it("by nodename") {
               val g = Seq(SqlNodeGlass(nodeNameRegex = Some(".*Scan .*")))

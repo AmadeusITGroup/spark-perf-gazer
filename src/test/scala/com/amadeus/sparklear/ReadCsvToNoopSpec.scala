@@ -1,9 +1,9 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.converters.{JobPretty, SqlJson, SqlJsonFlat, SqlPretty, SqlSingleLine, StagePretty}
-import com.amadeus.sparklear.input.{Input, JobInput, SqlInput, StageInput}
-import com.amadeus.sparklear.report.glasses.SqlNodeGlass
-import com.amadeus.sparklear.report.{StrReport, SqlNodeReport}
+import com.amadeus.sparklear.translators.{JobPretty, SqlJson, SqlJsonFlat, SqlPretty, SqlSingleLine, StagePretty}
+import com.amadeus.sparklear.prereports.{PreReport, JobPreReport, SqlPreReport, StagePreReport}
+import com.amadeus.sparklear.reports.glasses.SqlNodeGlass
+import com.amadeus.sparklear.reports.{StrReport, SqlNodeReport}
 import com.amadeus.testfwk.{ConfigSupport, JsonSupport, OptdSupport, SimpleSpec, SparkSupport}
 
 import scala.collection.mutable.ListBuffer
@@ -13,7 +13,7 @@ class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport wi
   describe("The listener when reading a .csv and writing to noop") {
     withSpark() { spark =>
       val df = readOptd(spark)
-      val inputs = new ListBuffer[Input]()
+      val inputs = new ListBuffer[PreReport]()
       val cfg = defaultTestConfig.withAllEnabled.withInputSink(inputs.+=)
       val eventsListener = new SparklEar(cfg)
       spark.sparkContext.addSparkListener(eventsListener)
@@ -26,7 +26,7 @@ class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport wi
 
       describe("should generate a basic SQL report") {
         // with JSON serializer
-        val inputSql = inputs.collect { case s: SqlInput => s }.head
+        val inputSql = inputs.collect { case s: SqlPreReport => s }.head
         it("with json serializer") {
           val r = SqlJson.toStringReport(cfg, inputSql)
           query(r, ".id") shouldEqual Array(1)
@@ -86,14 +86,14 @@ class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport wi
 
       it("should generate a basic JOB report (pretty)") {
         // with PRETTY serializer
-        val inputJob = inputs.collect { case s: JobInput => s }.head
+        val inputJob = inputs.collect { case s: JobPreReport => s }.head
         val r = JobPretty.toStringReport(cfg, inputJob)
         r should include regex ("JOB ID=1 GROUP='test group' NAME='test job' SQL_ID=1  STAGES=1 TOTAL_CPU_SEC=.*")
       }
 
       it("should generate a basic STAGE report (pretty)") {
         // with PRETTY serializer
-        val inputStage = inputs.collect { case s: StageInput => s }.head
+        val inputStage = inputs.collect { case s: StagePreReport => s }.head
         val r = StagePretty.toStringReport(cfg, inputStage)
         r should include regex ("STAGE ID=1 READ_MB=42 WRITE_MB=0 SHUFFLE_READ_MB=0 SHUFFLE_WRITE_MB=0 EXEC_CPU_SECS=.* ATTEMPT=0")
       }

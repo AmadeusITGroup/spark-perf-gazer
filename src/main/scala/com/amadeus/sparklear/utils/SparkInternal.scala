@@ -1,9 +1,9 @@
-package org.apache.spark.sql.execution.ui
+package org.apache.spark.sql.execution.ui // ATTENTION: spark package to access to the event.qe.executedPlan
 
 import org.apache.spark.sql.execution.command.ExecutedCommandExec
 import org.apache.spark.sql.execution.datasources.v2.V2ExistingTableWriteExec
-import org.apache.spark.sql.execution.{DeserializeToObjectExec, FileSourceScanExec, InputAdapter, MapElementsExec, MapPartitionsExec, ProjectExec, SerializeFromObjectExec, SparkPlan, UnaryExecNode, WholeStageCodegenExec}
 import org.apache.spark.sql.execution.metric.SQLMetric
+import org.apache.spark.sql.execution._
 
 object SparkInternal {
 
@@ -15,8 +15,9 @@ object SparkInternal {
 
   private def planToMetrics(p: SparkPlan): Map[Long, Long] = {
     val node = p match {
-      case i: FileSourceScanExec => toMetric(i.metrics) ++
-        toMetric(i.driverMetrics) // not sure why i.driverMetrics not included in i.metrics
+      case i: FileSourceScanExec =>
+        toMetric(i.metrics) ++
+          toMetric(i.driverMetrics) // not sure why i.driverMetrics not included in i.metrics
       case i: ProjectExec => toMetric(i.metrics) // always empty
       case i: V2ExistingTableWriteExec => toMetric(i.metrics) // TODO investigate, strange
       case i: ExecutedCommandExec => toMetric(i.metrics) // always empty

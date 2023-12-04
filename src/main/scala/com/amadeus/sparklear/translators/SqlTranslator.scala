@@ -1,17 +1,17 @@
-package com.amadeus.sparklear.converters
+package com.amadeus.sparklear.translators
 
 import com.amadeus.sparklear.Config
-import com.amadeus.sparklear.input.SqlInput
-import com.amadeus.sparklear.report.{Report, StrReport, SqlNodeReport}
+import com.amadeus.sparklear.prereports.SqlPreReport
+import com.amadeus.sparklear.reports.{Report, StrReport, SqlNodeReport}
 import com.amadeus.sparklear.collects.SqlCollect
 import org.apache.spark.sql.execution.SparkPlanInfo
 import org.apache.spark.sql.execution.metric.SQLMetricInfo
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.{write => asJson}
 
-sealed trait SqlReporter[T <: Report] extends Reporter[SqlInput, T]
+sealed trait SqlTranslator[T <: Report] extends Translator[SqlPreReport, T]
 
-case object SqlJsonFlat extends SqlReporter[SqlNodeReport] {
+case object SqlJsonFlat extends SqlTranslator[SqlNodeReport] {
   private def convert(baseCoord: String, level: Int, sqlId: Long, p: SparkPlanInfo, m: Map[Long, Long]): Seq[SqlNodeReport] = {
     val currNode = SqlNodeReport(
       sqlId = sqlId,
@@ -29,7 +29,7 @@ case object SqlJsonFlat extends SqlReporter[SqlNodeReport] {
     (m.name, v.getOrElse(-1).toString)
   }
 
-  override def toReport(c: Config, r: SqlInput): Seq[SqlNodeReport] = {
+  override def toReport(c: Config, r: SqlPreReport): Seq[SqlNodeReport] = {
     val metrics = r.m
     val sqlId = r.w.id
     val plan = r.w.p
@@ -38,7 +38,7 @@ case object SqlJsonFlat extends SqlReporter[SqlNodeReport] {
   }
 }
 
-case object SqlJson extends SqlReporter[StrReport] {
+case object SqlJson extends SqlTranslator[StrReport] {
 
   private def convert(p: SparkPlanInfo, m: Map[Long, Long]): SparkPlanInfo = new SparkPlanInfo(
     nodeName = p.nodeName,
@@ -56,7 +56,7 @@ case object SqlJson extends SqlReporter[StrReport] {
     )
   }
 
-  override def toReport(c: Config, r: SqlInput): Seq[StrReport] = {
+  override def toReport(c: Config, r: SqlPreReport): Seq[StrReport] = {
     val m = r.m
     val p = r.w
     val newP = SqlCollect(
@@ -67,12 +67,12 @@ case object SqlJson extends SqlReporter[StrReport] {
   }
 }
 
-case object SqlPretty extends SqlReporter[StrReport] {
-  override def toReport(c: Config, r: SqlInput): Seq[StrReport] =
+case object SqlPretty extends SqlTranslator[StrReport] {
+  override def toReport(c: Config, r: SqlPreReport): Seq[StrReport] =
     Seq(StrReport(SparkPlanInfoPrettifier.prettify(r.w.p, r.m)))
 }
 
-case object SqlSingleLine extends SqlReporter[StrReport] {
-  override def toReport(c: Config, r: SqlInput): Seq[StrReport] =
+case object SqlSingleLine extends SqlTranslator[StrReport] {
+  override def toReport(c: Config, r: SqlPreReport): Seq[StrReport] =
     Seq(StrReport(SparkPlanInfoPrettifier.prettifySingleLine(r.w.id, r.w.p)))
 }
