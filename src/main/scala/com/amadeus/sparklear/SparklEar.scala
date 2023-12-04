@@ -29,37 +29,18 @@ class SparklEar(c: Config) extends SparkListener {
   private val stageWrappers = new ConcurrentHashMap[StageKey, StageWrapper](c.maxCacheSize)
   private val metricWrappers = new ConcurrentHashMap[MetricKey, MetricWrapper](c.maxCacheSize)
 
-  private def cappedSqlWrapperPut(k: SqlKey, v: SqlWrapper) = {
-    import scala.collection.JavaConverters._
-    if (sqlWrappers.size() - 1 > c.maxCacheSize) {
-      sqlWrappers.remove(sqlWrappers.keys().asScala.min)
-    }
-    sqlWrappers.put(k, v)
-  }
 
-  private def cappedJobWrapperPut(k: JobKey, v: JobWrapper) = {
+  private def cappedWrapperPut[K, V](hm: ConcurrentHashMap[K, V], k: K, v: V)(implicit cmp: Ordering[K]) = {
     import scala.collection.JavaConverters._
-    if (jobWrappers.size() - 1 > c.maxCacheSize) {
-      jobWrappers.remove(jobWrappers.keys().asScala.min)
+    if (hm.size() - 1 > c.maxCacheSize) {
+      hm.remove(hm.keys().asScala.min)
     }
-    jobWrappers.put(k, v)
+    hm.put(k, v)
   }
-
-  private def cappedStageWrapperPut(k: StageKey, v: StageWrapper) = {
-    import scala.collection.JavaConverters._
-    if (stageWrappers.size() - 1 > c.maxCacheSize) {
-      stageWrappers.remove(stageWrappers.keys().asScala.min)
-    }
-    stageWrappers.put(k, v)
-  }
-
-  private def cappedMetricWrapperPut(k: MetricKey, v: MetricWrapper) = {
-    import scala.collection.JavaConverters._
-    if (metricWrappers.size() - 1 > c.maxCacheSize) {
-      metricWrappers.remove(metricWrappers.keys().asScala.min)
-    }
-    metricWrappers.put(k, v)
-  }
+  private def cappedSqlWrapperPut(k: SqlKey, v: SqlWrapper) = cappedWrapperPut[SqlKey, SqlWrapper](sqlWrappers, k, v)
+  private def cappedJobWrapperPut(k: JobKey, v: JobWrapper) = cappedWrapperPut[JobKey, JobWrapper](jobWrappers, k, v)
+  private def cappedStageWrapperPut(k: StageKey, v: StageWrapper) = cappedWrapperPut[StageKey, StageWrapper](stageWrappers, k, v)
+  private def cappedMetricWrapperPut(k: MetricKey, v: MetricWrapper) = cappedWrapperPut[MetricKey, MetricWrapper](metricWrappers, k, v)
 
   /**
     * Return the number of wrappers not purged from memory
@@ -137,7 +118,7 @@ class SparklEar(c: Config) extends SparkListener {
   override def onOtherEvent(event: SparkListenerEvent): Unit = {
     event match {
       case event: SparkListenerSQLExecutionStart =>
-        cappedSqlWrapperPut(event.executionId, SqlWrapper(event.executionId, event.sparkPlanInfo))
+        onSqlSTart(event)
       case event: SparkListenerDriverAccumUpdates =>
         // TODO: check if really needed
         event.accumUpdates.foreach{case (k, v) => cappedMetricWrapperPut(k, v)}
@@ -150,6 +131,11 @@ class SparklEar(c: Config) extends SparkListener {
       case _ =>
     }
   }
+
+  private def onSqlSTart(event: SparkListenerSQLExecutionStart): Unit = {
+    cappedSqlWrapperPut(event.executionId, SqlWrapper(event.executionId, event.sparkPlanInfo))
+  }
+
 
   /**
     * This is the listener method for SQL query end

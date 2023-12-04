@@ -55,7 +55,7 @@ class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport wi
           r.last should be(SqlNode(1, "Scan csv ", 2, "0.0", m))
         }
         describe("with jsonflat serializer filtered") {
-          it ("by nodename") {
+          it ("by nodename ...ByExpr...") {
             val g = Seq(SqlNodeGlass(nodeNameRegex = Some(".*ByExpr.*")))
             val cfg = defaultTestConfig.withAllEnabled.withGlasses(g)
             val r = SqlJsonFlat.toOutput(cfg, inputSql)
