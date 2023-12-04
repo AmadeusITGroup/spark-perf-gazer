@@ -93,7 +93,7 @@ class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport wi
         // with PRETTY serializer
         val inputStage = inputs.collect { case s: StageInput => s }.head
         val r = StagePretty.toStringReport(cfg, inputStage)
-        r should include regex ("STAGE ID=1 READ_MB=42 WRITE_MB=0 SHUFFLE_READ_MB=0SHUFFLE_WRITE_MB=0 EXEC_CPU_SECS=.* ATTEMPT=0")
+        r should include regex ("STAGE ID=1 READ_MB=42 WRITE_MB=0 SHUFFLE_READ_MB=0 SHUFFLE_WRITE_MB=0 EXEC_CPU_SECS=.* ATTEMPT=0")
       }
 
     }

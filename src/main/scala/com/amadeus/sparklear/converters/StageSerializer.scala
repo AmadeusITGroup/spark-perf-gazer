@@ -18,8 +18,8 @@ case object StagePretty extends StageSerializer {
   override def toOutput(c: Config, r: StageInput): Seq[OutputString] = {
     val p = r.w
     val spillRep = p.spillMb.map(i => s" SPILL_MB=$i").mkString
-    val attemptRep = if (p.attempt != 0) s"${p.attempt}" else ""
-    val s = s"STAGE ID=${r.w.stageInfo.stageId} READ_MB=${p.inputReadMb} WRITE_MB=${p.outputWriteMb} SHUFFLE_READ_MB=${p.shuffleReadMb}" +
+    val attemptRep = s""
+    val s = s"STAGE ID=${r.w.stageInfo.stageId} READ_MB=${p.inputReadMb} WRITE_MB=${p.outputWriteMb} SHUFFLE_READ_MB=${p.shuffleReadMb} " +
       s"SHUFFLE_WRITE_MB=${p.shuffleWriteMb} EXEC_CPU_SECS=${p.execCpuSecs} ATTEMPT=${p.attempt}$spillRep"
     Seq(OutputString(s))
   }
