@@ -17,7 +17,7 @@ trait ConfigSupport {
   }
 
   def defaultTestConfig: Config = {
-    Config.DefaultConfig.withPrefix("")
+    Config().withPrefix("")
   }
 
 

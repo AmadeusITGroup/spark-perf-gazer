@@ -21,7 +21,6 @@ case class Config(
 
 object Config {
   val DefaultPrefix = "SPARKLEAR"
-  val DefaultConfig = Config()
   val DefaultWaitBeforeReadMetricsMs = 1000
 
   sealed trait Sink {
