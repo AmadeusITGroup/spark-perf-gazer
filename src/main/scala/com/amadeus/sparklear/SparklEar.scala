@@ -31,6 +31,7 @@ class SparklEar(c: Config) extends SparkListener {
 
   def inputs: List[Input] = {
     def enabled(f: Boolean, r: List[Input]): List[Input] = if (f) r else List.empty[Input]
+    Thread.sleep(c.waitBeforeReadMetricsMs)
     enabled(c.showSqls, sqlInputs) ++
       enabled(c.showJobs, jobInputs) ++
       enabled(c.showStages, stageInputs)
@@ -92,13 +93,13 @@ class SparklEar(c: Config) extends SparkListener {
         sqlWrappers.put(event.executionId, SqlWrapper(event.executionId, event.sparkPlanInfo))
       case event: SparkListenerDriverAccumUpdates =>
         metrics.putAll(mapAsJavaMap(event.accumUpdates.toMap))
-      case event: SparkListenerSQLAdaptiveSQLMetricUpdates =>
-      // ignore for now, adds more metrics
+      case _: SparkListenerSQLAdaptiveSQLMetricUpdates =>
+      // TODO: ignored for now, maybe adds more metrics?
       case event: SparkListenerSQLAdaptiveExecutionUpdate =>
         sqlWrappers.put(event.executionId, SqlWrapper(event.executionId, event.sparkPlanInfo))
       case event: SparkListenerSQLExecutionEnd =>
-        val plan = sqlWrappers.get(event.executionId)
-      //display(s"SQL Query completed: id=${event.executionId}, ${SparkPlanInfoPrettifier.prettify(plan, metrics, "  ")}")
+        val m = SparkInternal.executedPlanMetrics(event)
+        metrics.putAll(m.asJava)
       case _ =>
     }
   }

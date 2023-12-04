@@ -1,6 +1,6 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.Config.{Sink, SinkStdout}
+import com.amadeus.sparklear.Config.{DefaultWaitBeforeReadMetricsMs, Sink, SinkStdout}
 import com.amadeus.sparklear.converters.{JobJson, JobSerializer, SqlJson, SqlSerializer, StageJson, StageSerializer}
 import com.amadeus.sparklear.output.Output
 import com.amadeus.sparklear.output.glasses.Glass
@@ -14,13 +14,15 @@ case class Config(
   sqlSerializer: SqlSerializer[_ <: Output] = SqlJson,
   jobSerializer: JobSerializer = JobJson,
   stageSerializer: StageSerializer = StageJson,
-  glasses: Seq[Glass] = Seq.empty[Glass]
+  glasses: Seq[Glass] = Seq.empty[Glass],
+  waitBeforeReadMetricsMs: Long = DefaultWaitBeforeReadMetricsMs
 ) {
 }
 
 object Config {
   val DefaultPrefix = "SPARKLEAR"
   val DefaultConfig = Config()
+  val DefaultWaitBeforeReadMetricsMs = 1000
 
   sealed trait Sink {
     def output(m: String): Unit

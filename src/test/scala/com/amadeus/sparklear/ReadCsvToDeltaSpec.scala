@@ -28,8 +28,8 @@ class ReadCsvToDeltaSpec
         spark.sparkContext.setJobGroup("test group", "test job")
         df.write.format("delta").mode("overwrite").save(tmpDir.toAbsolutePath.toFile.toString)
 
-        val inputs = eventsListener.inputs
         spark.sparkContext.removeSparkListener(eventsListener)
+        val inputs = eventsListener.inputs
 
         describe("should generate a basic SQL report") {
           // with JSON serializer
