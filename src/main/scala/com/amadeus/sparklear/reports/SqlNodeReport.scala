@@ -8,8 +8,7 @@ case class SqlNodeReport(
   sqlId: Long,
   jobName: String,
   nodeName: String,
-  level: Int,
-  coord: String,
+  coordinates: String,
   metrics: Seq[(String, String)]
 ) extends Report {
   override def asStringReport(): String = asJson(this)(DefaultFormats)

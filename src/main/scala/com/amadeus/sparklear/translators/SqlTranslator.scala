@@ -30,8 +30,7 @@ case object SqlNodeTranslator extends SqlTranslator[SqlNodeReport] {
       sqlId = sqlId,
       jobName = jobName,
       nodeName = plan.nodeName,
-      level = level,
-      coord = baseCoord,
+      coordinates = baseCoord,
       metrics = plan.metrics.map(resolveMetricInfo(_, metrics))
     )
     val childNode = plan.children.zipWithIndex.flatMap { case (pi, i) =>
