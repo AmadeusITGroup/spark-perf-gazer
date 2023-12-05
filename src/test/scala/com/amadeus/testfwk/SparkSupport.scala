@@ -50,7 +50,7 @@ trait SparkSupport {
     withSparkInternal(conf)(testCode)(_.stop())
   }
 
-  def withSparkUi[T](conf: List[(String, String)] = DefaultConfigs)(testCode: SparkSession => T): T =
+  def withSparkAndUi[T](conf: List[(String, String)] = DefaultConfigs)(testCode: SparkSession => T): T =
     withSparkInternal(conf ++ UiConfigs)(testCode) { spark =>
       println(s"Launched ${this.getClass.getName}.withSparkUI... Go to the web Spark UI now. We will wait...")
       Thread.sleep(DefaultUiWaitMs)

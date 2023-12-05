@@ -8,7 +8,9 @@ case class SqlPlanNodeReport(
   jobName: String,
   nodeName: String,
   coordinates: String,
-  metrics: Seq[(String, String)]
+  metrics: Seq[(String, String)],
+  isLeaf: Boolean,
+  parentNodeName: String,
 ) extends Report {
   override def asStringReport(): String = asJson(this)(DefaultFormats)
 }

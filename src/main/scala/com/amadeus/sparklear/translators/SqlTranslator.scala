@@ -12,10 +12,11 @@ import org.json4s.jackson.Serialization.{write => asJson}
 sealed trait SqlTranslator[T <: Report] extends Translator[SqlPreReport, T]
 
 case object SqlPlanNodeTranslator extends SqlTranslator[SqlPlanNodeReport] {
+  final val DefaultAcumValue = -1
 
   private def resolveMetricInfo(m: SQLMetricInfo, ms: Map[Long, Long]): (String, String) = {
     val v = ms.get(m.accumulatorId)
-    (m.name, v.getOrElse(-1).toString)
+    (m.name, v.getOrElse(DefaultAcumValue).toString)
   }
 
   private def convert(
@@ -23,17 +24,20 @@ case object SqlPlanNodeTranslator extends SqlTranslator[SqlPlanNodeReport] {
     baseCoord: String,
     sqlId: Long,
     plan: SparkPlanInfo,
-    metrics: Map[Long, Long]
+    metrics: Map[Long, Long],
+    parentNodeName: String
   ): Seq[SqlPlanNodeReport] = {
     val currNode = SqlPlanNodeReport(
       sqlId = sqlId,
       jobName = jobName,
       nodeName = plan.nodeName,
       coordinates = baseCoord,
-      metrics = plan.metrics.map(resolveMetricInfo(_, metrics))
+      metrics = plan.metrics.map(resolveMetricInfo(_, metrics)),
+      isLeaf = plan.children.isEmpty,
+      parentNodeName = parentNodeName
     )
     val childNode = plan.children.zipWithIndex.flatMap { case (pi, i) =>
-      convert(jobName, baseCoord + s".${i}", sqlId, pi, metrics)
+      convert(jobName, baseCoord + s".${i}", sqlId, pi, metrics, plan.nodeName)
     }
     Seq(currNode) ++ childNode
   }
@@ -42,7 +46,7 @@ case object SqlPlanNodeTranslator extends SqlTranslator[SqlPlanNodeReport] {
     val metrics = preReport.metrics
     val sqlId = preReport.collect.id
     val plan = preReport.collect.plan
-    val nodes = convert(preReport.collect.description, "0", sqlId, plan, metrics)
+    val nodes = convert(preReport.collect.description, "0", sqlId, plan, metrics, "")
     nodes
   }
 }
