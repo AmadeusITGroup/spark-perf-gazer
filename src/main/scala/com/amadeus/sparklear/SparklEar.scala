@@ -7,7 +7,6 @@ import com.amadeus.sparklear.collects.{JobCollect, SqlCollect, StageCollect}
 import org.apache.spark.scheduler._
 import org.apache.spark.sql.execution.ui._
 
-import java.util.concurrent.ConcurrentHashMap
 
 /** This listener displays in the Spark Driver STDOUT some
   * relevant information about the application, including:
@@ -22,7 +21,6 @@ class SparklEar(c: Config) extends SparkListener {
   type StageKey = Int
   type MetricKey = Long
   type MetricCollect = Long
-
 
   // Maps to keep sqls + jobs + stages collects (initial information) until some completion
   private val sqlCollects = new CappedConcurrentHashMap[SqlKey, SqlCollect](c.maxCacheSize)

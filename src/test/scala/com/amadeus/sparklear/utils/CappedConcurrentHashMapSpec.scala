@@ -3,7 +3,7 @@ package com.amadeus.sparklear.utils
 import com.amadeus.testfwk.SimpleSpec
 
 class CappedConcurrentHashMapSpec extends SimpleSpec {
-  describe("The map") {
+  describe("The concurrent and safe map") {
     it("should put elements") {
       val m = new CappedConcurrentHashMap[Int, Int](3)
       m.size shouldEqual(0)
