@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory
 trait SparkSupport {
   lazy val logger: Logger = Logger(LoggerFactory.getLogger(getClass.getName))
 
-
   val DefaultConfigs: List[(String, String)] =
     List(
       ("spark.sql.shuffle.partitions", "1"),
@@ -20,6 +19,8 @@ trait SparkSupport {
     List(
       ("spark.ui.enabled", "true")
     )
+  val DefaultUiWaitMs = 1000 * 60 * 60 // 1h
+
   def getOrCreateSparkSession(conf: List[(String, String)] = DefaultConfigs): SparkSession = {
     val builder = SparkSession.builder
       .appName("SparkSession for tests")
@@ -30,15 +31,30 @@ trait SparkSupport {
     customized.getOrCreate()
   }
 
-  def withSpark[T](conf: List[(String, String)] = DefaultConfigs)(testCode: SparkSession => T): T = {
+  private def withSparkInternal[T](
+    conf: List[(String, String)]
+  )(
+    testCode: SparkSession => T
+  )(
+    finallyCode: SparkSession => Unit
+  ): T = {
     val spark = getOrCreateSparkSession(conf)
     try {
       testCode(spark)
     } finally {
-      spark.stop()
+      finallyCode(spark)
     }
   }
 
+  def withSpark[T](conf: List[(String, String)] = DefaultConfigs)(testCode: SparkSession => T): T = {
+    withSparkInternal(conf)(testCode)(_.stop())
+  }
+
   def withSparkUi[T](conf: List[(String, String)] = DefaultConfigs)(testCode: SparkSession => T): T =
-    withSpark(conf ++ UiConfigs)(testCode)
+    withSparkInternal(conf ++ UiConfigs)(testCode) { spark =>
+      println(s"Launched ${this.getClass.getName}.withSparkUI... Go to the web Spark UI now. We will wait...")
+      Thread.sleep(DefaultUiWaitMs)
+      spark.stop()
+      throw new IllegalStateException("The method withSparkUi should only be used in a developer environment")
+    }
 }

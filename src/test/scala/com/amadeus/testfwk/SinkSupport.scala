@@ -1,0 +1,47 @@
+package com.amadeus.testfwk
+
+import com.amadeus.sparklear.Config
+import com.amadeus.sparklear.prereports.PreReport
+import com.amadeus.sparklear.reports.Report
+import com.amadeus.sparklear.translators.Translator.StringReport
+import com.amadeus.testfwk.SinkSupport.AllSinks
+
+import scala.collection.mutable.ListBuffer
+
+object SinkSupport {
+  class AllSinks(
+    val preReports: ListBuffer[PreReport] = new ListBuffer[PreReport](),
+    val reports: ListBuffer[Report] = new ListBuffer[Report](),
+    val stringReports: ListBuffer[StringReport] = new ListBuffer[StringReport]()
+  )
+}
+trait SinkSupport {
+
+  def withAllSinks[T](testCode: AllSinks => T): T = {
+    val allSinks = new AllSinks()
+    testCode(allSinks)
+  }
+
+  implicit class RichConfig(c: Config) {
+    def withSinks(
+      s: AllSinks,
+      echoPreReport: Boolean = false,
+      echoStringReport: Boolean = false,
+      echoReport: Boolean = false
+    ): Config = c.copy(
+      preReportSink = Some { i =>
+        if (echoPreReport) { println(i) }
+        s.preReports.+=(i)
+      },
+      stringReportSink = Some { i =>
+        if (echoStringReport) { println(i) }
+        s.stringReports.+=(i)
+      },
+      reportSink = Some { i =>
+        if (echoReport) { println(i) }
+        s.reports.+=(i)
+      }
+    )
+  }
+
+}

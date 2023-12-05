@@ -26,9 +26,9 @@ class SparklEar(c: Config) extends SparkListener {
 
   // Maps to keep sqls + jobs + stages collects (initial information) until some completion
   private val sqlCollects = new CappedConcurrentHashMap[SqlKey, SqlCollect](c.maxCacheSize)
+  private val sqlMetricCollects = new CappedConcurrentHashMap[MetricKey, MetricCollect](c.maxCacheSize)
   private val jobCollects = new CappedConcurrentHashMap[JobKey, JobCollect](c.maxCacheSize)
   private val stageCollects = new CappedConcurrentHashMap[StageKey, StageCollect](c.maxCacheSize)
-  private val metricCollects = new CappedConcurrentHashMap[MetricKey, MetricCollect](c.maxCacheSize)
 
   /** LISTENERS
     */
@@ -48,13 +48,12 @@ class SparklEar(c: Config) extends SparkListener {
     // generate the stage input
     val si = StagePreReport(sw)
 
-    // sink the stage input (for testing)
-    c.preReportSink.foreach(ss => ss(si))
-
-    // sink the stage input serialized (as string, and as objects)
     if (c.showStages) {
-      c.outputSink.foreach(ss => c.stageSerializer.toAllReports(c, si).map(ss))
-      c.stringSink.foreach(ss => c.stageSerializer.toStringReports(c, si).map(ss))
+      // sink the stage input (for testing)
+      c.preReportSink.foreach(ss => ss(si))
+      // sink the stage input serialized (as string, and as objects)
+      c.reportSink.foreach(ss => c.stageSerializer.toAllReports(c, si).map(ss))
+      c.stringReportSink.foreach(ss => c.stageSerializer.toStringReports(c, si).map(ss))
     }
 
     // nothing to purge
@@ -79,13 +78,12 @@ class SparklEar(c: Config) extends SparkListener {
     // generate the job input
     val ji = JobPreReport(jobCollect, EndUpdate(finalStages = stagesIdAndStats, jobEnd = jobEnd))
 
-    // sink the job input (for testing)
-    c.preReportSink.foreach(ss => ss(ji))
-
-    // sink the job input serialized (as string, and as objects)
     if (c.showJobs) {
-      c.outputSink.foreach(ss => c.jobSerializer.toAllReports(c, ji).map(ss))
-      c.stringSink.foreach(ss => c.jobSerializer.toStringReports(c, ji).map(ss))
+      // sink the job input (for testing)
+      c.preReportSink.foreach(ss => ss(ji))
+      // sink the job input serialized (as string, and as objects)
+      c.reportSink.foreach(ss => c.jobSerializer.toAllReports(c, ji).map(ss))
+      c.stringReportSink.foreach(ss => c.jobSerializer.toStringReports(c, ji).map(ss))
     }
 
     // purge
@@ -100,7 +98,7 @@ class SparklEar(c: Config) extends SparkListener {
         onSqlStart(event)
       case event: SparkListenerDriverAccumUpdates =>
         // TODO: check if really needed
-        event.accumUpdates.foreach{case (k, v) => metricCollects.put(k, v)}
+        event.accumUpdates.foreach{case (k, v) => sqlMetricCollects.put(k, v)}
       case _: SparkListenerSQLAdaptiveSQLMetricUpdates =>
         // TODO: ignored for now, maybe adds more metrics?
       case _: SparkListenerSQLAdaptiveExecutionUpdate =>
@@ -129,20 +127,19 @@ class SparklEar(c: Config) extends SparkListener {
     val sqlCollect = sqlCollects.get(event.executionId)
 
     // generate the SQL input
-    val si = SqlPreReport(sqlCollect, metricCollects.toScalaMap ++ m)
+    val si = SqlPreReport(sqlCollect, sqlMetricCollects.toScalaMap ++ m)
 
-    // sink the SQL input (for testing)
-    c.preReportSink.foreach(ss => ss(si))
-
-    // sink the SQL input serialized (as string, and as objects)
     if (c.showSqls) {
-      c.outputSink.foreach(ss => c.sqlSerializer.toAllReports(c, si).map(ss))
-      c.stringSink.foreach(ss => c.sqlSerializer.toStringReports(c, si).map(ss))
+      // sink the SQL input (for testing)
+      c.preReportSink.foreach(ss => ss(si))
+      // sink the SQL input serialized (as string, and as objects)
+      c.reportSink.foreach(ss => c.sqlSerializer.toAllReports(c, si).map(ss))
+      c.stringReportSink.foreach(ss => c.sqlSerializer.toStringReports(c, si).map(ss))
     }
 
     // purge
     sqlCollects.remove(event.executionId)
-    m.keys.foreach(metricCollects.remove)
+    m.keys.foreach(sqlMetricCollects.remove)
   }
 
 }

@@ -2,7 +2,7 @@ package com.amadeus.sparklear.translators
 
 import com.amadeus.sparklear.Config
 import com.amadeus.sparklear.prereports.SqlPreReport
-import com.amadeus.sparklear.reports.{Report, SqlNodeReport, StrReport}
+import com.amadeus.sparklear.reports.{Report, SqlPlanNodeReport, StrReport}
 import com.amadeus.sparklear.collects.SqlCollect
 import org.apache.spark.sql.execution.SparkPlanInfo
 import org.apache.spark.sql.execution.metric.SQLMetricInfo
@@ -11,7 +11,7 @@ import org.json4s.jackson.Serialization.{write => asJson}
 
 sealed trait SqlTranslator[T <: Report] extends Translator[SqlPreReport, T]
 
-case object SqlNodeTranslator extends SqlTranslator[SqlNodeReport] {
+case object SqlPlanNodeTranslator extends SqlTranslator[SqlPlanNodeReport] {
 
   private def resolveMetricInfo(m: SQLMetricInfo, ms: Map[Long, Long]): (String, String) = {
     val v = ms.get(m.accumulatorId)
@@ -24,8 +24,8 @@ case object SqlNodeTranslator extends SqlTranslator[SqlNodeReport] {
     sqlId: Long,
     plan: SparkPlanInfo,
     metrics: Map[Long, Long]
-  ): Seq[SqlNodeReport] = {
-    val currNode = SqlNodeReport(
+  ): Seq[SqlPlanNodeReport] = {
+    val currNode = SqlPlanNodeReport(
       sqlId = sqlId,
       jobName = jobName,
       nodeName = plan.nodeName,
@@ -38,7 +38,7 @@ case object SqlNodeTranslator extends SqlTranslator[SqlNodeReport] {
     Seq(currNode) ++ childNode
   }
 
-  override def toAllReports(c: Config, preReport: SqlPreReport): Seq[SqlNodeReport] = {
+  override def toAllReports(c: Config, preReport: SqlPreReport): Seq[SqlPlanNodeReport] = {
     val metrics = preReport.metrics
     val sqlId = preReport.collect.id
     val plan = preReport.collect.plan

@@ -1,5 +1,4 @@
 package com.amadeus.sparklear.reports
-import com.amadeus.sparklear.reports.glasses.Glass
 import com.amadeus.sparklear.translators.Translator.StringReport
 
 import org.json4s.DefaultFormats

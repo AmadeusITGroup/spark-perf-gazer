@@ -12,7 +12,7 @@ trait Translator[I <: PreReport, R <: Report] {
     frep
   }
   def toStringReports(c: Config, p: I): Seq[Translator.StringReport] =
-    toReports(c, p).map(l => s"${c.prefix}${l.asStringReport}")
+    toReports(c, p).map(l => s"${c.stringReportPrefix}${l.asStringReport}")
 }
 
 object Translator {
