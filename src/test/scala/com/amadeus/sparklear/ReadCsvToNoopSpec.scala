@@ -53,7 +53,7 @@ class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport wi
           }
         }
         it("with pretty translator") {
-          val r = SqlPrettyTranslator.toStringReport(cfg, inputSql)
+          val r = SqlPrettyTranslator.toStringReport(cfg, inputSql).mkString("\n")
           r should include regex ("Operator OverwriteByExpression | OverwriteByExpression")
           // scalastyle:off line.size.limit
           r should include regex ("  Operator Scan csv  | FileScan csv \\[iata_code#17,icao_code#18,faa_code#19,is_geonames#20,geoname_id#21,envelope_id#22,name#23,asciiname#24,latitude#25,longitude#26,fclass#27,fcode#28,page_rank#29,date_from#30,date_until#31,comment#32,country_code#33,cc2#34,country_name#35,continent_name#36,adm1_code#37,adm1_name_utf#38,adm1_name_ascii#39,adm2_code#40,... 27 more fields\\] Batched: false, DataFilters: \\[\\], Format: CSV, Location: InMemoryFileIndex\\(1 paths\\)\\[file:.*/src/test/resources/optd_por_publi..., PartitionFilters: \\[\\], PushedFilters: \\[\\], ReadSchema: struct<iata_code:string,icao_code:string,faa_code:string,is_geonames:string,geoname_id:string,env...")
@@ -65,13 +65,13 @@ class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport wi
 
       it("should generate a basic JOB report (pretty)") {
         val inputJob = inputs.collect { case s: JobPreReport => s }.head
-        val r = JobPrettyTranslator.toStringReport(cfg, inputJob)
+        val r = JobPrettyTranslator.toStringReport(cfg, inputJob).mkString("\n")
         r should include regex ("JOB ID=1 GROUP='test group' NAME='test job' SQL_ID=1  STAGES=1 TOTAL_CPU_SEC=.*")
       }
 
       it("should generate a basic STAGE report (pretty)") {
         val inputStage = inputs.collect { case s: StagePreReport => s }.head
-        val r = StagePrettyTranslator.toStringReport(cfg, inputStage)
+        val r = StagePrettyTranslator.toStringReport(cfg, inputStage).mkString("\n")
         r should include regex ("STAGE ID=1 READ_MB=42 WRITE_MB=0 SHUFFLE_READ_MB=0 SHUFFLE_WRITE_MB=0 EXEC_CPU_SECS=.* ATTEMPT=0")
       }
 
