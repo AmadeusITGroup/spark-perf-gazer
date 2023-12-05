@@ -61,7 +61,6 @@ Settings -> Editor -> Code Style -> Scala -> Formatter: ScalaFMT
 ```
 # To Do
 
-- Investigate in SparkInternal why V2ExistingTableWriteExec is needed
 - Improve README to include comparison with other similar solution
 - Add test case with a join
 - Investigate if possible to persist SparkUI logs as a complementary approach with
