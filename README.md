@@ -12,7 +12,8 @@ The use-cases that this library is intended to address:
 - identify jobs that take the longer cumulated execution time (as measured in executors)
 - identify Spark jobs that have spill
 - monitor certain SQL metrics like amount of files read, pruned, ...
-- investigate predicate pushdowns
+- investigate predicate pushdowns and their effectiveness on data skipping
+- connect to any monitoring system to expose certain metrics (spill, files read, ...)
 - ...
 
 Why not using the regular Spark UI? 
