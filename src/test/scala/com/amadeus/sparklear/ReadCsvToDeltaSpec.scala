@@ -23,75 +23,76 @@ class ReadCsvToDeltaSpec
 
   def subdir(base: Path, s: String) = base.resolve(s).toAbsolutePath.toFile.toString
 
-  describe("The listener when") {
+  describe("The listener when reading a delta table filtering and writing to another delta") {
     withSpark(DeltaSettings) { spark =>
       withTmpDir { tmpDir =>
         val df = readOptd(spark)
         df.write.format("delta").mode("overwrite").save(subdir(tmpDir, "deltadir1"))
 
-        describe("reading a delta table filtering and writing to another delta") {
-          withAllSinks { sinks =>
-            // DF TABLE: iata_code, icao_code, ..., name, ..., country_name, country_code, ...
-            val df = DeltaTable.forPath(subdir(tmpDir, "deltadir1")).toDF
-            val cfg = defaultTestConfig.withOnlySqlEnabled
-              .withGlasses(
-                Seq(
-                  SqlNodeGlass(
-                    nodeNameRegex = Some(".*Filter.*"),
-                    parentNodeNameRegex = Some(".*WholeStageCodegen.*")
-                  ),
-                  SqlNodeGlass(
-                    nodeNameRegex = Some(".*Scan.*")
-                  ),
-                  SqlNodeGlass(
-                    nodeNameRegex = Some(".*Join.*")
-                  )
+        withAllSinks { sinks =>
+          // DF TABLE: iata_code, icao_code, ..., name, ..., country_name, country_code, ...
+          val df = DeltaTable.forPath(subdir(tmpDir, "deltadir1")).toDF
+          val cfg = defaultTestConfig.withOnlySqlEnabled
+            .withGlasses(
+              Seq(
+                SqlNodeGlass(
+                  nodeNameRegex = Some(".*Filter.*"),
+                  parentNodeNameRegex = Some(".*WholeStageCodegen.*")
+                ),
+                SqlNodeGlass(
+                  nodeNameRegex = Some(".*Scan.*")
+                ),
+                SqlNodeGlass(
+                  nodeNameRegex = Some(".*Join.*")
                 )
               )
-              .withSinks(sinks)
-            val eventsListener = new SparklEar(cfg)
-            spark.sparkContext.addSparkListener(eventsListener)
+            )
+            .withSinks(sinks)
+          val eventsListener = new SparklEar(cfg)
+          spark.sparkContext.addSparkListener(eventsListener)
 
-            spark.sparkContext.setJobDescription("jobfilter")
-            val dfFiltered1 =
-              df.filter(df("adm1_name_ascii") === "Cordoba" && df("fcode") === "AIRP") // 16 records matching
-            dfFiltered1.write.format("delta").mode("overwrite").save(subdir(tmpDir, "jobfilterdir"))
+          spark.sparkContext.setJobDescription("jobfilter")
+          val dfFiltered1 =
+            df.filter(df("adm1_name_ascii") === "Cordoba" && df("fcode") === "AIRP") // 16 records matching
+          dfFiltered1.write.format("delta").mode("overwrite").save(subdir(tmpDir, "jobfilterdir"))
 
-            // LOOKUP TABLE: country_code, country name
-            spark.sparkContext.setJobDescription("joblookuptable")
-            df
-              .select("country_code", "country_name")
-              .distinct()
-              .write
-              .format("delta")
-              .mode("overwrite")
-              .save(subdir(tmpDir, "joblookuptabledir"))
+          // LOOKUP TABLE: country_code, country name
+          spark.sparkContext.setJobDescription("joblookuptable")
+          df
+            .select("country_code", "country_name")
+            .distinct()
+            .write
+            .format("delta")
+            .mode("overwrite")
+            .save(subdir(tmpDir, "joblookuptabledir"))
 
-            it("should report the filter plan nodes") {
-              val actual = sinks.reports
-                .collect { case i: SqlPlanNodeReport => i }
-                .filter(_.nodeName.contains("Filter"))
-                .filter(i => i.jobName.contains("jobfilter"))
-                .map(i => (i.jobName, i.metrics))
-              actual should equal(Seq(("jobfilter", Seq(("number of output rows", "16")))))
-            }
-            spark.sparkContext.setJobDescription("jobjoin")
-            val df3 = df.select("name", "country_code").filter(df("iata_code") === "COR").as("l")
-              .join(DeltaTable.forPath(subdir(tmpDir, "joblookuptabledir")).toDF.as("r"), "country_code")
+          it("should report the filter plan nodes") {
+            val actual = sinks.reports
+              .collect { case i: SqlPlanNodeReport => i }
+              .filter(_.nodeName.contains("Filter"))
+              .filter(i => i.jobName.contains("jobfilter"))
+              .map(i => (i.jobName, i.metrics))
+            actual should equal(Seq(("jobfilter", Seq(("number of output rows", "16")))))
+          }
+          spark.sparkContext.setJobDescription("jobjoin")
+          val df3 = df
+            .select("name", "country_code")
+            .filter(df("iata_code") === "COR")
+            .as("l")
+            .join(DeltaTable.forPath(subdir(tmpDir, "joblookuptabledir")).toDF.as("r"), "country_code")
 
-            df3.write.format("delta").mode("overwrite").save(subdir(tmpDir, "deltadirjob3"))
-            it("should report the join plan node") {
-              val actual = sinks.reports
-                .collect { case i: SqlPlanNodeReport => i }
-                .filter(_.nodeName.contains("BroadcastHashJoin"))
-                .filter(i => i.jobName.contains("jobjoin"))
-                .map(i => (i.jobName, i.metrics))
-              actual should equal(
-                Seq(
-                  ("jobjoin", Seq(("number of output rows", "2")))
-                )
+          df3.write.format("delta").mode("overwrite").save(subdir(tmpDir, "deltadirjob3"))
+          it("should report the join plan node") {
+            val actual = sinks.reports
+              .collect { case i: SqlPlanNodeReport => i }
+              .filter(_.nodeName.contains("BroadcastHashJoin"))
+              .filter(i => i.jobName.contains("jobjoin"))
+              .map(i => (i.jobName, i.metrics))
+            actual should equal(
+              Seq(
+                ("jobjoin", Seq(("number of output rows", "2")))
               )
-            }
+            )
           }
         }
       }

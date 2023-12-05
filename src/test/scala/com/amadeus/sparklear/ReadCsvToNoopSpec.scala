@@ -1,56 +1,61 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.translators.{JobPrettyTranslator, SqlPlanNodeTranslator, SqlPrettyTranslator, StagePrettyTranslator}
-import com.amadeus.sparklear.prereports.{JobPreReport, PreReport, SqlPreReport, StagePreReport}
+import com.amadeus.sparklear.translators.{
+  JobPrettyTranslator,
+  SqlPlanNodeTranslator,
+  SqlPrettyTranslator,
+  StagePrettyTranslator
+}
 import com.amadeus.sparklear.reports.glasses.SqlNodeGlass
-import com.amadeus.testfwk.{ConfigSupport, JsonSupport, OptdSupport, SimpleSpec, SparkSupport}
+import com.amadeus.testfwk.{ConfigSupport, JsonSupport, OptdSupport, SimpleSpec, SinkSupport, SparkSupport}
 
-import scala.collection.mutable.ListBuffer
 
-class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport with JsonSupport with ConfigSupport {
+class ReadCsvToNoopSpec
+    extends SimpleSpec
+    with SparkSupport
+    with OptdSupport
+    with JsonSupport
+    with ConfigSupport
+    with SinkSupport {
 
   describe("The listener when reading a .csv and writing to noop") {
     withSpark() { spark =>
-      val df = readOptd(spark)
-      val prereports = new ListBuffer[PreReport]()
-      val cfg = defaultTestConfig.withAllEnabled.withPreReportSink(prereports.+=)
-      val eventsListener = new SparklEar(cfg)
-      spark.sparkContext.addSparkListener(eventsListener)
-      spark.sparkContext.setJobGroup("test group", "test job")
-      df.write.format("noop").mode("overwrite").save()
-      it("should count a total of 3 inputs") {
-        prereports.size shouldBe 3
-      }
+      withAllSinks { sinks =>
+        val df = readOptd(spark)
+        val cfg = defaultTestConfig.withAllEnabled.withSinks(sinks)
+        val eventsListener = new SparklEar(cfg)
+        spark.sparkContext.addSparkListener(eventsListener)
+        spark.sparkContext.setJobGroup("testgroup", "testjob")
+        df.write.format("noop").mode("overwrite").save()
 
-      describe("should generate a basic SQL report") {
-        val inputSql = prereports.collect { case s: SqlPreReport => s }.head
-        it("with sqlnode translator") {
+        it("should build some preReports") {
+          sinks.preReports.size shouldBe 3
+        }
+
+        it("should build SQL preReports (SqlPlanNodeTranslator)") {
+          val inputSql = sinks.sqlPreReports.head
           val r = SqlPlanNodeTranslator.toAllReports(cfg, inputSql)
           r.size should be(2)
-          r.map(i => (i.sqlId, i.jobName, i.nodeName)).head should be(1, "test job", "OverwriteByExpression")
-          val m = Seq(
-            ("number of output rows", "124189"),
-            ("number of files read", "1"),
-            ("metadata time", "0"),
-            ("size of files read", "44662949")
-          )
-          r.map(i => (i.sqlId, i.jobName, i.nodeName)).last should be(1, "test job", "Scan csv ")
+          r.map(i => (i.sqlId, i.jobName, i.nodeName)).head should be(1, "testjob", "OverwriteByExpression")
+          r.map(i => (i.sqlId, i.jobName, i.nodeName)).last should be(1, "testjob", "Scan csv ")
         }
-        describe("with sqlnode translator filtered") {
-          it("by nodename ...ByExpr...") {
-            val g = Seq(SqlNodeGlass(nodeNameRegex = Some(".*ByExpr.*")))
-            val cfg = defaultTestConfig.withAllEnabled.withGlasses(g)
-            val r = SqlPlanNodeTranslator.toReports(cfg, inputSql)
-            r.map(i => (i.sqlId, i.jobName, i.nodeName)) should be(Seq((1, "test job", "OverwriteByExpression")))
-          }
-          it("by metric number_of_files_read") {
-            val g = Seq(SqlNodeGlass(metricRegex = Some("number of files read")))
-            val cfg = defaultTestConfig.withAllEnabled.withGlasses(g)
-            val r = SqlPlanNodeTranslator.toReports(cfg, inputSql)
-            r.map(_.nodeName) should be(Seq("Scan csv "))
-          }
+
+        it("should build SQL preReports (SqlPlanNodeTranslator filtered by nodeName)") {
+          val inputSql = sinks.sqlPreReports.head
+          val g = Seq(SqlNodeGlass(nodeNameRegex = Some(".*ByExpr.*")))
+          val cfg = defaultTestConfig.withAllEnabled.withGlasses(g)
+          val r = SqlPlanNodeTranslator.toReports(cfg, inputSql)
+          r.map(i => (i.sqlId, i.jobName, i.nodeName)) should be(Seq((1, "testjob", "OverwriteByExpression")))
         }
-        it("with pretty translator") {
+        it("should build SQL preReports (SqlPlanNodeTranslator filtered by metric)") {
+          val inputSql = sinks.sqlPreReports.head
+          val g = Seq(SqlNodeGlass(metricRegex = Some("number of files read")))
+          val cfg = defaultTestConfig.withAllEnabled.withGlasses(g)
+          val r = SqlPlanNodeTranslator.toReports(cfg, inputSql)
+          r.map(_.nodeName) should be(Seq("Scan csv "))
+        }
+        it("should build SQL preReports (SqlPrettyTRanslator filtered by metric)") {
+          val inputSql = sinks.sqlPreReports.head
           val r = SqlPrettyTranslator.toStringReports(cfg, inputSql).mkString("\n")
           r should include regex ("Operator OverwriteByExpression | OverwriteByExpression")
           // scalastyle:off line.size.limit
@@ -59,20 +64,20 @@ class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport wi
           r should include regex ("   - Metrics: 'number_of_output_rows'=124189,'number_of_files_read'=1,'metadata_time'=.*,'size_of_files_read'=44662949")
           // scalastyle:on line.size.limit
         }
-      }
 
-      it("should generate a basic JOB report (pretty)") {
-        val inputJob = prereports.collect { case s: JobPreReport => s }.head
-        val r = JobPrettyTranslator.toStringReports(cfg, inputJob).mkString("\n")
-        r should include regex ("JOB ID=1 GROUP='test group' NAME='test job' SQL_ID=1  STAGES=1 TOTAL_CPU_SEC=.*")
-      }
+        it("should build job preReports (JobPrettyTranslator)") {
+          val inputJob = sinks.jobPreReports.head
+          val r = JobPrettyTranslator.toStringReports(cfg, inputJob).mkString("\n")
+          r should include regex ("JOB ID=1 GROUP='testgroup' NAME='testjob' SQL_ID=1  STAGES=1 TOTAL_CPU_SEC=.*")
+        }
 
-      it("should generate a basic STAGE report (pretty)") {
-        val inputStage = prereports.collect { case s: StagePreReport => s }.head
-        val r = StagePrettyTranslator.toStringReports(cfg, inputStage).mkString("\n")
-        r should include regex ("STAGE ID=1 READ_MB=42 WRITE_MB=0 SHUFFLE_READ_MB=0 SHUFFLE_WRITE_MB=0 EXEC_CPU_SECS=.* ATTEMPT=0")
-      }
+        it("should build stage preReports (StagePrettyTranslator)") {
+          val inputStage = sinks.stagePreReports.head
+          val r = StagePrettyTranslator.toStringReports(cfg, inputStage).mkString("\n")
+          r should include regex ("STAGE ID=1 READ_MB=42 WRITE_MB=0 SHUFFLE_READ_MB=0 SHUFFLE_WRITE_MB=0 EXEC_CPU_SECS=.* ATTEMPT=0")
+        }
 
+      }
     }
   }
 
