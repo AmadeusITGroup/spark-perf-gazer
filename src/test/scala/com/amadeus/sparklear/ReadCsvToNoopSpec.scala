@@ -29,27 +29,27 @@ class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport wi
         it("with sqlnode translator") {
           val r = SqlNodeTranslator.toReport(cfg, inputSql)
           r.size should be(2)
-          r.head should be(SqlNodeReport(1, "OverwriteByExpression", 1, "0", Seq.empty[(String, String)]))
+          r.head should be(SqlNodeReport(1, "test job", "OverwriteByExpression", 1, "0", Seq.empty[(String, String)]))
           val m = Seq(
             ("number of output rows", "124189"),
             ("number of files read", "1"),
             ("metadata time", "0"),
             ("size of files read", "44662949")
           )
-          r.last should be(SqlNodeReport(1, "Scan csv ", 2, "0.0", m))
+          r.last should be(SqlNodeReport(1, "test job", "Scan csv ", 2, "0.0", m))
         }
         describe("with sqlnode translator filtered") {
           it("by nodename ...ByExpr...") {
             val g = Seq(SqlNodeGlass(nodeNameRegex = Some(".*ByExpr.*")))
             val cfg = defaultTestConfig.withAllEnabled.withGlasses(g)
             val r = SqlNodeTranslator.toReport(cfg, inputSql)
-            r should be(Seq(SqlNodeReport(1, "OverwriteByExpression", 1, "0", Seq.empty[(String, String)])))
+            r should be(Seq(SqlNodeReport(1, "test job", "OverwriteByExpression", 1, "0", Seq.empty[(String, String)])))
           }
           it("by metric number_of_files_read") {
             val g = Seq(SqlNodeGlass(metricRegex = Some("number of files read")))
             val cfg = defaultTestConfig.withAllEnabled.withGlasses(g)
             val r = SqlNodeTranslator.toReport(cfg, inputSql)
-            r.map(_.name) should be(Seq("Scan csv "))
+            r.map(_.nodeName) should be(Seq("Scan csv "))
           }
         }
         it("with pretty translator") {

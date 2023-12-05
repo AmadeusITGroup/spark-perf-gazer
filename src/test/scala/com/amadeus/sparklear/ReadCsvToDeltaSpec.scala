@@ -42,12 +42,12 @@ class ReadCsvToDeltaSpec
               val g = Seq(SqlNodeGlass(nodeNameRegex = Some(".*Scan .*")))
               val cfg = defaultTestConfig.withAllEnabled.withGlasses(g)
               val r = inputSqls.flatMap(i => SqlNodeTranslator.toReport(cfg, i))
-              r.map(i => i.name).distinct should contain allOf (
+              r.map(i => i.nodeName).distinct should contain allOf (
                 "Scan csv ",
                 "Scan ExistingRDD",
                 "Scan json "
               ) // we read the CSV, then scan json (delta log) and ExistingRDD (for writing to delta)
-              r.filter(_.name.matches("Scan ExistingRDD Delta Table State.*")).size should equal(1)
+              r.filter(_.nodeName.matches("Scan ExistingRDD Delta Table State.*")).size should equal(1)
             }
           }
         }

@@ -25,7 +25,7 @@ case class Config(
   stageSerializer: StageTranslator = StageJson,
   glasses: Seq[Glass] = Seq.empty[Glass],
   maxCacheSize: Int = Config.DefaultCacheSize
-) {}
+)
 
 object Config {
   val DefaultPrefix: String = "SPARKLEAR"

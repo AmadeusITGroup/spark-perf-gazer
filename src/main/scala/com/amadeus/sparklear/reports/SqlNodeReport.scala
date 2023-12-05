@@ -6,7 +6,8 @@ import org.json4s.jackson.Serialization.{write => asJson}
 
 case class SqlNodeReport(
   sqlId: Long,
-  name: String,
+  jobName: String,
+  nodeName: String,
   level: Int,
   coord: String,
   metrics: Seq[(String, String)]
@@ -14,8 +15,8 @@ case class SqlNodeReport(
   override def asStringReport(): String = asJson(this)(DefaultFormats)
 
   private def check(g: SqlNodeGlass): Boolean = {
-    val n = g.nodeNameRegex.map(r => name.matches(r)).getOrElse(true)
-    val m = g.metricRegex.map(r => metrics.exists{ case (n, _) => n.matches(r)}).getOrElse(true)
+    val n = g.nodeNameRegex.map(r => nodeName.matches(r)).getOrElse(true)
+    val m = g.metricRegex.map(r => metrics.exists { case (n, _) => n.matches(r) }).getOrElse(true)
     n && m
   }
 

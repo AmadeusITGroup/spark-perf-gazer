@@ -2,7 +2,7 @@ package com.amadeus.sparklear.translators
 
 import com.amadeus.sparklear.Config
 import com.amadeus.sparklear.prereports.SqlPreReport
-import com.amadeus.sparklear.reports.{Report, StrReport, SqlNodeReport}
+import com.amadeus.sparklear.reports.{Report, SqlNodeReport, StrReport}
 import com.amadeus.sparklear.collects.SqlCollect
 import org.apache.spark.sql.execution.SparkPlanInfo
 import org.apache.spark.sql.execution.metric.SQLMetricInfo
@@ -12,34 +12,44 @@ import org.json4s.jackson.Serialization.{write => asJson}
 sealed trait SqlTranslator[T <: Report] extends Translator[SqlPreReport, T]
 
 case object SqlNodeTranslator extends SqlTranslator[SqlNodeReport] {
-  private def convert(baseCoord: String, level: Int, sqlId: Long, p: SparkPlanInfo, m: Map[Long, Long]): Seq[SqlNodeReport] = {
-    val currNode = SqlNodeReport(
-      sqlId = sqlId,
-      name = p.nodeName,
-      level = level,
-      coord = baseCoord,
-      metrics = p.metrics.map(convert(_, m))
-    )
-    val childNode = p.children.zipWithIndex.flatMap{case (pi, i) => convert(baseCoord + s".${i}" ,level + 1, sqlId, pi, m)}
-    Seq(currNode) ++ childNode
-  }
 
-  private def convert(m: SQLMetricInfo, ms: Map[Long, Long]): (String, String) = {
+  private def resolveMetricInfo(m: SQLMetricInfo, ms: Map[Long, Long]): (String, String) = {
     val v = ms.get(m.accumulatorId)
     (m.name, v.getOrElse(-1).toString)
   }
 
-  override def toReport(c: Config, r: SqlPreReport): Seq[SqlNodeReport] = {
-    val metrics = r.m
-    val sqlId = r.w.id
-    val plan = r.w.p
-    val nodes = convert("0", 1, sqlId, plan, metrics)
+  private def convert(
+    jobName: String,
+    baseCoord: String,
+    level: Int,
+    sqlId: Long,
+    plan: SparkPlanInfo,
+    metrics: Map[Long, Long]
+  ): Seq[SqlNodeReport] = {
+    val currNode = SqlNodeReport(
+      sqlId = sqlId,
+      jobName = jobName,
+      nodeName = plan.nodeName,
+      level = level,
+      coord = baseCoord,
+      metrics = plan.metrics.map(resolveMetricInfo(_, metrics))
+    )
+    val childNode = plan.children.zipWithIndex.flatMap { case (pi, i) =>
+      convert(jobName, baseCoord + s".${i}", level + 1, sqlId, pi, metrics)
+    }
+    Seq(currNode) ++ childNode
+  }
+
+  override def toReport(c: Config, preReport: SqlPreReport): Seq[SqlNodeReport] = {
+    val metrics = preReport.metrics
+    val sqlId = preReport.collect.id
+    val plan = preReport.collect.p
+    val nodes = convert(preReport.collect.description, "0", 1, sqlId, plan, metrics)
     nodes.filter(n => c.glasses.forall(g => n.eligible(g)))
   }
 }
 
 case object SqlPrettyTranslator extends SqlTranslator[StrReport] {
   override def toReport(c: Config, r: SqlPreReport): Seq[StrReport] =
-    Seq(StrReport(SparkPlanInfoPrettifier.prettify(r.w.p, r.m)))
+    Seq(StrReport(SparkPlanInfoPrettifier.prettify(r.collect.p, r.metrics)))
 }
-
