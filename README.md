@@ -45,7 +45,13 @@ multiple `Report`s using a `Translator`. A `Report` is a type that represents th
 
 #### Sbt
 
-The project uses `sbt`. You can run tests locally with `sbt test`.
+The project uses `sbt`. 
+
+```sh
+sbt test # run tests locally
+sbt coverageOn test coverageReport # run tests with coverage checks
+```
+
 
 #### Intellij
 Using IntelliJ IDEA, you can update the ScalaTest Configuration Template to avoid manual settings.
