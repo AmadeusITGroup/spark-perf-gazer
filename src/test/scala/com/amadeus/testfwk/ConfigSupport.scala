@@ -10,9 +10,9 @@ trait ConfigSupport {
 
   implicit class ConfigHelper(c: Config) {
     def withPrefix(p: String): Config = c.copy(stringReportPrefix = p)
-    def withSqlSerializer(s: SqlTranslator[_ <: Report]): Config = c.copy(sqlSerializer = s)
-    def withJobSerializer(s: JobTranslator[_ <: Report]): Config = c.copy(jobSerializer = s)
-    def withStageSerializer(s: StageTranslator): Config = c.copy(stageSerializer = s)
+    def withSqlSerializer(s: SqlTranslator[_ <: Report]): Config = c.copy(sqlTranslator = s)
+    def withJobSerializer(s: JobTranslator[_ <: Report]): Config = c.copy(jobTranslator = s)
+    def withStageSerializer(s: StageTranslator): Config = c.copy(stageTranslator = s)
     def withAllEnabled: Config = c.copy(showSqls = true, showJobs = true, showStages = true)
     def withOnlySqlEnabled: Config = c.copy(showSqls = true, showJobs = false, showStages = false)
     def withGlasses(g: Seq[Glass]): Config = c.copy(glasses = g)

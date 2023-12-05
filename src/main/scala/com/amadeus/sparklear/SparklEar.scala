@@ -50,8 +50,8 @@ class SparklEar(c: Config) extends SparkListener {
       // sink the stage input (for testing)
       c.preReportSink.foreach(ss => ss(si))
       // sink the stage input serialized (as string, and as objects)
-      c.reportSink.foreach(ss => c.stageSerializer.toReports(c, si).map(ss))
-      c.stringReportSink.foreach(ss => c.stageSerializer.toStringReports(c, si).map(ss))
+      c.reportSink.foreach(ss => c.stageTranslator.toReports(c, si).map(ss))
+      c.stringReportSink.foreach(ss => c.stageTranslator.toStringReports(c, si).map(ss))
     }
 
     // nothing to purge
@@ -80,8 +80,8 @@ class SparklEar(c: Config) extends SparkListener {
       // sink the job input (for testing)
       c.preReportSink.foreach(ss => ss(ji))
       // sink the job input serialized (as string, and as objects)
-      c.reportSink.foreach(ss => c.jobSerializer.toReports(c, ji).map(ss))
-      c.stringReportSink.foreach(ss => c.jobSerializer.toStringReports(c, ji).map(ss))
+      c.reportSink.foreach(ss => c.jobTranslator.toReports(c, ji).map(ss))
+      c.stringReportSink.foreach(ss => c.jobTranslator.toStringReports(c, ji).map(ss))
     }
 
     // purge
@@ -131,8 +131,8 @@ class SparklEar(c: Config) extends SparkListener {
       // sink the SQL input (for testing)
       c.preReportSink.foreach(ss => ss(si))
       // sink the SQL input serialized (as string, and as objects)
-      c.reportSink.foreach(ss => c.sqlSerializer.toReports(c, si).map(ss))
-      c.stringReportSink.foreach(ss => c.sqlSerializer.toStringReports(c, si).map(ss))
+      c.reportSink.foreach(ss => c.sqlTranslator.toReports(c, si).map(ss))
+      c.stringReportSink.foreach(ss => c.sqlTranslator.toStringReports(c, si).map(ss))
     }
 
     // purge

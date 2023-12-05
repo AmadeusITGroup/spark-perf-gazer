@@ -21,12 +21,13 @@ case class Config(
   preReportSink: Option[PreReport => Unit] = None, // for testing purposes
   stringReportSink: Option[StringReport => Unit] = None,
   reportSink: Option[Report => Unit] = None,
-  sqlSerializer: SqlTranslator[_ <: Report] = SqlPlanNodeTranslator,
-  jobSerializer: JobTranslator[_ <: Report] = JobJsonTranslator,
-  stageSerializer: StageTranslator = StageJson,
+  sqlTranslator: SqlTranslator[_ <: Report] = SqlPlanNodeTranslator,
+  jobTranslator: JobTranslator[_ <: Report] = JobJsonTranslator,
+  stageTranslator: StageTranslator = StageJson,
   glasses: Seq[Glass] = Seq.empty[Glass],
   maxCacheSize: Int = Config.DefaultCacheSize
 ) {
+  // TODO: use these to avoid collecting (at the source) some objects if won't be used
   def collectSqls: Boolean = showSqls // collect sqls only if we will show them
   def collectJobs: Boolean = showJobs // collect jobs only if we will show them
   def collectStages: Boolean = showStages || showJobs // collect stages only if we will show either stages or jobs
