@@ -3,7 +3,6 @@ package com.amadeus.sparklear
 import com.amadeus.sparklear.translators.{JobPrettyTranslator, SqlPlanNodeTranslator, SqlPrettyTranslator, StagePrettyTranslator}
 import com.amadeus.sparklear.prereports.{JobPreReport, PreReport, SqlPreReport, StagePreReport}
 import com.amadeus.sparklear.reports.glasses.SqlNodeGlass
-import com.amadeus.sparklear.reports.SqlPlanNodeReport
 import com.amadeus.testfwk.{ConfigSupport, JsonSupport, OptdSupport, SimpleSpec, SparkSupport}
 
 import scala.collection.mutable.ListBuffer
@@ -19,7 +18,6 @@ class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport wi
       spark.sparkContext.addSparkListener(eventsListener)
       spark.sparkContext.setJobGroup("test group", "test job")
       df.write.format("noop").mode("overwrite").save()
-      spark.sparkContext.removeSparkListener(eventsListener)
       it("should count a total of 3 inputs") {
         prereports.size shouldBe 3
       }
