@@ -9,13 +9,13 @@ import org.json4s.jackson.Serialization.{write => asJson}
 sealed trait StageTranslator extends Translator[StagePreReport, StrReport]
 
 case object StageJson extends StageTranslator {
-  override def toReport(c: Config, p: StagePreReport): Seq[StrReport] = {
+  override def toAllReports(c: Config, p: StagePreReport): Seq[StrReport] = {
     Seq(StrReport(asJson(p)(DefaultFormats)))
   }
 }
 
 case object StagePrettyTranslator extends StageTranslator {
-  override def toReport(c: Config, r: StagePreReport): Seq[StrReport] = {
+  override def toAllReports(c: Config, r: StagePreReport): Seq[StrReport] = {
     val p = r.w
     val spillRep = p.spillMb.map(i => s" SPILL_MB=$i").mkString
     val attemptRep = s""

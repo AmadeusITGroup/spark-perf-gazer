@@ -5,9 +5,14 @@ import com.amadeus.sparklear.prereports.PreReport
 import com.amadeus.sparklear.reports.Report
 
 trait Translator[I <: PreReport, R <: Report] {
-  def toReport(c: Config, p: I): Seq[R]
-  def toStringReport(c: Config, p: I): Seq[Translator.StringReport] =
-    toReport(c, p).map(l => s"${c.prefix}${l.asStringReport}")
+  def toAllReports(c: Config, p: I): Seq[R]
+  def toReports(c: Config, p: I): Seq[R] = {
+    val rep = toAllReports(c, p)
+    val frep = rep.filter(r => c.glasses.forall(g => g.eligible(r)))
+    frep
+  }
+  def toStringReports(c: Config, p: I): Seq[Translator.StringReport] =
+    toReports(c, p).map(l => s"${c.prefix}${l.asStringReport}")
 }
 
 object Translator {

@@ -21,7 +21,6 @@ case object SqlNodeTranslator extends SqlTranslator[SqlNodeReport] {
   private def convert(
     jobName: String,
     baseCoord: String,
-    level: Int,
     sqlId: Long,
     plan: SparkPlanInfo,
     metrics: Map[Long, Long]
@@ -34,21 +33,21 @@ case object SqlNodeTranslator extends SqlTranslator[SqlNodeReport] {
       metrics = plan.metrics.map(resolveMetricInfo(_, metrics))
     )
     val childNode = plan.children.zipWithIndex.flatMap { case (pi, i) =>
-      convert(jobName, baseCoord + s".${i}", level + 1, sqlId, pi, metrics)
+      convert(jobName, baseCoord + s".${i}", sqlId, pi, metrics)
     }
     Seq(currNode) ++ childNode
   }
 
-  override def toReport(c: Config, preReport: SqlPreReport): Seq[SqlNodeReport] = {
+  override def toAllReports(c: Config, preReport: SqlPreReport): Seq[SqlNodeReport] = {
     val metrics = preReport.metrics
     val sqlId = preReport.collect.id
-    val plan = preReport.collect.p
-    val nodes = convert(preReport.collect.description, "0", 1, sqlId, plan, metrics)
-    nodes.filter(n => c.glasses.forall(g => n.eligible(g)))
+    val plan = preReport.collect.plan
+    val nodes = convert(preReport.collect.description, "0", sqlId, plan, metrics)
+    nodes
   }
 }
 
 case object SqlPrettyTranslator extends SqlTranslator[StrReport] {
-  override def toReport(c: Config, r: SqlPreReport): Seq[StrReport] =
-    Seq(StrReport(SparkPlanInfoPrettifier.prettify(r.collect.p, r.metrics)))
+  override def toAllReports(c: Config, report: SqlPreReport): Seq[StrReport] =
+    Seq(StrReport(SparkPlanInfoPrettifier.prettify(report.collect.plan, report.metrics)))
 }

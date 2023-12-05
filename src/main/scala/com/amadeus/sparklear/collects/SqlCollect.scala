@@ -5,6 +5,6 @@ import org.apache.spark.sql.execution.SparkPlanInfo
 
 case class SqlCollect(
   id: Long,
-  p: SparkPlanInfo,
+  plan: SparkPlanInfo,
   description: String
 ) extends Collect[SqlPreReport]

@@ -7,7 +7,7 @@ import com.amadeus.sparklear.reports.{JobReport, Report, StrReport}
 sealed trait JobTranslator[T <: Report] extends Translator[JobPreReport, T]
 
 case object JobJsonTranslator extends JobTranslator[JobReport] {
-  override def toReport(c: Config, preReport: JobPreReport): Seq[JobReport] = {
+  override def toAllReports(c: Config, preReport: JobPreReport): Seq[JobReport] = {
     val col = preReport.collect
     val end = preReport.endUpdate
     val (spillMb, totalExecCpuTimeSec) = end.spillAndCpu
@@ -26,7 +26,7 @@ case object JobJsonTranslator extends JobTranslator[JobReport] {
 }
 
 case object JobPrettyTranslator extends JobTranslator[StrReport] {
-  override def toReport(c: Config, preReport: JobPreReport): Seq[StrReport] = {
+  override def toAllReports(c: Config, preReport: JobPreReport): Seq[StrReport] = {
     val col = preReport.collect
     val end = preReport.endUpdate
     val (spillMb, totalExecCpuTimeSec) = end.spillAndCpu

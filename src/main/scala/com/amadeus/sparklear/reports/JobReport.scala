@@ -15,5 +15,4 @@ case class JobReport(
   stages: Int
 ) extends Report {
   override def asStringReport: StringReport = asJson(this)(DefaultFormats)
-  override def eligible(g: Glass): Boolean = true
 }
