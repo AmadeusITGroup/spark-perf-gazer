@@ -17,7 +17,7 @@ trait ConfigSupport {
     def withGlasses(g: Seq[Glass]): Config = c.copy(glasses = g)
     def withStringSink(ss: String => Unit): Config = c.copy(stringSink = Some(ss))
     def withOutputSink(ss: Report => Unit): Config = c.copy(outputSink = Some(ss))
-    def withInputSink(ss: PreReport => Unit): Config = c.copy(inputSink = Some(ss))
+    def withPreReportSink(ss: PreReport => Unit): Config = c.copy(preReportSink = Some(ss))
   }
 
   def defaultTestConfig: Config = {

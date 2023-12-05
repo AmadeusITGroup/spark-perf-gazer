@@ -49,7 +49,7 @@ class SparklEar(c: Config) extends SparkListener {
     val si = StagePreReport(sw)
 
     // sink the stage input (for testing)
-    c.inputSink.foreach(ss => ss(si))
+    c.preReportSink.foreach(ss => ss(si))
 
     // sink the stage input serialized (as string, and as objects)
     if (c.showStages) {
@@ -80,7 +80,7 @@ class SparklEar(c: Config) extends SparkListener {
     val ji = JobPreReport(jobCollect, EndUpdate(finalStages = stagesIdAndStats, jobEnd = jobEnd))
 
     // sink the job input (for testing)
-    c.inputSink.foreach(ss => ss(ji))
+    c.preReportSink.foreach(ss => ss(ji))
 
     // sink the job input serialized (as string, and as objects)
     if (c.showJobs) {
@@ -132,7 +132,7 @@ class SparklEar(c: Config) extends SparkListener {
     val si = SqlPreReport(sqlCollect, metricCollects.toScalaMap ++ m)
 
     // sink the SQL input (for testing)
-    c.inputSink.foreach(ss => ss(si))
+    c.preReportSink.foreach(ss => ss(si))
 
     // sink the SQL input serialized (as string, and as objects)
     if (c.showSqls) {

@@ -14,7 +14,7 @@ class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport wi
     withSpark() { spark =>
       val df = readOptd(spark)
       val inputs = new ListBuffer[PreReport]()
-      val cfg = defaultTestConfig.withAllEnabled.withInputSink(inputs.+=)
+      val cfg = defaultTestConfig.withAllEnabled.withPreReportSink(inputs.+=)
       val eventsListener = new SparklEar(cfg)
       spark.sparkContext.addSparkListener(eventsListener)
       spark.sparkContext.setJobGroup("test group", "test job")
