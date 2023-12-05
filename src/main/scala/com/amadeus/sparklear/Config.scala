@@ -1,6 +1,6 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.translators.{JobJson, JobTranslator, SqlJson, SqlTranslator, StageJson, StageTranslator}
+import com.amadeus.sparklear.translators.{JobJsonTranslator, JobTranslator, SqlNodeTranslator, SqlTranslator, StageJson, StageTranslator}
 import com.amadeus.sparklear.prereports.PreReport
 import com.amadeus.sparklear.reports.Report
 import com.amadeus.sparklear.reports.glasses.Glass
@@ -13,8 +13,8 @@ case class Config(
                    inputSink: Option[PreReport => Unit] = None, // for testing purposes
                    stringSink: Option[String => Unit] = None,
                    outputSink: Option[Report => Unit] = None,
-                   sqlSerializer: SqlTranslator[_ <: Report] = SqlJson,
-                   jobSerializer: JobTranslator = JobJson,
+                   sqlSerializer: SqlTranslator[_ <: Report] = SqlNodeTranslator,
+                   jobSerializer: JobTranslator[_ <: Report] = JobJsonTranslator,
                    stageSerializer: StageTranslator = StageJson,
                    glasses: Seq[Glass] = Seq.empty[Glass],
                    maxCacheSize: Int = Config.DefaultCacheSize

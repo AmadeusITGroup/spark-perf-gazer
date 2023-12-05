@@ -41,7 +41,8 @@ object Fixtures {
     val rootSqlReport = SqlPreReport(
       w = SqlCollect(
         id  = 1,
-        p = p1
+        p = p1,
+        description = "toto"
       ),
       m = Map(
         48L -> 44662949L,

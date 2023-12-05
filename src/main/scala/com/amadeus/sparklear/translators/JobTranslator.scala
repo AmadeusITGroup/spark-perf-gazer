@@ -2,31 +2,38 @@ package com.amadeus.sparklear.translators
 
 import com.amadeus.sparklear.Config
 import com.amadeus.sparklear.prereports.JobPreReport
-import com.amadeus.sparklear.reports.StrReport
-import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization.{write => asJson}
+import com.amadeus.sparklear.reports.{JobReport, Report, StrReport}
 
-sealed trait JobTranslator extends Translator[JobPreReport, StrReport]
+sealed trait JobTranslator[T <: Report] extends Translator[JobPreReport, T]
 
-case object JobJson extends JobTranslator {
-  override def toReport(c: Config, r: JobPreReport): Seq[StrReport] = {
-    Seq(StrReport(asJson(r)(DefaultFormats)))
+case object JobJsonTranslator extends JobTranslator[JobReport] {
+  override def toReport(c: Config, preReport: JobPreReport): Seq[JobReport] = {
+    val col = preReport.collect
+    val end = preReport.endUpdate
+    val (spillMb, totalExecCpuTimeSec) = end.spillAndCpu
+    Seq(
+      JobReport(
+        jobId = end.jobEnd.jobId,
+        groupId = col.group,
+        jobName = col.name,
+        sqlId = col.sqlId,
+        spillMb = spillMb,
+        totalExecCpuTimeSec = totalExecCpuTimeSec,
+        stages = col.initialStages.size
+      )
+    )
   }
 }
 
-case object JobPretty extends JobTranslator {
-  override def toReport(c: Config, ji: JobPreReport): Seq[StrReport] = {
-    val w = ji.w
-    val v = {
-      val u = ji.e
-      val totalExecCpuTimeSec = u.finalStages.collect { case (_, Some(stgStats)) => stgStats.execCpuSecs }.sum
-      val spillMb = u.finalStages.collect { case (_, Some(stgStats)) => stgStats.spillMb }.flatten.sum
-      val spillReport = if (spillMb != 0) s"SPILL_MB=$spillMb" else ""
-      val header =
-        s"JOB ID=${u.jobEnd.jobId} GROUP='${w.group}' NAME='${w.name}' SQL_ID=${w.sqlId} ${spillReport}"
-      val jobStats = s"STAGES=${w.initialStages.size} TOTAL_CPU_SEC=${totalExecCpuTimeSec}"
-      s"$header $jobStats"
-    }
-    Seq(StrReport(v))
+case object JobPrettyTranslator extends JobTranslator[StrReport] {
+  override def toReport(c: Config, preReport: JobPreReport): Seq[StrReport] = {
+    val col = preReport.collect
+    val end = preReport.endUpdate
+    val (spillMb, totalExecCpuTimeSec) = end.spillAndCpu
+    val spillReport = if (spillMb != 0) s"SPILL_MB=$spillMb" else ""
+    val header =
+      s"JOB ID=${end.jobEnd.jobId} GROUP='${col.group}' NAME='${col.name}' SQL_ID=${col.sqlId} ${spillReport}"
+    val jobStats = s"STAGES=${col.initialStages.size} TOTAL_CPU_SEC=${totalExecCpuTimeSec}"
+    Seq(StrReport(s"$header $jobStats"))
   }
 }

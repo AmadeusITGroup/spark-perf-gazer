@@ -14,7 +14,7 @@ case object StageJson extends StageTranslator {
   }
 }
 
-case object StagePretty extends StageTranslator {
+case object StagePrettyTranslator extends StageTranslator {
   override def toReport(c: Config, r: StagePreReport): Seq[StrReport] = {
     val p = r.w
     val spillRep = p.spillMb.map(i => s" SPILL_MB=$i").mkString

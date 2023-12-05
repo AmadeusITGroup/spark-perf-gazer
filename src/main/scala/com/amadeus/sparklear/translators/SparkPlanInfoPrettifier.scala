@@ -27,8 +27,5 @@ object SparkPlanInfoPrettifier {
     s1
   }
 
-  def prettifySingleLine(id: Long, planInfo: SparkPlanInfo): String = {
-    s"SQL_ID=${id}"
-  }
 }
 

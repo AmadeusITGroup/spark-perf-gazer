@@ -1,9 +1,9 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.translators.{JobPretty, SqlJson, SqlJsonFlat, SqlPretty, SqlSingleLine, StagePretty}
-import com.amadeus.sparklear.prereports.{PreReport, JobPreReport, SqlPreReport, StagePreReport}
+import com.amadeus.sparklear.translators.{JobPrettyTranslator, SqlNodeTranslator, SqlPrettyTranslator, StagePrettyTranslator}
+import com.amadeus.sparklear.prereports.{JobPreReport, PreReport, SqlPreReport, StagePreReport}
 import com.amadeus.sparklear.reports.glasses.SqlNodeGlass
-import com.amadeus.sparklear.reports.{StrReport, SqlNodeReport}
+import com.amadeus.sparklear.reports.{SqlNodeReport, StrReport}
 import com.amadeus.testfwk.{ConfigSupport, JsonSupport, OptdSupport, SimpleSpec, SparkSupport}
 
 import scala.collection.mutable.ListBuffer
@@ -25,25 +25,9 @@ class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport wi
       }
 
       describe("should generate a basic SQL report") {
-        // with JSON serializer
         val inputSql = inputs.collect { case s: SqlPreReport => s }.head
-        it("with json serializer") {
-          val r = SqlJson.toStringReport(cfg, inputSql)
-          query(r, ".id") shouldEqual Array(1)
-          query(r, ".p.nodeName") shouldEqual Array("OverwriteByExpression")
-          query(r, ".p.children[0].nodeName") shouldEqual Array("Scan csv ")
-          query(r, ".p.children[0].metrics[*].name") shouldEqual
-            Array("number of output rows", "number of files read", "metadata time", "size of files read")
-          query(r, ".p.children[0].metrics[*].metricType") shouldEqual Array("OK", "OK", "OK", "OK")
-          query(r, ".p.children[0].metrics[*].accumulatorId") shouldEqual Array(
-            124189,
-            1,
-            0,
-            44662949
-          ) // scalastyle:ignore magic.number
-        }
-        it("with jsonflat serializer") {
-          val r = SqlJsonFlat.toReport(cfg, inputSql)
+        it("with sqlnode translator") {
+          val r = SqlNodeTranslator.toReport(cfg, inputSql)
           r.size should be(2)
           r.head should be(SqlNodeReport(1, "OverwriteByExpression", 1, "0", Seq.empty[(String, String)]))
           val m = Seq(
@@ -54,22 +38,22 @@ class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport wi
           )
           r.last should be(SqlNodeReport(1, "Scan csv ", 2, "0.0", m))
         }
-        describe("with jsonflat serializer filtered") {
-          it ("by nodename ...ByExpr...") {
+        describe("with sqlnode translator filtered") {
+          it("by nodename ...ByExpr...") {
             val g = Seq(SqlNodeGlass(nodeNameRegex = Some(".*ByExpr.*")))
             val cfg = defaultTestConfig.withAllEnabled.withGlasses(g)
-            val r = SqlJsonFlat.toReport(cfg, inputSql)
+            val r = SqlNodeTranslator.toReport(cfg, inputSql)
             r should be(Seq(SqlNodeReport(1, "OverwriteByExpression", 1, "0", Seq.empty[(String, String)])))
           }
-          it ("by metric number_of_files_read") {
+          it("by metric number_of_files_read") {
             val g = Seq(SqlNodeGlass(metricRegex = Some("number of files read")))
             val cfg = defaultTestConfig.withAllEnabled.withGlasses(g)
-            val r = SqlJsonFlat.toReport(cfg, inputSql)
+            val r = SqlNodeTranslator.toReport(cfg, inputSql)
             r.map(_.name) should be(Seq("Scan csv "))
           }
         }
-        it("with pretty serializer") {
-          val r = SqlPretty.toStringReport(cfg, inputSql)
+        it("with pretty translator") {
+          val r = SqlPrettyTranslator.toStringReport(cfg, inputSql)
           r should include regex ("Operator OverwriteByExpression | OverwriteByExpression")
           // scalastyle:off line.size.limit
           r should include regex ("  Operator Scan csv  | FileScan csv \\[iata_code#17,icao_code#18,faa_code#19,is_geonames#20,geoname_id#21,envelope_id#22,name#23,asciiname#24,latitude#25,longitude#26,fclass#27,fcode#28,page_rank#29,date_from#30,date_until#31,comment#32,country_code#33,cc2#34,country_name#35,continent_name#36,adm1_code#37,adm1_name_utf#38,adm1_name_ascii#39,adm2_code#40,... 27 more fields\\] Batched: false, DataFilters: \\[\\], Format: CSV, Location: InMemoryFileIndex\\(1 paths\\)\\[file:.*/src/test/resources/optd_por_publi..., PartitionFilters: \\[\\], PushedFilters: \\[\\], ReadSchema: struct<iata_code:string,icao_code:string,faa_code:string,is_geonames:string,geoname_id:string,env...")
@@ -77,24 +61,17 @@ class ReadCsvToNoopSpec extends SimpleSpec with SparkSupport with OptdSupport wi
           r should include regex ("   - Metrics: 'number_of_output_rows'=124189,'number_of_files_read'=1,'metadata_time'=.*,'size_of_files_read'=44662949")
           // scalastyle:on line.size.limit
         }
-
-        it("with singleline serializer") {
-          val r = SqlSingleLine.toReport(cfg, inputSql)
-          r should equal(Seq(StrReport("SQL_ID=1")))
-        }
       }
 
       it("should generate a basic JOB report (pretty)") {
-        // with PRETTY serializer
         val inputJob = inputs.collect { case s: JobPreReport => s }.head
-        val r = JobPretty.toStringReport(cfg, inputJob)
+        val r = JobPrettyTranslator.toStringReport(cfg, inputJob)
         r should include regex ("JOB ID=1 GROUP='test group' NAME='test job' SQL_ID=1  STAGES=1 TOTAL_CPU_SEC=.*")
       }
 
       it("should generate a basic STAGE report (pretty)") {
-        // with PRETTY serializer
         val inputStage = inputs.collect { case s: StagePreReport => s }.head
-        val r = StagePretty.toStringReport(cfg, inputStage)
+        val r = StagePrettyTranslator.toStringReport(cfg, inputStage)
         r should include regex ("STAGE ID=1 READ_MB=42 WRITE_MB=0 SHUFFLE_READ_MB=0 SHUFFLE_WRITE_MB=0 EXEC_CPU_SECS=.* ATTEMPT=0")
       }
 

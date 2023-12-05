@@ -103,8 +103,9 @@ class SparklEar(c: Config) extends SparkListener {
         event.accumUpdates.foreach{case (k, v) => metricCollects.put(k, v)}
       case _: SparkListenerSQLAdaptiveSQLMetricUpdates =>
         // TODO: ignored for now, maybe adds more metrics?
-      case event: SparkListenerSQLAdaptiveExecutionUpdate =>
-        sqlCollects.put(event.executionId, SqlCollect(event.executionId, event.sparkPlanInfo))
+      case _: SparkListenerSQLAdaptiveExecutionUpdate =>
+        // TODO: ignored for now, maybe adds more metrics?
+        //sqlCollects.put(event.executionId, SqlCollect(event.executionId, event.sparkPlanInfo, event.))
       case event: SparkListenerSQLExecutionEnd =>
         onSqlEnd(event)
       case _ =>
@@ -112,7 +113,7 @@ class SparklEar(c: Config) extends SparkListener {
   }
 
   private def onSqlStart(event: SparkListenerSQLExecutionStart): Unit = {
-    sqlCollects.put(event.executionId, SqlCollect(event.executionId, event.sparkPlanInfo))
+    sqlCollects.put(event.executionId, SqlCollect(event.executionId, event.sparkPlanInfo, event.description))
   }
 
 

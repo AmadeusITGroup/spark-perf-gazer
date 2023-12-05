@@ -1,7 +1,6 @@
 package com.amadeus.sparklear.collects
 
 import com.amadeus.sparklear.prereports.JobPreReport
-import com.amadeus.sparklear.collects.JobCollect.EndUpdate
 import org.apache.spark.scheduler.{SparkListenerJobEnd, SparkListenerJobStart, StageInfo}
 
 import java.util.Properties
@@ -11,15 +10,20 @@ case class JobCollect(
   group: String,
   sqlId: String,
   initialStages: Seq[StageRef]
-) extends Collect[JobPreReport] {
-}
+) extends Collect[JobPreReport] {}
 
 object JobCollect {
 
   case class EndUpdate(
-                        finalStages: Seq[(StageRef, Option[StageCollect])],
-                        jobEnd: SparkListenerJobEnd
-  )
+    finalStages: Seq[(StageRef, Option[StageCollect])],
+    jobEnd: SparkListenerJobEnd
+  ) {
+    def spillAndCpu: (Long, Long) = {
+      val spillMb = finalStages.collect { case (_, Some(stgStats)) => stgStats.spillMb }.flatten.sum
+      val totalExecCpuTimeSec = finalStages.collect { case (_, Some(stgStats)) => stgStats.execCpuSecs }.sum
+      (spillMb, totalExecCpuTimeSec)
+    }
+  }
 
   // Copied from org.apache.spark.context to keep them in this package
   private val SPARK_JOB_DESCRIPTION = "spark.job.description"

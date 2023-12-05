@@ -1,6 +1,8 @@
 package com.amadeus.sparklear.reports
 
 import com.amadeus.sparklear.reports.glasses.{Glass, SqlNodeGlass}
+import org.json4s.DefaultFormats
+import org.json4s.jackson.Serialization.{write => asJson}
 
 case class SqlNodeReport(
   sqlId: Long,
@@ -9,8 +11,7 @@ case class SqlNodeReport(
   coord: String,
   metrics: Seq[(String, String)]
 ) extends Report {
-  override def asStringReport(): String =
-    s"SQL_ID=$sqlId NAME=${name} L=${level}, COORD=${coord} METRICS=${metrics.mkString(",")}"
+  override def asStringReport(): String = asJson(this)(DefaultFormats)
 
   private def check(g: SqlNodeGlass): Boolean = {
     val n = g.nodeNameRegex.map(r => name.matches(r)).getOrElse(true)

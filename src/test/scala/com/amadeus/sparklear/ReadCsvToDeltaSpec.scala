@@ -41,7 +41,7 @@ class ReadCsvToDeltaSpec
             it("by nodename") {
               val g = Seq(SqlNodeGlass(nodeNameRegex = Some(".*Scan .*")))
               val cfg = defaultTestConfig.withAllEnabled.withGlasses(g)
-              val r = inputSqls.flatMap(i => SqlJsonFlat.toReport(cfg, i))
+              val r = inputSqls.flatMap(i => SqlNodeTranslator.toReport(cfg, i))
               r.map(i => i.name).distinct should contain allOf (
                 "Scan csv ",
                 "Scan ExistingRDD",
