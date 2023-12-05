@@ -30,15 +30,15 @@ trait SinkSupport {
       echoReport: Boolean = false
     ): Config = c.copy(
       preReportSink = Some { i =>
-        if (echoPreReport) { println(i) }
+        if (echoPreReport) { println(i) } // scalastyle:ignore regex
         s.preReports.+=(i)
       },
       stringReportSink = Some { i =>
-        if (echoStringReport) { println(i) }
+        if (echoStringReport) { println(i) } // scalastyle:ignore regex
         s.stringReports.+=(i)
       },
       reportSink = Some { i =>
-        if (echoReport) { println(i) }
+        if (echoReport) { println(i) } // scalastyle:ignore regex
         s.reports.+=(i)
       }
     )
