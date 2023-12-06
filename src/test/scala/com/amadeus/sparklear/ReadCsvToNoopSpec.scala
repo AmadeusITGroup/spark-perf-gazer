@@ -68,7 +68,7 @@ class ReadCsvToNoopSpec
         it("should build job preReports (JobPrettyTranslator)") {
           val inputJob = sinks.jobPreReports.head
           val r = JobPrettyTranslator.toStringReports(cfg, inputJob).mkString("\n")
-          r should include regex ("JOB ID=1 GROUP='testgroup' NAME='testjob' SQL_ID=1  STAGES=1 TOTAL_CPU_SEC=.*")
+          r should include regex ("JOB ID=1 GROUP='testgroup' NAME='testjob' SQL_ID=1 STAGES=1 TOTAL_CPU_SEC=.*")
         }
 
         it("should build stage preReports (StagePrettyTranslator)") {

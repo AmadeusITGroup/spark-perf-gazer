@@ -30,9 +30,9 @@ case object JobPrettyTranslator extends JobTranslator[StrReport] {
     val col = preReport.collect
     val end = preReport.endUpdate
     val (spillMb, totalExecCpuTimeSec) = end.spillAndCpu
-    val spillReport = if (spillMb != 0) s"SPILL_MB=$spillMb" else ""
+    val spillReport = if (spillMb != 0) s" SPILL_MB=$spillMb" else ""
     val header =
-      s"JOB ID=${end.jobEnd.jobId} GROUP='${col.group}' NAME='${col.name}' SQL_ID=${col.sqlId} ${spillReport}"
+      s"JOB ID=${end.jobEnd.jobId} GROUP='${col.group}' NAME='${col.name}' SQL_ID=${col.sqlId}${spillReport}"
     val jobStats = s"STAGES=${col.initialStages.size} TOTAL_CPU_SEC=${totalExecCpuTimeSec}"
     Seq(StrJobReport(s"$header $jobStats"))
   }
