@@ -68,26 +68,28 @@ class SparklEar(c: Config) extends SparkListener {
     */
   override def onJobEnd(jobEnd: SparkListenerJobEnd): Unit = {
     val jobId = jobEnd.jobId
-    val jobCollect = jobCollects.get(jobId) // retrieve initial image of job
-    val stagesIdAndStats = jobCollect.initialStages.map { sd => // retrieve image of stages
-      (sd, Option(stageCollects.get(sd.id)))
+    val jobCollectOpt = Option(jobCollects.get(jobId)) // retrieve initial image of job (it could have been purged)
+    jobCollectOpt.foreach { jobCollect =>
+      val stagesIdAndStats = jobCollect.initialStages.map { sd => // retrieve image of stages
+        (sd, Option(stageCollects.get(sd.id)))
+      }
+
+      // generate the job input
+      val ji = JobPreReport(jobCollect, EndUpdate(finalStages = stagesIdAndStats, jobEnd = jobEnd))
+
+      if (c.showJobs) {
+        // sink the job input (for testing)
+        c.preReportSink.foreach(ss => ss(ji))
+        // sink the job input serialized (as string, and as objects)
+        c.reportSink.foreach(ss => c.jobTranslator.toReports(c, ji).map(ss))
+        c.stringReportSink.foreach(ss => c.jobTranslator.toStringReports(c, ji).map(ss))
+      }
+
+      // purge
+      jobCollects.remove(jobId)
+      val stageIds = jobCollect.initialStages.map(_.id)
+      stageIds.foreach(i => stageCollects.remove(i))
     }
-
-    // generate the job input
-    val ji = JobPreReport(jobCollect, EndUpdate(finalStages = stagesIdAndStats, jobEnd = jobEnd))
-
-    if (c.showJobs) {
-      // sink the job input (for testing)
-      c.preReportSink.foreach(ss => ss(ji))
-      // sink the job input serialized (as string, and as objects)
-      c.reportSink.foreach(ss => c.jobTranslator.toReports(c, ji).map(ss))
-      c.stringReportSink.foreach(ss => c.jobTranslator.toStringReports(c, ji).map(ss))
-    }
-
-    // purge
-    jobCollects.remove(jobId)
-    val stageIds = jobCollect.initialStages.map(_.id)
-    stageIds.foreach(i => stageCollects.remove(i))
   }
 
   override def onOtherEvent(event: SparkListenerEvent): Unit = {
