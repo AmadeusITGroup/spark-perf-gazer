@@ -123,23 +123,25 @@ class SparklEar(c: Config) extends SparkListener {
   private def onSqlEnd(event: SparkListenerSQLExecutionEnd): Unit = {
     val m = SparkInternal.executedPlanMetrics(event)
 
-    // get the initial sql collect information
-    val sqlCollect = sqlCollects.get(event.executionId)
+    // get the initial sql collect information (it could have been purged)
+    val sqlCollectOpt = Option(sqlCollects.get(event.executionId))
 
-    // generate the SQL input
-    val si = SqlPreReport(sqlCollect, sqlMetricCollects.toScalaMap ++ m)
+    sqlCollectOpt.foreach { sqlCollect =>
+      // generate the SQL input
+      val si = SqlPreReport(sqlCollect, sqlMetricCollects.toScalaMap ++ m)
 
-    if (c.showSqls) {
-      // sink the SQL input (for testing)
-      c.preReportSink.foreach(ss => ss(si))
-      // sink the SQL input serialized (as string, and as objects)
-      c.reportSink.foreach(ss => c.sqlTranslator.toReports(c, si).map(ss))
-      c.stringReportSink.foreach(ss => c.sqlTranslator.toStringReports(c, si).map(ss))
+      if (c.showSqls) {
+        // sink the SQL input (for testing)
+        c.preReportSink.foreach(ss => ss(si))
+        // sink the SQL input serialized (as string, and as objects)
+        c.reportSink.foreach(ss => c.sqlTranslator.toReports(c, si).map(ss))
+        c.stringReportSink.foreach(ss => c.sqlTranslator.toStringReports(c, si).map(ss))
+      }
+
+      // purge
+      sqlCollects.remove(event.executionId)
+      m.keys.foreach(sqlMetricCollects.remove)
     }
-
-    // purge
-    sqlCollects.remove(event.executionId)
-    m.keys.foreach(sqlMetricCollects.remove)
   }
 
 }
