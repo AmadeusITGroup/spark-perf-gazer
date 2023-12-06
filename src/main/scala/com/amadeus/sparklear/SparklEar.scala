@@ -43,10 +43,9 @@ class SparklEar(c: Config) extends SparkListener {
     // store stage collect for the use in jobs
     stageCollects.put(stageCompleted.stageInfo.stageId, sw)
 
-    // generate the stage input
-    val si = StagePreReport(sw)
-
     if (c.showStages) {
+      // generate the stage input
+      val si = StagePreReport(sw)
       // sink the stage input (for testing)
       c.preReportSink.foreach(ss => ss(si))
       // sink the stage input serialized (as string, and as objects)
@@ -74,10 +73,9 @@ class SparklEar(c: Config) extends SparkListener {
         (sd, Option(stageCollects.get(sd.id)))
       }
 
-      // generate the job input
-      val ji = JobPreReport(jobCollect, EndUpdate(finalStages = stagesIdAndStats, jobEnd = jobEnd))
-
       if (c.showJobs) {
+        // generate the job input
+        val ji = JobPreReport(jobCollect, EndUpdate(finalStages = stagesIdAndStats, jobEnd = jobEnd))
         // sink the job input (for testing)
         c.preReportSink.foreach(ss => ss(ji))
         // sink the job input serialized (as string, and as objects)
@@ -127,10 +125,9 @@ class SparklEar(c: Config) extends SparkListener {
     val sqlCollectOpt = Option(sqlCollects.get(event.executionId))
 
     sqlCollectOpt.foreach { sqlCollect =>
-      // generate the SQL input
-      val si = SqlPreReport(sqlCollect, sqlMetricCollects.toScalaMap ++ m)
-
       if (c.showSqls) {
+        // generate the SQL input
+        val si = SqlPreReport(sqlCollect, sqlMetricCollects.toScalaMap ++ m)
         // sink the SQL input (for testing)
         c.preReportSink.foreach(ss => ss(si))
         // sink the SQL input serialized (as string, and as objects)
