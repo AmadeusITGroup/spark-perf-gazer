@@ -2,7 +2,7 @@ package com.amadeus.sparklear.translators
 
 import com.amadeus.sparklear.Config
 import com.amadeus.sparklear.prereports.SqlPreReport
-import com.amadeus.sparklear.reports.{Report, SqlPlanNodeReport, StrReport}
+import com.amadeus.sparklear.reports.{Report, SqlPlanNodeReport, StrReport, StrSqlReport}
 import com.amadeus.sparklear.collects.SqlCollect
 import org.apache.spark.sql.execution.SparkPlanInfo
 import org.apache.spark.sql.execution.metric.SQLMetricInfo
@@ -53,5 +53,5 @@ case object SqlPlanNodeTranslator extends SqlTranslator[SqlPlanNodeReport] {
 
 case object SqlPrettyTranslator extends SqlTranslator[StrReport] {
   override def toAllReports(c: Config, report: SqlPreReport): Seq[StrReport] =
-    Seq(StrReport(SparkPlanInfoPrettifier.prettify(report.collect.plan, report.metrics)))
+    Seq(StrSqlReport(SparkPlanInfoPrettifier.prettify(report.collect.plan, report.metrics)))
 }

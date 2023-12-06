@@ -2,7 +2,7 @@ package com.amadeus.sparklear.translators
 
 import com.amadeus.sparklear.Config
 import com.amadeus.sparklear.prereports.JobPreReport
-import com.amadeus.sparklear.reports.{JobReport, Report, StrReport}
+import com.amadeus.sparklear.reports.{JobReport, Report, StrJobReport, StrReport}
 
 sealed trait JobTranslator[T <: Report] extends Translator[JobPreReport, T]
 
@@ -34,6 +34,6 @@ case object JobPrettyTranslator extends JobTranslator[StrReport] {
     val header =
       s"JOB ID=${end.jobEnd.jobId} GROUP='${col.group}' NAME='${col.name}' SQL_ID=${col.sqlId} ${spillReport}"
     val jobStats = s"STAGES=${col.initialStages.size} TOTAL_CPU_SEC=${totalExecCpuTimeSec}"
-    Seq(StrReport(s"$header $jobStats"))
+    Seq(StrJobReport(s"$header $jobStats"))
   }
 }

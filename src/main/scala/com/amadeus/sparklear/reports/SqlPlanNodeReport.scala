@@ -1,5 +1,6 @@
 package com.amadeus.sparklear.reports
 
+import com.amadeus.sparklear.translators.Translator.{EntityName, EntitySql, StringReport}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.{write => asJson}
 
@@ -12,5 +13,6 @@ case class SqlPlanNodeReport(
   isLeaf: Boolean,
   parentNodeName: String,
 ) extends Report {
-  override def asStringReport(): String = asJson(this)(DefaultFormats)
+  override def entity: EntityName = EntitySql
+  override def asStringReport(): StringReport = asJson(this)(DefaultFormats)
 }

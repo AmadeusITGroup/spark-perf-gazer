@@ -13,6 +13,23 @@ import com.amadeus.sparklear.reports.Report
 import com.amadeus.sparklear.reports.glasses.Glass
 import com.amadeus.sparklear.translators.Translator.StringReport
 
+/**
+  *
+  * @param stringReportPrefix prefix to use when a [[StringReport]] is generated (help end-user discriminate SparklEar in logs)
+  * @param showSqls whether to expose to end-user SQL queries level reports
+  * @param showJobs whether to expose to end-user job level reports
+  * @param showStages whether to expose to end-user stage level reports
+  * @param preReportSink (internal) method to use as sink for completed [[PreReport]] instances
+  * @param stringReportSink optional method to use as sink for completed [[Report]] instances (as string)
+  * @param reportSink optional method to use as sink for completed [[Report]] instances
+  * @param sqlTranslator translator to use to generate [[Report]] for SQL queries
+  * @param jobTranslator translator to use to generate [[Report]] for jobs
+  * @param stageTranslator translator to use to generate [[Report]] for stages
+  * @param glasses filters to use on [[Report]]
+  * @param maxCacheSize maximum amount of elements [[Collect]] to keep in memory (per category)
+  *                     too large and could cause OOM on the driver, and too small could cause incomplete reports
+  *                     generated, so try stay around 200 to 1000 unless you really know what you're doing.
+  */
 case class Config(
   stringReportPrefix: String = Config.DefaultStringReportPrefix,
   showSqls: Boolean = true,
@@ -34,6 +51,6 @@ case class Config(
 }
 
 object Config {
-  val DefaultStringReportPrefix: String = "SPARKLEAR"
+  val DefaultStringReportPrefix: String = "SPARKLEAR "
   val DefaultCacheSize: Int = 200
 }

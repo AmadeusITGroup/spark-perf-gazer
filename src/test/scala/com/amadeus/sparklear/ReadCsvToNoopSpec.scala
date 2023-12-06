@@ -54,7 +54,7 @@ class ReadCsvToNoopSpec
           val r = SqlPlanNodeTranslator.toReports(cfg, inputSql)
           r.map(_.nodeName) should be(Seq("Scan csv "))
         }
-        it("should build SQL preReports (SqlPrettyTRanslator filtered by metric)") {
+        it("should build SQL preReports (SqlPrettyTranslator filtered by metric)") {
           val inputSql = sinks.sqlPreReports.head
           val r = SqlPrettyTranslator.toStringReports(cfg, inputSql).mkString("\n")
           r should include regex ("Operator OverwriteByExpression | OverwriteByExpression")
