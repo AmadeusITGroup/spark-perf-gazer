@@ -2,6 +2,16 @@ package com.amadeus.sparklear.reports.glasses
 
 import com.amadeus.sparklear.reports.{Report, SqlPlanNodeReport}
 
+/**
+  * Glass for SQL plan nodes
+  *
+  * @param jobNameRegex regex on the job name
+  * @param nodeNameRegex regex on the node name (Join, Project, Scan, ...)
+  * @param parentNodeNameRegex regex on the parent node name
+  * @param metricRegex regex on the metric name (number of files read, ...)
+  *                    a match in one metric is enough to keep the [[SqlPlanNodeReport]]
+  * @param isLeaf expression to filter on leaf value
+  */
 case class SqlNodeGlass(
   jobNameRegex: Option[String] = None,
   nodeNameRegex: Option[String] = None,
