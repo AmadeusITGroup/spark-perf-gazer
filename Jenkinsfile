@@ -16,8 +16,8 @@ def checkLastLog() {
 
 def configGit = {
   sh "git config --global credential.helper '!f() { sleep 1; echo \"username=${USERNAME}\npassword=${PASSWORD}\"; }; f'"
-  sh 'git config --global user.name "swb2-izu-ATI"'
-  sh 'git config --global user.email "swb2-izu-ATI@amadeus.com"'
+  sh 'git config --global user.name "${USERNAME}"'
+  sh 'git config --global user.email "${USERNAME}@amadeus.com"'
   sh 'git config --list'
 }
 
