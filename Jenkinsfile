@@ -3,7 +3,7 @@
 String dockerRepository = "dockerhub.rnd.amadeus.net:5005"
 String dockerImageFullName = "dihdlk-app:v2"
 
-String sbtOptions = "-Dsbt.log.noformat=true -Dsbt.override.build.repos=true -Dsbt.repository.config=.repositories"
+String sbtOptions = "-Dsbt.override.build.repos=true -Dsbt.repository.config=.repositories"
 def artifactoryRetries = 3
 
 def isTechnicalCommit = false
@@ -60,10 +60,12 @@ pipeline {
 
       steps {
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'IZ_USER', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
-          script {
-            configGit()
-            fetchMasterTags()
-            sh "sbt ${sbtOptions} -batch 'show latestTag unreleasedCommits suggestedBump'"
+          wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'gnome-terminal']) {
+            script {
+              configGit()
+              fetchMasterTags()
+              sh "sbt ${sbtOptions} -batch 'show latestTag unreleasedCommits suggestedBump'"
+            }
           }
         }
       }
@@ -76,7 +78,9 @@ pipeline {
       steps {
         script {
           withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'IZ_USER', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
-            sh "sbt ${sbtOptions} -batch clean compile"
+            wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'gnome-terminal']) {
+              sh "sbt ${sbtOptions} -batch clean compile"
+            }
           }
         }
       }
@@ -88,7 +92,9 @@ pipeline {
       }
 
       steps {
-        sh "sbt ${sbtOptions} -batch coverageOn test coverageReport coverageAggregate"
+        wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'gnome-terminal']) {
+          sh "sbt ${sbtOptions} -batch coverageOn test coverageReport coverageAggregate"
+        }
       }
     }
 
@@ -101,14 +107,16 @@ pipeline {
 
       steps {
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'IZ_USER', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
-          script {
-            configGit()
-            fetchMasterTags()
+          wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'gnome-terminal']) {
+            script {
+              configGit()
+              fetchMasterTags()
 
-            sh "git checkout ${env.BRANCH_NAME}"
-            sh "git branch -u origin/${env.BRANCH_NAME}"
-            sh "sbt ${sbtOptions} -batch 'release with-defaults skip-tests'"
-            currentBuild.displayName = getProjectVersion()
+              sh "git checkout ${env.BRANCH_NAME}"
+              sh "git branch -u origin/${env.BRANCH_NAME}"
+              sh "sbt ${sbtOptions} -batch 'release with-defaults skip-tests'"
+              currentBuild.displayName = getProjectVersion()
+            }
           }
         }
       }
@@ -122,10 +130,12 @@ pipeline {
         stage("Publish PR Snapshots to artifactory") {
           steps {
             withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'IZ_USER', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
-              script {
-                def generatedVersion = "${getProjectVersion()}.PR${CHANGE_ID}.COMMIT${env.GIT_COMMIT.take(8)}"
-                currentBuild.displayName = generatedVersion
-                sh "sbt 'set every version := \"${generatedVersion}\"' ${sbtOptions} publish"
+              wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'gnome-terminal']) {
+                script {
+                  def generatedVersion = "${getProjectVersion()}.PR${CHANGE_ID}.COMMIT${env.GIT_COMMIT.take(8)}"
+                  currentBuild.displayName = generatedVersion
+                  sh "sbt 'set every version := \"${generatedVersion}\"' ${sbtOptions} publish"
+                }
               }
             }
           }
