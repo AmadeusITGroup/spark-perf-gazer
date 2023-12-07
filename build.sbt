@@ -30,6 +30,7 @@ val testSettings = Seq(
     "-Xms512M",
     "-Xmx1G"
   ),
+  Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oD"),
   libraryDependencies ++= Dependencies.testDeps
 )
 
