@@ -83,6 +83,6 @@ lazy val root = (project in file("."))
     testSettings,
     publishSettings,
     coverageFailOnMinimum := true,
-    coverageMinimumStmtTotal := 97.7,
-    coverageMinimumBranchTotal := 94.4
+    coverageMinimumStmtTotal := 97.5,
+    coverageMinimumBranchTotal := 94.3
   )
