@@ -12,11 +12,11 @@ import org.json4s.jackson.Serialization.{write => asJson}
 sealed trait SqlTranslator[T <: Report] extends Translator[SqlPreReport, T]
 
 case object SqlPlanNodeTranslator extends SqlTranslator[SqlPlanNodeReport] {
-  final val DefaultAcumValue = -1
+  final val ValueNotFoundForMetricKeyAcumValue = -1
 
   private def resolveMetricInfo(m: SQLMetricInfo, ms: Map[Long, Long]): (String, String) = {
     val v = ms.get(m.accumulatorId)
-    (m.name, v.getOrElse(DefaultAcumValue).toString)
+    (m.name, v.getOrElse(ValueNotFoundForMetricKeyAcumValue).toString)
   }
 
   private def convert(

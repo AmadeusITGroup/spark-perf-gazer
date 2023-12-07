@@ -100,10 +100,10 @@ Settings -> Editor -> Code Style -> Scala -> Formatter: ScalaFMT
 ```
 # TODOs
 
-- [ ] Add diagram to explain basic architecture
+- [x] Add diagram to explain basic architecture
 - [ ] Use it in PRD projects (json2star, snowflake-push, ...)
 - [ ] Improve README to include comparison with other similar solution
-- [ ] Add test case with a join
+- [x] Add test case with a join
 - [ ] Any glass applies to any Report (could it be a performance issue if 100 glasses passed?)
 - [ ] This project must be dependency-free, so there is a fix to do on the logger library
 - [ ] Review the CappedMap (JMH benchmark?)
