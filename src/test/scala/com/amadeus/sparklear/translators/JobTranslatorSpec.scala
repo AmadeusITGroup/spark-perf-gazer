@@ -5,8 +5,8 @@ import com.amadeus.sparklear.collects.{JobCollect, StageCollect, StageRef}
 import com.amadeus.sparklear.prereports.JobPreReport
 import com.amadeus.sparklear.reports.StrJobReport
 import com.amadeus.testfwk.{ConfigSupport, SimpleSpec}
-import org.apache.spark.scheduler.SparkListenerJobEnd
-import org.apache.spark.scheduler.JobSucceeded
+import org.apache.spark.Fixtures2
+import org.apache.spark.scheduler.{JobSucceeded, SparkListenerJobEnd}
 
 class JobTranslatorSpec extends SimpleSpec with ConfigSupport {
 
@@ -16,17 +16,18 @@ class JobTranslatorSpec extends SimpleSpec with ConfigSupport {
       val jc = JobCollect(
         name = "job",
         group = "group",
-        sqlId = "1",
+        sqlId = "3",
         initialStages = Seq.empty[StageRef]
       )
+      val si = Fixtures2.Stage1.stageInfo
+      val sc = StageCollect(si)
       val eu = EndUpdate(
-        finalStages = Seq.empty[(StageRef, Option[StageCollect])],
-        jobEnd = SparkListenerJobEnd(1, 0, JobSucceeded)
+        finalStages = Seq((StageRef(1, 1), Some(sc))),
+        jobEnd = SparkListenerJobEnd(7, 0L, JobSucceeded)
       )
       val p = JobPreReport(jc, eu)
       val r = JobPrettyTranslator.toReports(c, p)
-      r should equal(Seq(StrJobReport("JOB ID=1 GROUP='group' NAME='job' SQL_ID=1 STAGES=0 TOTAL_CPU_SEC=0")))
-
+      r should equal(Seq(StrJobReport("JOB ID=7 GROUP='group' NAME='job' SQL_ID=3 SPILL_MB=3 STAGES=0 TOTAL_CPU_SEC=77")))
     }
   }
 
