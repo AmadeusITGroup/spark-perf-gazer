@@ -43,10 +43,9 @@ class SparklEar(c: Config) extends SparkListener {
     // store stage collect for the use in jobs
     stageCollects.put(stageCompleted.stageInfo.stageId, sw)
 
-    // generate the stage input
-    val si = StagePreReport(sw)
-
     if (c.showStages) {
+      // generate the stage input
+      val si = StagePreReport(sw)
       // sink the stage input (for testing)
       c.preReportSink.foreach(ss => ss(si))
       // sink the stage input serialized (as string, and as objects)
@@ -68,26 +67,27 @@ class SparklEar(c: Config) extends SparkListener {
     */
   override def onJobEnd(jobEnd: SparkListenerJobEnd): Unit = {
     val jobId = jobEnd.jobId
-    val jobCollect = jobCollects.get(jobId) // retrieve initial image of job
-    val stagesIdAndStats = jobCollect.initialStages.map { sd => // retrieve image of stages
-      (sd, Option(stageCollects.get(sd.id)))
+    val jobCollectOpt = Option(jobCollects.get(jobId)) // retrieve initial image of job (it could have been purged)
+    jobCollectOpt.foreach { jobCollect =>
+      val stagesIdAndStats = jobCollect.initialStages.map { sd => // retrieve image of stages
+        (sd, Option(stageCollects.get(sd.id)))
+      }
+
+      if (c.showJobs) {
+        // generate the job input
+        val ji = JobPreReport(jobCollect, EndUpdate(finalStages = stagesIdAndStats, jobEnd = jobEnd))
+        // sink the job input (for testing)
+        c.preReportSink.foreach(ss => ss(ji))
+        // sink the job input serialized (as string, and as objects)
+        c.reportSink.foreach(ss => c.jobTranslator.toReports(c, ji).map(ss))
+        c.stringReportSink.foreach(ss => c.jobTranslator.toStringReports(c, ji).map(ss))
+      }
+
+      // purge
+      jobCollects.remove(jobId)
+      val stageIds = jobCollect.initialStages.map(_.id)
+      stageIds.foreach(i => stageCollects.remove(i))
     }
-
-    // generate the job input
-    val ji = JobPreReport(jobCollect, EndUpdate(finalStages = stagesIdAndStats, jobEnd = jobEnd))
-
-    if (c.showJobs) {
-      // sink the job input (for testing)
-      c.preReportSink.foreach(ss => ss(ji))
-      // sink the job input serialized (as string, and as objects)
-      c.reportSink.foreach(ss => c.jobTranslator.toReports(c, ji).map(ss))
-      c.stringReportSink.foreach(ss => c.jobTranslator.toStringReports(c, ji).map(ss))
-    }
-
-    // purge
-    jobCollects.remove(jobId)
-    val stageIds = jobCollect.initialStages.map(_.id)
-    stageIds.foreach(i => stageCollects.remove(i))
   }
 
   override def onOtherEvent(event: SparkListenerEvent): Unit = {
@@ -121,23 +121,24 @@ class SparklEar(c: Config) extends SparkListener {
   private def onSqlEnd(event: SparkListenerSQLExecutionEnd): Unit = {
     val m = SparkInternal.executedPlanMetrics(event)
 
-    // get the initial sql collect information
-    val sqlCollect = sqlCollects.get(event.executionId)
+    // get the initial sql collect information (it could have been purged)
+    val sqlCollectOpt = Option(sqlCollects.get(event.executionId))
 
-    // generate the SQL input
-    val si = SqlPreReport(sqlCollect, sqlMetricCollects.toScalaMap ++ m)
+    sqlCollectOpt.foreach { sqlCollect =>
+      if (c.showSqls) {
+        // generate the SQL input
+        val si = SqlPreReport(sqlCollect, sqlMetricCollects.toScalaMap ++ m)
+        // sink the SQL input (for testing)
+        c.preReportSink.foreach(ss => ss(si))
+        // sink the SQL input serialized (as string, and as objects)
+        c.reportSink.foreach(ss => c.sqlTranslator.toReports(c, si).map(ss))
+        c.stringReportSink.foreach(ss => c.sqlTranslator.toStringReports(c, si).map(ss))
+      }
 
-    if (c.showSqls) {
-      // sink the SQL input (for testing)
-      c.preReportSink.foreach(ss => ss(si))
-      // sink the SQL input serialized (as string, and as objects)
-      c.reportSink.foreach(ss => c.sqlTranslator.toReports(c, si).map(ss))
-      c.stringReportSink.foreach(ss => c.sqlTranslator.toStringReports(c, si).map(ss))
+      // purge
+      sqlCollects.remove(event.executionId)
+      m.keys.foreach(sqlMetricCollects.remove)
     }
-
-    // purge
-    sqlCollects.remove(event.executionId)
-    m.keys.foreach(sqlMetricCollects.remove)
   }
 
 }
