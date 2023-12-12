@@ -1,11 +1,10 @@
 package com.amadeus.testfwk
 
-import com.typesafe.scalalogging.Logger
 import org.apache.spark.sql.SparkSession
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
 trait SparkSupport {
-  lazy val logger: Logger = Logger(LoggerFactory.getLogger(getClass.getName))
+  lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
 
   val DefaultConfigs: List[(String, String)] =
     List(

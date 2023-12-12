@@ -98,6 +98,7 @@ For code formatting setup:
 ```
 Settings -> Editor -> Code Style -> Scala -> Formatter: ScalaFMT
 ```
+
 # TODOs
 
 - [x] Add diagram to explain basic architecture
@@ -105,7 +106,7 @@ Settings -> Editor -> Code Style -> Scala -> Formatter: ScalaFMT
 - [ ] Improve README to include comparison with other similar solution
 - [x] Add test case with a join
 - [ ] Any glass applies to any Report (could it be a performance issue if 100 glasses passed?)
-- [ ] This project must be dependency-free, so there is a fix to do on the logger library
+- [x] This project must be dependency-free, so there is a fix to do on the logger library
 - [ ] Review the CappedMap (JMH benchmark?)
 - [ ] Add the missing link of SQL queries with children SQL queries
 - [ ] Add the missing link SQL queries with stages
