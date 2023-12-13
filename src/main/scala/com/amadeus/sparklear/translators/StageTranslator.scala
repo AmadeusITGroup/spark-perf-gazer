@@ -3,13 +3,14 @@ package com.amadeus.sparklear.translators
 import com.amadeus.sparklear.Config
 import com.amadeus.sparklear.prereports.StagePreReport
 import com.amadeus.sparklear.reports.{StrReport, StrStageReport}
-import com.amadeus.sparklear.translators.Translator.{EntityStage, TranslatorName}
+import com.amadeus.sparklear.translators.Translator.{EntityName, TranslatorName}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.{write => asJson}
 
 object StageTranslator {
+  val EntityNameStage: EntityName = "STAGE"
   val Translators: Seq[StageTranslator] = Seq(StageJson, StagePrettyTranslator)
-  def forName(s: TranslatorName): StageTranslator = Translator.forName(Translators)(EntityStage, s)
+  def forName(s: TranslatorName): StageTranslator = Translator.forName(Translators)(EntityNameStage, s)
 }
 
 sealed trait StageTranslator extends Translator[StagePreReport, StrReport]

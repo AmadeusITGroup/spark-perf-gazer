@@ -3,11 +3,12 @@ package com.amadeus.sparklear.translators
 import com.amadeus.sparklear.Config
 import com.amadeus.sparklear.prereports.JobPreReport
 import com.amadeus.sparklear.reports.{JobReport, Report, StrJobReport, StrReport}
-import com.amadeus.sparklear.translators.Translator.{EntityJob, TranslatorName}
+import com.amadeus.sparklear.translators.Translator.{EntityName, TranslatorName}
 
 object JobTranslator {
+  val EntityNameJob: EntityName = "JOB"
   val Translators: Seq[JobTranslator[_ <: Report]] = Seq(JobJsonTranslator, JobPrettyTranslator)
-  def forName(s: TranslatorName): JobTranslator[_ <: Report] = Translator.forName(Translators)(EntityJob, s)
+  def forName(s: TranslatorName): JobTranslator[_ <: Report] = Translator.forName(Translators)(EntityNameJob, s)
 }
 
 sealed trait JobTranslator[T <: Report] extends Translator[JobPreReport, T]

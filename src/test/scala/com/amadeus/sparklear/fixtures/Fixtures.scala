@@ -1,4 +1,4 @@
-package com.amadeus.sparklear
+package com.amadeus.sparklear.fixtures
 
 import com.amadeus.sparklear.prereports.SqlPreReport
 import org.apache.spark.sql.execution.SparkPlanInfo
@@ -47,7 +47,7 @@ object Fixtures {
       metrics = Map(
         48L -> 44662949L,
         46L -> 1L,
-        47L -> 0L
+        //47L -> 0L missing
       )
     )
   }

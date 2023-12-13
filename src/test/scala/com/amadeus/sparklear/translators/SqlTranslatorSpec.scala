@@ -1,6 +1,6 @@
 package com.amadeus.sparklear.translators
 
-import com.amadeus.sparklear.Fixtures
+import com.amadeus.sparklear.fixtures.Fixtures
 import com.amadeus.sparklear.reports.SqlPlanNodeReport
 import com.amadeus.testfwk.{ConfigSupport, SimpleSpec}
 
@@ -21,7 +21,7 @@ class SqlTranslatorSpec extends SimpleSpec with ConfigSupport {
             List(
               ("number of output rows", "-1"),
               ("number of files read", "1"),
-              ("metadata time", "0"),
+              ("metadata time", "-1"), // unresolved
               ("size of files read", "44662949")
             ),
             true,

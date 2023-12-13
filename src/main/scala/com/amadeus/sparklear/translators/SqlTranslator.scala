@@ -4,15 +4,16 @@ import com.amadeus.sparklear.Config
 import com.amadeus.sparklear.prereports.SqlPreReport
 import com.amadeus.sparklear.reports.{Report, SqlPlanNodeReport, StrReport, StrSqlReport}
 import com.amadeus.sparklear.collects.SqlCollect
-import com.amadeus.sparklear.translators.Translator.{EntitySql, TranslatorName}
+import com.amadeus.sparklear.translators.Translator.{EntityName, TranslatorName}
 import org.apache.spark.sql.execution.SparkPlanInfo
 import org.apache.spark.sql.execution.metric.SQLMetricInfo
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.{write => asJson}
 
 object SqlTranslator {
+  val EntityNameSql: EntityName = "SQL"
   val Translators: Seq[SqlTranslator[_ <: Report]] = Seq(SqlPlanNodeTranslator, SqlPrettyTranslator)
-  def forName(s: TranslatorName): SqlTranslator[_ <: Report] = Translator.forName(Translators)(EntitySql, s)
+  def forName(s: TranslatorName): SqlTranslator[_ <: Report] = Translator.forName(Translators)(EntityNameSql, s)
 }
 sealed trait SqlTranslator[T <: Report] extends Translator[SqlPreReport, T]
 

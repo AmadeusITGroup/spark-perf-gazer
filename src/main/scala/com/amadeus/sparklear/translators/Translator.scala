@@ -52,11 +52,7 @@ object Translator {
   type StringReport = String
   type EntityName = String
 
-  val EntitySql = "SQL"
-  val EntityJob = "JOB"
-  val EntityStage = "STAGE"
-
   def forName[T <: Translator[_, _]](s: Seq[T])(e: EntityName, n: TranslatorName): T =
     s.filter(t => t.name.equalsIgnoreCase(n)).headOption
-      .getOrElse(throw new IllegalArgumentException(s"Invalid translator for ${e}: ${n} (valid: ${s.map(_.name).mkString(",")})"))
+      .getOrElse(throw new IllegalArgumentException(s"Invalid translator '${n}' for entity ${e} (expected one of: ${s.map(_.name).mkString(", ")})"))
 }
