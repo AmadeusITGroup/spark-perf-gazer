@@ -39,6 +39,7 @@ class SparklEar(c: Config) extends SparkListener {
     * It is NOT a trigger for automatic purge of stages (job end will purge stages).
     */
   override def onStageCompleted(stageCompleted: SparkListenerStageCompleted): Unit = {
+    logger.trace("onStageCompleted(...)")
     // generate a stage collect
     val sw = StageCollect(stageCompleted.stageInfo)
 
@@ -62,6 +63,7 @@ class SparklEar(c: Config) extends SparkListener {
   }
 
   override def onJobStart(jobStart: SparkListenerJobStart): Unit = {
+    logger.trace("onJobStart(...)")
     jobCollects.put(jobStart.jobId, JobCollect.from(jobStart))
   }
 
@@ -70,6 +72,7 @@ class SparklEar(c: Config) extends SparkListener {
     * It is a trigger for automatic purge of job and stages.
     */
   override def onJobEnd(jobEnd: SparkListenerJobEnd): Unit = {
+    logger.trace("onJobEnd(...)")
     val jobId = jobEnd.jobId
     val jobCollectOpt = Option(jobCollects.get(jobId)) // retrieve initial image of job (it could have been purged)
     jobCollectOpt.foreach { jobCollect =>
@@ -98,6 +101,7 @@ class SparklEar(c: Config) extends SparkListener {
   }
 
   override def onOtherEvent(event: SparkListenerEvent): Unit = {
+    logger.trace("onOtherEvent(...)")
     event match {
       case event: SparkListenerSQLExecutionStart =>
         onSqlStart(event)
@@ -116,6 +120,7 @@ class SparklEar(c: Config) extends SparkListener {
   }
 
   private def onSqlStart(event: SparkListenerSQLExecutionStart): Unit = {
+    logger.trace("onSqlStart(...)")
     sqlCollects.put(event.executionId, SqlCollect(event.executionId, event.sparkPlanInfo, event.description))
   }
 
@@ -124,6 +129,7 @@ class SparklEar(c: Config) extends SparkListener {
     * It is a trigger for automatic purge of SQL queries and involved metrics.
     */
   private def onSqlEnd(event: SparkListenerSQLExecutionEnd): Unit = {
+    logger.trace("onSqlEnd(...)")
     val m = SparkInternal.executedPlanMetrics(event)
 
     // get the initial sql collect information (it could have been purged)
