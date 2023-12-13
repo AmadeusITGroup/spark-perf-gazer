@@ -1,14 +1,14 @@
 package com.amadeus.testfwk
 
-import com.typesafe.scalalogging.Logger
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
 import java.nio.file.{Files, Path}
 import scala.reflect.io.Directory
 
 trait TempDirSupport {
 
-  lazy val tmpDirLogger: Logger = Logger(LoggerFactory.getLogger(getClass.getName))
+  lazy val tmpDirLogger: Logger = LoggerFactory.getLogger(getClass.getName)
+
   /**
     * Method to be used in unit tests for automatic creation and cleaning of a temporary directory.
     */
@@ -28,4 +28,3 @@ trait TempDirSupport {
   def withTmpDirUncleaned[T](testCode: Path => T): T =
     withTmpDir(testCode = testCode, cleanupEnabled = false)
 }
-

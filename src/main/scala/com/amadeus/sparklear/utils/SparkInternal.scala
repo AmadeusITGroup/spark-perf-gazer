@@ -1,15 +1,14 @@
 package org.apache.spark.sql.execution.ui // ATTENTION: spark package to access to the event.qe.executedPlan
 
-import org.apache.spark.sql.execution.command.ExecutedCommandExec
-import org.apache.spark.sql.execution.datasources.v2.{OverwriteByExpressionExec, V2ExistingTableWriteExec}
-import org.apache.spark.sql.execution.metric.SQLMetric
 import org.apache.spark.sql.execution._
-import com.typesafe.scalalogging.Logger
-import org.slf4j.LoggerFactory
+import org.apache.spark.sql.execution.command.ExecutedCommandExec
+import org.apache.spark.sql.execution.datasources.v2.OverwriteByExpressionExec
+import org.apache.spark.sql.execution.metric.SQLMetric
+import org.slf4j.{Logger, LoggerFactory}
 
 object SparkInternal {
 
-  implicit lazy val logger: Logger = Logger(LoggerFactory.getLogger(getClass.getName))
+  implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
 
   val Empty = Map.empty[Long, Long]
 
