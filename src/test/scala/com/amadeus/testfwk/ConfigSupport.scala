@@ -15,6 +15,8 @@ trait ConfigSupport {
     def withJobTranslator(s: TranslatorName): Config = c.copy(jobTranslatorName = s)
     def withStageTranslator(s: TranslatorName): Config = c.copy(stageTranslatorName = s)
     def withAllEnabled: Config = c.copy(showSqls = true, showJobs = true, showStages = true)
+
+    def withAllDisabled: Config = c.copy(showSqls = false, showJobs = false, showStages = false)
     def withOnlySqlEnabled: Config = c.copy(showSqls = true, showJobs = false, showStages = false)
     def withGlasses(g: Seq[Glass]): Config = c.copy(glasses = g)
     def withStringSink(ss: String => Unit): Config = c.copy(stringReportSink = Some(ss))

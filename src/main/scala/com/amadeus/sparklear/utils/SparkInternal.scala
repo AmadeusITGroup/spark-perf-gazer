@@ -25,7 +25,6 @@ object SparkInternal {
       case i: ExecutedCommandExec => toMetric(i.metrics) // always empty?
       case i: SerializeFromObjectExec => toMetric(i.metrics) // always empty?
       case i: MapElementsExec => toMetric(i.metrics) // always empty?
-      case i: InputAdapter => toMetric(i.metrics) // always empty?
       case i: DeserializeToObjectExec => toMetric(i.metrics) // always empty?
       case i: MapPartitionsExec => toMetric(i.metrics) // always empty?
       case i: OverwriteByExpressionExec => toMetric(i.metrics) // always empty?

@@ -7,6 +7,7 @@ import com.amadeus.sparklear.collects.{JobCollect, SqlCollect, StageCollect}
 import org.apache.spark.scheduler._
 import org.apache.spark.sql.execution.ui._
 
+import org.slf4j.{Logger, LoggerFactory}
 
 /** This listener displays in the Spark Driver STDOUT some
   * relevant information about the application, including:
@@ -15,6 +16,8 @@ import org.apache.spark.sql.execution.ui._
   * - ...
   */
 class SparklEar(c: Config) extends SparkListener {
+
+  implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
 
   type SqlKey = Long
   type JobKey = Int
@@ -31,8 +34,7 @@ class SparklEar(c: Config) extends SparkListener {
   /** LISTENERS
     */
 
-  /**
-    * This is the listener method for stage end
+  /** This is the listener method for stage end
     *
     * It is NOT a trigger for automatic purge of stages (job end will purge stages).
     */
@@ -44,6 +46,7 @@ class SparklEar(c: Config) extends SparkListener {
     stageCollects.put(stageCompleted.stageInfo.stageId, sw)
 
     if (c.showStages) {
+      logger.trace(s"Handling Stage end: ${stageCompleted.stageInfo.stageId}")
       // generate the stage input
       val si = StagePreReport(sw)
       // sink the stage input (for testing)
@@ -51,6 +54,8 @@ class SparklEar(c: Config) extends SparkListener {
       // sink the stage input serialized (as string, and as objects)
       c.reportSink.foreach(ss => c.stageTranslator.toReports(c, si).map(ss))
       c.stringReportSink.foreach(ss => c.stageTranslator.toStringReports(c, si).map(ss))
+    } else {
+      logger.trace(s"Ignoring Stage end: ${stageCompleted.stageInfo.stageId}")
     }
 
     // nothing to purge
@@ -60,8 +65,7 @@ class SparklEar(c: Config) extends SparkListener {
     jobCollects.put(jobStart.jobId, JobCollect.from(jobStart))
   }
 
-  /**
-    * This is the listener method for job end
+  /** This is the listener method for job end
     *
     * It is a trigger for automatic purge of job and stages.
     */
@@ -74,6 +78,7 @@ class SparklEar(c: Config) extends SparkListener {
       }
 
       if (c.showJobs) {
+        logger.trace(s"Handling Job end: ${jobEnd.jobId}")
         // generate the job input
         val ji = JobPreReport(jobCollect, EndUpdate(finalStages = stagesIdAndStats, jobEnd = jobEnd))
         // sink the job input (for testing)
@@ -81,6 +86,8 @@ class SparklEar(c: Config) extends SparkListener {
         // sink the job input serialized (as string, and as objects)
         c.reportSink.foreach(ss => c.jobTranslator.toReports(c, ji).map(ss))
         c.stringReportSink.foreach(ss => c.jobTranslator.toStringReports(c, ji).map(ss))
+      } else {
+        logger.trace(s"Ignoring Job end: ${jobEnd.jobId}")
       }
 
       // purge
@@ -96,10 +103,11 @@ class SparklEar(c: Config) extends SparkListener {
         onSqlStart(event)
       case event: SparkListenerDriverAccumUpdates =>
         // TODO: check if really needed
-        event.accumUpdates.foreach{case (k, v) => sqlMetricCollects.put(k, v)}
+        event.accumUpdates.foreach { case (k, v) => sqlMetricCollects.put(k, v) }
       case event: SparkListenerSQLExecutionEnd =>
         onSqlEnd(event)
-      case _ => // ignored
+      case e =>
+        logger.trace(s"Event ignored: ${e}")
       //case _: SparkListenerSQLAdaptiveSQLMetricUpdates =>
       // TODO: ignored for now, maybe adds more metrics?
       //case _: SparkListenerSQLAdaptiveExecutionUpdate =>
@@ -111,9 +119,7 @@ class SparklEar(c: Config) extends SparkListener {
     sqlCollects.put(event.executionId, SqlCollect(event.executionId, event.sparkPlanInfo, event.description))
   }
 
-
-  /**
-    * This is the listener method for SQL query end
+  /** This is the listener method for SQL query end
     *
     * It is a trigger for automatic purge of SQL queries and involved metrics.
     */
@@ -125,6 +131,7 @@ class SparklEar(c: Config) extends SparkListener {
 
     sqlCollectOpt.foreach { sqlCollect =>
       if (c.showSqls) {
+        logger.trace(s"Handling SQL end: ${event.executionId}")
         // generate the SQL input
         val si = SqlPreReport(sqlCollect, sqlMetricCollects.toScalaMap ++ m)
         // sink the SQL input (for testing)
@@ -132,6 +139,8 @@ class SparklEar(c: Config) extends SparkListener {
         // sink the SQL input serialized (as string, and as objects)
         c.reportSink.foreach(ss => c.sqlTranslator.toReports(c, si).map(ss))
         c.stringReportSink.foreach(ss => c.sqlTranslator.toStringReports(c, si).map(ss))
+      } else {
+        logger.trace(s"Ignoring SQL end: ${event.executionId}")
       }
 
       // purge

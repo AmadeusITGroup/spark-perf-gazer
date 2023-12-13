@@ -1,12 +1,8 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.translators.{
-  JobPrettyTranslator,
-  SqlPlanNodeTranslator,
-  SqlPrettyTranslator,
-  StagePrettyTranslator
-}
+import com.amadeus.sparklear.translators.{JobPrettyTranslator, SqlPlanNodeTranslator, SqlPrettyTranslator, StagePrettyTranslator}
 import com.amadeus.sparklear.reports.glasses.SqlNodeGlass
+import com.amadeus.testfwk.SinkSupport.AllSinks
 import com.amadeus.testfwk.{ConfigSupport, JsonSupport, OptdSupport, SimpleSpec, SinkSupport, SparkSupport}
 
 
@@ -22,9 +18,17 @@ class ReadCsvToNoopSpec
     withSpark() { spark =>
       withAllSinks { sinks =>
         val df = readOptd(spark)
+
+        // regular setup
         val cfg = defaultTestConfig.withAllEnabled.withSinks(sinks)
         val eventsListener = new SparklEar(cfg)
         spark.sparkContext.addSparkListener(eventsListener)
+
+        // setup to check if disabling all entities yields no reports in sinks
+        val emptySinks = new AllSinks()
+        val emptyEventsListener = new SparklEar(cfg.withAllDisabled.withSinks(emptySinks))
+        spark.sparkContext.addSparkListener(emptyEventsListener)
+
         spark.sparkContext.setJobGroup("testgroup", "testjob")
         df.write.format("noop").mode("overwrite").save()
 
@@ -75,6 +79,12 @@ class ReadCsvToNoopSpec
           val inputStage = sinks.stagePreReports.head
           val r = StagePrettyTranslator.toStringReports(cfg, inputStage).mkString("\n")
           r should include regex ("STAGE ID=1 READ_MB=42 WRITE_MB=0 SHUFFLE_READ_MB=0 SHUFFLE_WRITE_MB=0 EXEC_CPU_SECS=.* ATTEMPT=0")
+        }
+
+        it("should not generate any report if all is disabled") {
+          emptySinks.preReports.size should be(0)
+          emptySinks.reports.size should be(0)
+          emptySinks.stringReports.size should be(0)
         }
 
       }

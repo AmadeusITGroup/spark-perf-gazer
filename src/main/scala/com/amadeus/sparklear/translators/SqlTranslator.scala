@@ -18,7 +18,7 @@ object SqlTranslator {
 sealed trait SqlTranslator[T <: Report] extends Translator[SqlPreReport, T]
 
 case object SqlPlanNodeTranslator extends SqlTranslator[SqlPlanNodeReport] {
-  final val ValueNotFoundForMetricKeyAcumValue = -1
+  val ValueNotFoundForMetricKeyAcumValue: Long = -1L
 
   def name: TranslatorName = "sqlplannode"
 

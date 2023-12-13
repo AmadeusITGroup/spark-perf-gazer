@@ -9,7 +9,7 @@ object Fixtures {
 
   object SqlWrapper1 {
 
-    val p2 = new org.apache.spark.sql.execution.SparkPlanInfo(
+    val planInfo2 = new org.apache.spark.sql.execution.SparkPlanInfo(
       nodeName = "Scan csv ",
       simpleString = "FileScan csv [iata_code#17,icao_code#18,faa_code#19,is_geonames#20,geoname_id#21,envelope_id#22,name#23,asciiname#24,latitude#25,longitude#26,fclass#27,fcode#28,page_rank#29,date_from#30,date_until#31,comment#32,country_code#33,cc2#34,country_name#35,continent_name#36,adm1_code#37,adm1_name_utf#38,adm1_name_ascii#39,adm2_code#40,... 27 more fields] Batched: false, DataFilters: [], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/home/mjost/workspace/sparklear/src/test/resources/optd_por_publi..., PartitionFilters: [], PushedFilters: [], ReadSchema: struct<iata_code:string,icao_code:string,faa_code:string,is_geonames:string,geoname_id:string,env...",
       children = Seq.empty[SparkPlanInfo],
@@ -30,10 +30,10 @@ object Fixtures {
       )
     )
 
-    val p1 = new org.apache.spark.sql.execution.SparkPlanInfo(
+    val planInfo1 = new org.apache.spark.sql.execution.SparkPlanInfo(
       nodeName = "OverwriteByExpression",
       simpleString = "OverwriteByExpression ...",
-      children = Seq(p2),
+      children = Seq(planInfo2),
       metadata = Map.empty[String, String],
       metrics = Seq.empty[SQLMetricInfo]
     )
@@ -41,7 +41,7 @@ object Fixtures {
     val rootSqlReport = SqlPreReport(
       collect = SqlCollect(
         id  = 1,
-        plan = p1,
+        plan = planInfo1,
         description = "toto"
       ),
       metrics = Map(
