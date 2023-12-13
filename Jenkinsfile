@@ -145,7 +145,7 @@ pipeline {
   }
   post {
     always {
-      junit testResults: '**/target/test-reports/*.xml', skipPublishingChecks: true
+      junit testResults: '**/target/test-reports/*.xml', skipPublishingChecks: true, allowEmptyResults: true
     }
   }
 }
