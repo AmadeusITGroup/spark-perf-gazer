@@ -5,14 +5,15 @@ import com.amadeus.sparklear.translators.{JobTranslator, SqlTranslator, StageTra
 import com.amadeus.sparklear.prereports.PreReport
 import com.amadeus.sparklear.reports.Report
 import com.amadeus.sparklear.reports.glasses.{Glass, SqlNodeGlass}
+import com.amadeus.sparklear.translators.Translator.TranslatorName
 
 trait ConfigSupport {
 
   implicit class ConfigHelper(c: Config) {
     def withPrefix(p: String): Config = c.copy(stringReportPrefix = p)
-    def withSqlTranslator(s: SqlTranslator[_ <: Report]): Config = c.copy(sqlTranslator = s)
-    def withJobTranslator(s: JobTranslator[_ <: Report]): Config = c.copy(jobTranslator = s)
-    def withStageTranslator(s: StageTranslator): Config = c.copy(stageTranslator = s)
+    def withSqlTranslator(s: TranslatorName): Config = c.copy(sqlTranslatorName = s)
+    def withJobTranslator(s: TranslatorName): Config = c.copy(jobTranslatorName = s)
+    def withStageTranslator(s: TranslatorName): Config = c.copy(stageTranslatorName = s)
     def withAllEnabled: Config = c.copy(showSqls = true, showJobs = true, showStages = true)
     def withOnlySqlEnabled: Config = c.copy(showSqls = true, showJobs = false, showStages = false)
     def withGlasses(g: Seq[Glass]): Config = c.copy(glasses = g)

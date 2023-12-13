@@ -4,15 +4,22 @@ import com.amadeus.sparklear.Config
 import com.amadeus.sparklear.prereports.SqlPreReport
 import com.amadeus.sparklear.reports.{Report, SqlPlanNodeReport, StrReport, StrSqlReport}
 import com.amadeus.sparklear.collects.SqlCollect
+import com.amadeus.sparklear.translators.Translator.{EntitySql, TranslatorName}
 import org.apache.spark.sql.execution.SparkPlanInfo
 import org.apache.spark.sql.execution.metric.SQLMetricInfo
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.{write => asJson}
 
+object SqlTranslator {
+  val Translators: Seq[SqlTranslator[_ <: Report]] = Seq(SqlPlanNodeTranslator, SqlPrettyTranslator)
+  def forName(s: TranslatorName): SqlTranslator[_ <: Report] = Translator.forName(Translators)(EntitySql, s)
+}
 sealed trait SqlTranslator[T <: Report] extends Translator[SqlPreReport, T]
 
 case object SqlPlanNodeTranslator extends SqlTranslator[SqlPlanNodeReport] {
   final val ValueNotFoundForMetricKeyAcumValue = -1
+
+  def name: TranslatorName = "sqlplannode"
 
   private def resolveMetricInfo(m: SQLMetricInfo, ms: Map[Long, Long]): (String, String) = {
     val v = ms.get(m.accumulatorId)
@@ -52,6 +59,8 @@ case object SqlPlanNodeTranslator extends SqlTranslator[SqlPlanNodeReport] {
 }
 
 case object SqlPrettyTranslator extends SqlTranslator[StrReport] {
+
+  def name: TranslatorName = "sqlpretty"
   override def toAllReports(c: Config, report: SqlPreReport): Seq[StrReport] =
     Seq(StrSqlReport(SparkPlanInfoPrettifier.prettify(report.collect.plan, report.metrics)))
 }

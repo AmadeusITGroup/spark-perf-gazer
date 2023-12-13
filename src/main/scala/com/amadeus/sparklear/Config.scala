@@ -38,9 +38,9 @@ case class Config(
   preReportSink: Option[PreReport => Unit] = None, // for testing purposes
   stringReportSink: Option[StringReport => Unit] = None,
   reportSink: Option[Report => Unit] = None,
-  sqlTranslator: SqlTranslator[_ <: Report] = SqlPlanNodeTranslator,
-  jobTranslator: JobTranslator[_ <: Report] = JobJsonTranslator,
-  stageTranslator: StageTranslator = StageJson,
+  sqlTranslatorName: String = SqlPlanNodeTranslator.name,
+  jobTranslatorName: String = JobJsonTranslator.name,
+  stageTranslatorName: String = StageJson.name,
   glasses: Seq[Glass] = Seq.empty[Glass],
   maxCacheSize: Int = Config.DefaultCacheSize
 ) {
@@ -48,6 +48,10 @@ case class Config(
   //def collectSqls: Boolean = showSqls // collect sqls only if we will show them
   //def collectJobs: Boolean = showJobs // collect jobs only if we will show them
   //def collectStages: Boolean = showStages || showJobs // collect stages only if we will show either stages or jobs
+
+  val sqlTranslator: SqlTranslator[_ <: Report] = SqlTranslator.forName(sqlTranslatorName)
+  val jobTranslator: JobTranslator[_ <: Report] = JobTranslator.forName(jobTranslatorName)
+  val stageTranslator: StageTranslator = StageTranslator.forName(stageTranslatorName)
 }
 
 object Config {

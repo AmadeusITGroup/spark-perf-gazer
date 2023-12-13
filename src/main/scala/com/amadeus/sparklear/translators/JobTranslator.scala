@@ -3,10 +3,18 @@ package com.amadeus.sparklear.translators
 import com.amadeus.sparklear.Config
 import com.amadeus.sparklear.prereports.JobPreReport
 import com.amadeus.sparklear.reports.{JobReport, Report, StrJobReport, StrReport}
+import com.amadeus.sparklear.translators.Translator.{EntityJob, TranslatorName}
+
+object JobTranslator {
+  val Translators: Seq[JobTranslator[_ <: Report]] = Seq(JobJsonTranslator, JobPrettyTranslator)
+  def forName(s: TranslatorName): JobTranslator[_ <: Report] = Translator.forName(Translators)(EntityJob, s)
+}
 
 sealed trait JobTranslator[T <: Report] extends Translator[JobPreReport, T]
 
 case object JobJsonTranslator extends JobTranslator[JobReport] {
+
+  override def name: TranslatorName = "jobjson"
   override def toAllReports(c: Config, preReport: JobPreReport): Seq[JobReport] = {
     val col = preReport.collect
     val end = preReport.endUpdate
@@ -26,6 +34,8 @@ case object JobJsonTranslator extends JobTranslator[JobReport] {
 }
 
 case object JobPrettyTranslator extends JobTranslator[StrReport] {
+
+  override def name: TranslatorName = "jobpretty"
   override def toAllReports(c: Config, preReport: JobPreReport): Seq[StrReport] = {
     val col = preReport.collect
     val end = preReport.endUpdate
