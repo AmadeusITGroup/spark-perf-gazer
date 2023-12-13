@@ -51,7 +51,8 @@ trait SparkSupport {
 
   def withSparkAndUi[T](conf: List[(String, String)] = DefaultConfigs)(testCode: SparkSession => T): T =
     withSparkInternal(conf ++ UiConfigs)(testCode) { spark =>
-      println(s"Launched ${this.getClass.getName}.withSparkUI... Go to the web Spark UI now. We will wait...")
+      println(s"Launched ${this.getClass.getName}.withSparkUI at ${spark.sparkContext.uiWebUrl}...")
+      println("Go to the web Spark UI now. We will wait...")
       Thread.sleep(DefaultUiWaitMs)
       spark.stop()
       throw new IllegalStateException("The method withSparkUi should only be used in a developer environment")
