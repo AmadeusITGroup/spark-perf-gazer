@@ -4,7 +4,7 @@ import com.amadeus.sparklear.Fixtures
 import com.amadeus.sparklear.reports.SqlPlanNodeReport
 import com.amadeus.testfwk.{ConfigSupport, SimpleSpec}
 
-class SqlReportSpec extends SimpleSpec with ConfigSupport {
+class SqlTranslatorSpec extends SimpleSpec with ConfigSupport {
   describe(s"The ${SqlPlanNodeTranslator.getClass.getName}") {
     it("should generate reports in a basic scenario") {
       val reportSql = Fixtures.SqlWrapper1.rootSqlReport

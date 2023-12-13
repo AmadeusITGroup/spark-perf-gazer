@@ -97,14 +97,13 @@ class SparklEar(c: Config) extends SparkListener {
       case event: SparkListenerDriverAccumUpdates =>
         // TODO: check if really needed
         event.accumUpdates.foreach{case (k, v) => sqlMetricCollects.put(k, v)}
-      case _: SparkListenerSQLAdaptiveSQLMetricUpdates =>
-        // TODO: ignored for now, maybe adds more metrics?
-      case _: SparkListenerSQLAdaptiveExecutionUpdate =>
-        // TODO: ignored for now, maybe adds more metrics?
-        //sqlCollects.put(event.executionId, SqlCollect(event.executionId, event.sparkPlanInfo, event.))
       case event: SparkListenerSQLExecutionEnd =>
         onSqlEnd(event)
-      case _ =>
+      case _ => // ignored
+      //case _: SparkListenerSQLAdaptiveSQLMetricUpdates =>
+      // TODO: ignored for now, maybe adds more metrics?
+      //case _: SparkListenerSQLAdaptiveExecutionUpdate =>
+      // TODO: ignored for now, maybe adds more metrics?
     }
   }
 
