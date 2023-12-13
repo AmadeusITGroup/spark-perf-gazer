@@ -143,4 +143,9 @@ pipeline {
       }
     }
   }
+  post {
+    always {
+      junit testResults: '**/target/test-reports/*.xml', skipPublishingChecks: true
+    }
+  }
 }
