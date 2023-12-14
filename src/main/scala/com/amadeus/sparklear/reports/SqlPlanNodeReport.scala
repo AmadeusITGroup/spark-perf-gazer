@@ -10,7 +10,7 @@ case class SqlPlanNodeReport(
   jobName: String,
   nodeName: String,
   coordinates: String,
-  metrics: Seq[(String, String)],
+  metrics: Map[String, String],
   isLeaf: Boolean,
   parentNodeName: String,
 ) extends Report {

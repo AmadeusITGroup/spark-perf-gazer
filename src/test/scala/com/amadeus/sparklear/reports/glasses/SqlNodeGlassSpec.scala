@@ -11,7 +11,7 @@ class SqlNodeGlassSpec extends SimpleSpec {
   }
   describe(s"The ${SqlNodeGlass.getClass.getSimpleName}") {
 
-    val r = SqlPlanNodeReport(1, "jobName", "nodeName", "0.0", Seq(("m1", "v1")), false, "parent")
+    val r = SqlPlanNodeReport(1, "jobName", "nodeName", "0.0", Map("m1" -> "v1"), false, "parent")
 
     it(s"should be able to tell eligibility on ${SqlPlanNodeReport.getClass.getSimpleName} job name") {
 

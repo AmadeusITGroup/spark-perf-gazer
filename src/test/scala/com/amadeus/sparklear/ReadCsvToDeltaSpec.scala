@@ -72,7 +72,7 @@ class ReadCsvToDeltaSpec
               .filter(_.nodeName.contains("Filter"))
               .filter(i => i.jobName.contains("jobfilter"))
               .map(i => (i.jobName, i.metrics))
-            actual should equal(Seq(("jobfilter", Seq(("number of output rows", "16")))))
+            actual should equal(Seq(("jobfilter", Map("number of output rows"-> "16"))))
           }
           spark.sparkContext.setJobDescription("jobjoin")
           val df3 = df
@@ -90,7 +90,7 @@ class ReadCsvToDeltaSpec
               .map(i => (i.jobName, i.metrics))
             actual should equal(
               Seq(
-                ("jobjoin", Seq(("number of output rows", "2")))
+                ("jobjoin", Map("number of output rows" -> "2"))
               )
             )
           }

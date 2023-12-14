@@ -44,11 +44,7 @@ object Fixtures {
         plan = planInfo1,
         description = "toto"
       ),
-      metrics = Map(
-        48L -> 44662949L,
-        46L -> 1L,
-        //47L -> 0L missing
-      )
+      end = null
     )
   }
 

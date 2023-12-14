@@ -22,12 +22,9 @@ class SparklEar(c: Config) extends SparkListener {
   type SqlKey = Long
   type JobKey = Int
   type StageKey = Int
-  type MetricKey = Long
-  type MetricCollect = Long
 
   // Maps to keep sqls + jobs + stages collects (initial information) until some completion
   private val sqlCollects = new CappedConcurrentHashMap[SqlKey, SqlCollect](c.maxCacheSize)
-  private val sqlMetricCollects = new CappedConcurrentHashMap[MetricKey, MetricCollect](c.maxCacheSize)
   private val jobCollects = new CappedConcurrentHashMap[JobKey, JobCollect](c.maxCacheSize)
   private val stageCollects = new CappedConcurrentHashMap[StageKey, StageCollect](c.maxCacheSize)
 
@@ -105,13 +102,11 @@ class SparklEar(c: Config) extends SparkListener {
     event match {
       case event: SparkListenerSQLExecutionStart =>
         onSqlStart(event)
-      case event: SparkListenerDriverAccumUpdates =>
-        // TODO: check if really needed
-        event.accumUpdates.foreach { case (k, v) => sqlMetricCollects.put(k, v) }
+      //case event: SparkListenerDriverAccumUpdates =>
       case event: SparkListenerSQLExecutionEnd =>
         onSqlEnd(event)
       case e =>
-        logger.trace(s"Event ignored: ${e}")
+        logger.trace(s"Event ignored: ${e.getClass.getName}")
       //case _: SparkListenerSQLAdaptiveSQLMetricUpdates =>
       // TODO: ignored for now, maybe adds more metrics?
       //case _: SparkListenerSQLAdaptiveExecutionUpdate =>
@@ -130,7 +125,6 @@ class SparklEar(c: Config) extends SparkListener {
     */
   private def onSqlEnd(event: SparkListenerSQLExecutionEnd): Unit = {
     logger.trace("onSqlEnd(...)")
-    val m = SparkInternal.executedPlanMetrics(event)
 
     // get the initial sql collect information (it could have been purged)
     val sqlCollectOpt = Option(sqlCollects.get(event.executionId))
@@ -139,7 +133,7 @@ class SparklEar(c: Config) extends SparkListener {
       if (c.showSqls) {
         logger.trace(s"Handling SQL end: ${event.executionId}")
         // generate the SQL input
-        val si = SqlPreReport(sqlCollect, sqlMetricCollects.toScalaMap ++ m)
+        val si = SqlPreReport(sqlCollect, event)
         // sink the SQL input (for testing)
         c.preReportSink.foreach(ss => ss(si))
         // sink the SQL input serialized (as string, and as objects)
@@ -151,7 +145,6 @@ class SparklEar(c: Config) extends SparkListener {
 
       // purge
       sqlCollects.remove(event.executionId)
-      m.keys.foreach(sqlMetricCollects.remove)
     }
   }
 

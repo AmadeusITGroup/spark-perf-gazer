@@ -14,6 +14,5 @@ class CappedConcurrentHashMap[K, V](cap: Int) {
   def remove(k: K): V = m.remove(k)
   def get(k: K): V = m.get(k)
   def size: Int = m.size()
-  def keys: Iterator[K] = m.keys().asScala
-  def toScalaMap: scala.collection.immutable.Map[K, V] = m.asScala.toMap
+  private[utils] def keys: Iterator[K] = m.keys().asScala
 }
