@@ -6,6 +6,7 @@ import com.amadeus.sparklear.reports.{Report, SqlPlanNodeReport, StrReport, StrS
 import com.amadeus.sparklear.collects.SqlCollect
 import com.amadeus.sparklear.translators.SqlTranslator.metricToKv
 import com.amadeus.sparklear.translators.Translator.{EntityName, TranslatorName}
+import org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanExec
 import org.apache.spark.sql.execution.{SparkPlan, SparkPlanInfo}
 import org.apache.spark.sql.execution.metric.{SQLMetric, SQLMetricInfo}
 import org.apache.spark.sql.execution.ui.SparkInternal
@@ -32,16 +33,22 @@ case object SqlPlanNodeTranslator extends SqlTranslator[SqlPlanNodeReport] {
     plan: SparkPlan,
     parentNodeName: String
   ): Seq[SqlPlanNodeReport] = {
+
+    val (children, metrics) = plan match {
+      case a: AdaptiveSparkPlanExec => (a.finalPhysicalPlan.children, a.finalPhysicalPlan.metrics)
+      case x => (x.children, x.metrics)
+    }
+
     val currNode = SqlPlanNodeReport(
       sqlId = sqlId,
       jobName = jobName,
       nodeName = plan.nodeName,
       coordinates = baseCoord,
-      metrics = plan.metrics.map(metricToKv),
-      isLeaf = plan.children.isEmpty,
+      metrics = metrics.map(metricToKv),
+      isLeaf = children.isEmpty,
       parentNodeName = parentNodeName
     )
-    val childNode = plan.children.zipWithIndex.flatMap { case (pi, i) =>
+    val childNode = children.zipWithIndex.flatMap { case (pi, i) =>
       convert(jobName, baseCoord + s".${i}", sqlId, pi, plan.nodeName)
     }
     Seq(currNode) ++ childNode
