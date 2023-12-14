@@ -15,7 +15,7 @@ class StageTranslatorSpec extends SimpleSpec with ConfigSupport {
       rs shouldEqual (
         List(
           StrStageReport(
-            "STAGE ID=1 READ_MB=5 WRITE_MB=74 SHUFFLE_READ_MB=75 SHUFFLE_WRITE_MB=76 EXEC_CPU_SECS=77 ATTEMPT=8 SPILL_MB=3"
+            "STAGE ID=1 READ_MB=5 WRITE_MB=74 SHUFFLE_READ_MB=75 SHUFFLE_WRITE_MB=76 EXEC_CPU_SECS=77 EXEC_RUN_SECS=98 EXEC_JVM_GC_SECS=13 ATTEMPT=8 SPILL_MB=3"
           )
         )
       )

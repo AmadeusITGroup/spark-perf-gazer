@@ -78,7 +78,7 @@ class ReadCsvToNoopSpec
         it("should build stage preReports (StagePrettyTranslator)") {
           val inputStage = sinks.stagePreReports.head
           val r = StagePrettyTranslator.toStringReports(cfg, inputStage).mkString("\n")
-          r should include regex ("STAGE ID=1 READ_MB=42 WRITE_MB=0 SHUFFLE_READ_MB=0 SHUFFLE_WRITE_MB=0 EXEC_CPU_SECS=.* ATTEMPT=0")
+          r should include regex ("STAGE ID=1 READ_MB=42 WRITE_MB=0 SHUFFLE_READ_MB=0 SHUFFLE_WRITE_MB=0 EXEC_CPU_SECS=(\\d+) EXEC_RUN_SECS=(\\d+) EXEC_JVM_GC_SECS=(\\d+) ATTEMPT=0")
         }
 
         it("should not generate any report if all is disabled") {
