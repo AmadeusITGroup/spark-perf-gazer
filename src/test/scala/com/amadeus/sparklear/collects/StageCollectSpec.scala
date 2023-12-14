@@ -9,6 +9,8 @@ class StageCollectSpec extends SimpleSpec with MockFactory {
     it("should generate correct metrics") {
       val rs = StageCollect(Fixtures2.Stage1.stageInfo)
       rs.execCpuSecs shouldEqual (77)
+      rs.execRunSecs shouldEqual (98)
+      rs.execjvmGCSecs shouldEqual (13)
       rs.attempt shouldEqual (8)
       rs.spillMb shouldEqual (Some(3))
       rs.inputReadMb shouldEqual 5

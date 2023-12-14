@@ -23,7 +23,9 @@ object Fixtures2 {
     val taskMetrics: TaskMetrics = {
       val tm = mock[TaskMetrics2]
       (tm.memoryBytesSpilled _).expects().returns(1024 * 1024 * 3).anyNumberOfTimes()
-      (tm.executorCpuTime _).expects().returns(1024L * 1024 * 1024 * 77).anyNumberOfTimes()
+      (tm.executorCpuTime _).expects().returns(1000L * 1000 * 1000 * 77).anyNumberOfTimes()
+      (tm.executorRunTime _).expects().returns(1000L * 1000 * 1000 * 98).anyNumberOfTimes()
+      (tm.jvmGCTime _).expects().returns(1000L * 1000 * 1000 * 13).anyNumberOfTimes()
       tm
     }
 
