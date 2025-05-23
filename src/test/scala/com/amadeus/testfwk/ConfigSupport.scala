@@ -2,7 +2,7 @@ package com.amadeus.testfwk
 
 import com.amadeus.sparklear.Config
 import com.amadeus.sparklear.translators.{JobTranslator, SqlTranslator, StageTranslator}
-import com.amadeus.sparklear.prereports.PreReport
+import com.amadeus.sparklear.entities.Entity
 import com.amadeus.sparklear.reports.Report
 import com.amadeus.sparklear.reports.filters.{Filter, SqlNodeFilter}
 import com.amadeus.sparklear.translators.Translator.TranslatorName
@@ -21,7 +21,7 @@ trait ConfigSupport {
     def withFilters(g: Seq[Filter]): Config = c.copy(filters = g)
     def withStringSink(ss: String => Unit): Config = c.copy(stringReportSink = Some(ss))
     def withReportSink(ss: Report => Unit): Config = c.copy(reportSink = Some(ss))
-    def withPreReportSink(ss: PreReport => Unit): Config = c.copy(preReportSink = Some(ss))
+    def withPreReportSink(ss: Entity => Unit): Config = c.copy(preReportSink = Some(ss))
   }
 
   def defaultTestConfig: Config = {

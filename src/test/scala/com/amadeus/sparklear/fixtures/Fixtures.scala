@@ -1,9 +1,9 @@
 package com.amadeus.sparklear.fixtures
 
-import com.amadeus.sparklear.prereports.SqlPreReport
+import com.amadeus.sparklear.entities.SqlEntity
 import org.apache.spark.sql.execution.SparkPlanInfo
 import org.apache.spark.sql.execution.metric.SQLMetricInfo
-import com.amadeus.sparklear.raw.SqlRawEvent
+import com.amadeus.sparklear.events.SqlEvent
 
 object Fixtures {
 
@@ -38,8 +38,8 @@ object Fixtures {
       metrics = Seq.empty[SQLMetricInfo]
     )
 
-    val rootSqlReport = SqlPreReport(
-      raw = SqlRawEvent(
+    val rootSqlReport = SqlEntity(
+      start = SqlEvent(
         id  = 1,
         plan = planInfo1,
         description = "toto"

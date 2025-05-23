@@ -36,7 +36,7 @@ The core class is `SparklEar`, which can be instantiated easily when providing a
 It can be registered as `Spark` listener via `spark.sparkContext.addSparkListener(...)`.
 It will then listen to multiple events coming from `Spark`.
 
-The event objects at the launch of the query/job/stage are wrapped by `RawEvent`. The event objects wrapped are classes like: 
+The event objects at the launch of the query/job/stage are wrapped by `Event`. The event objects wrapped are classes like: 
 
 - `org.apache.spark...StageInfo`
 - `org.apache.spark...SparkListenerJobEnd`
@@ -44,14 +44,14 @@ The event objects at the launch of the query/job/stage are wrapped by `RawEvent`
 
 When a SQL query, or a job, or a stage finishes, it triggers a callback mechanism. 
 
-When the inputs are requested to `SparklEar`, all collected `RawEvent`s are inspected and transformed into `PreReport`s at the end
+When the inputs are requested to `SparklEar`, all collected `Event`s are inspected and transformed into `Entity`s at the end
 of the query/job/stage execution enriched with some extra information only available then, according
-to the type of `RawEvent`.
+to the type of `Event`.
 
-A `PreReport` is transformed into one (or multiple) `Report`/s.
+A `Entity` is transformed into one (or multiple) `Report`/s.
 A `Report` is a type that represents the report unit shared with the end-user.
 
-It is the `Translator` that *translates* a `PreReport` into a `Report`.
+It is the `Translator` that *translates* a `Entity` into a `Report`.
 
 A `Filter` is a filter that operates on `Report`s, so that the end-user can have some control to focus specific aspects of
 their Spark ETL (like *file pruning* for instance).
@@ -62,19 +62,20 @@ they become a `Report` ready to be exposed to the end-user.
 ```
 TRAITS
 ------------------------------------------------------------------------------------------------------------------------
-<SparkEventDataType>  --> X<:RawEvent    --->  PreReport -----> (Translator) -----> Report ---> sink(Report)
-                          Y<:RawEvent  
+X<:Event -----------> Entity -----> (Translator) -----> Report (ready to be sent to the sink)
+Y<:Event  
 ------------------------------------------------------------------------------------------------------------------------
 
-SUBTYPES
+CLASSES
 ------------------------------------------------------------------------------------------------------------------------
- SparkListenerJobEnd      SqlRawEvent ----+-> SqlPreReport --->   (...)   +-------> StrReport (by SqlTranslator)
- StageInfo                MetricRawEvent /                                 \------> SqlPlanNodeReport (by SqlTranslator)
- ...
-                          JobRawEvent ----+-> JobPreReport --->   (...)   +-------> JobReport (by JobTranslator)
-                                        /                                 \------> StrReport (by JobTranslator)
-                          StageRawEvent ----> StagePreReport ->   (...)   +-------> StageReport (by StageTranslator)
-                                                                         \-------> StrReport (by StageTranslator)
+SqlEvent ---------> SqlEntity --->   (...)   +-------> StrReport (by SqlTranslator)
+                                              \------> SqlPlanNodeReport (by SqlTranslator)
+                          
+JobEvent -------+-> JobEntity --->   (...)   +-------> JobReport (by JobTranslator)
+StageEvent(s)--/                              \------> StrReport (by JobTranslator)
+                        
+StageEvent -------> StageEntity ->   (...)   +-------> StageReport (by StageTranslator)
+                                              \-------> StrReport (by StageTranslator)
 ```
 
 #### Build
@@ -112,6 +113,12 @@ Settings -> Editor -> Code Style -> Scala -> Formatter: ScalaFMT
 - [ ] Add the missing link of SQL queries with children SQL queries
 - [ ] Add the missing link SQL queries with stages
 - [ ] Investigate if possible to persist SparkUI logs as a complementary approach with
+- [ ] Add use case catalog / examples
+  - read amplification
+  - hashbroadcastjoin is not being used
+  - compare scan parquet, v1 v2
+  - within a SQL query, which job took longer and why
+  - provide the maximum SQL in terms of cost (find the big fish)
 ```
 From https://docs.databricks.com/en/clusters/configure.html#cluster-log-delivery. 
 For example, if the log path is dbfs:/cluster-logs, the log files for a specific cluster will be 

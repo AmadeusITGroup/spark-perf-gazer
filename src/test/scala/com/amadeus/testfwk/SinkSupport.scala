@@ -1,7 +1,7 @@
 package com.amadeus.testfwk
 
 import com.amadeus.sparklear.Config
-import com.amadeus.sparklear.prereports.{JobPreReport, PreReport, SqlPreReport, StagePreReport}
+import com.amadeus.sparklear.entities.{JobEntity, Entity, SqlEntity, StageEntity}
 import com.amadeus.sparklear.reports.Report
 import com.amadeus.sparklear.translators.Translator.StringReport
 import com.amadeus.testfwk.SinkSupport.AllSinks
@@ -10,13 +10,13 @@ import scala.collection.mutable.ListBuffer
 
 object SinkSupport {
   class AllSinks(
-    val preReports: ListBuffer[PreReport] = new ListBuffer[PreReport](),
-    val reports: ListBuffer[Report] = new ListBuffer[Report](),
-    val stringReports: ListBuffer[StringReport] = new ListBuffer[StringReport]()
+                  val preReports: ListBuffer[Entity] = new ListBuffer[Entity](),
+                  val reports: ListBuffer[Report] = new ListBuffer[Report](),
+                  val stringReports: ListBuffer[StringReport] = new ListBuffer[StringReport]()
   ) {
-    def sqlPreReports = preReports.collect { case s: SqlPreReport => s }
-    def jobPreReports = preReports.collect { case s: JobPreReport => s }
-    def stagePreReports = preReports.collect { case s: StagePreReport => s }
+    def sqlPreReports = preReports.collect { case s: SqlEntity => s }
+    def jobPreReports = preReports.collect { case s: JobEntity => s }
+    def stagePreReports = preReports.collect { case s: StageEntity => s }
   }
 }
 trait SinkSupport {

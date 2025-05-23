@@ -1,9 +1,9 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.prereports.{JobPreReport, PreReport, SqlPreReport, StagePreReport}
+import com.amadeus.sparklear.entities.{JobEntity, Entity, SqlEntity, StageEntity}
 import com.amadeus.sparklear.utils.CappedConcurrentHashMap
-import com.amadeus.sparklear.raw.JobRawEvent.EndUpdate
-import com.amadeus.sparklear.raw.{JobRawEvent, SqlRawEvent, StageRawEvent}
+import com.amadeus.sparklear.events.JobEvent.EndUpdate
+import com.amadeus.sparklear.events.{JobEvent, SqlEvent, StageEvent}
 import org.apache.spark.scheduler._
 import org.apache.spark.sql.execution.ui._
 
@@ -24,9 +24,9 @@ class SparklEar(c: Config) extends SparkListener {
   type StageKey = Int
 
   // Maps to keep sqls + jobs + stages raw events (initial information) until some completion
-  private val sqlRawEvents = new CappedConcurrentHashMap[SqlKey, SqlRawEvent](c.maxCacheSize)
-  private val jobRawEvents = new CappedConcurrentHashMap[JobKey, JobRawEvent](c.maxCacheSize)
-  private val stageRawEvents = new CappedConcurrentHashMap[StageKey, StageRawEvent](c.maxCacheSize)
+  private val sqlRawEvents = new CappedConcurrentHashMap[SqlKey, SqlEvent](c.maxCacheSize)
+  private val jobRawEvents = new CappedConcurrentHashMap[JobKey, JobEvent](c.maxCacheSize)
+  private val stageRawEvents = new CappedConcurrentHashMap[StageKey, StageEvent](c.maxCacheSize)
 
   /** LISTENERS
     */
@@ -38,7 +38,7 @@ class SparklEar(c: Config) extends SparkListener {
   override def onStageCompleted(stageCompleted: SparkListenerStageCompleted): Unit = {
     logger.trace("onStageCompleted(...)")
     // generate a stage collect
-    val sw = StageRawEvent(stageCompleted.stageInfo)
+    val sw = StageEvent(stageCompleted.stageInfo)
 
     // store stage collect for the use in jobs
     stageRawEvents.put(stageCompleted.stageInfo.stageId, sw)
@@ -46,7 +46,7 @@ class SparklEar(c: Config) extends SparkListener {
     if (c.showStages) {
       logger.trace(s"Handling Stage end: ${stageCompleted.stageInfo.stageId}")
       // generate the stage input
-      val si = StagePreReport(sw)
+      val si = StageEntity(sw)
       // sink the stage input (for testing)
       c.preReportSink.foreach(ss => ss(si))
       // sink the stage input serialized (as string, and as objects)
@@ -61,7 +61,7 @@ class SparklEar(c: Config) extends SparkListener {
 
   override def onJobStart(jobStart: SparkListenerJobStart): Unit = {
     logger.trace("onJobStart(...)")
-    jobRawEvents.put(jobStart.jobId, JobRawEvent.from(jobStart))
+    jobRawEvents.put(jobStart.jobId, JobEvent.from(jobStart))
   }
 
   /** This is the listener method for job end
@@ -80,7 +80,7 @@ class SparklEar(c: Config) extends SparkListener {
       if (c.showJobs) {
         logger.trace(s"Handling Job end: ${jobEnd.jobId}")
         // generate the job input
-        val ji = JobPreReport(jobCollect, EndUpdate(finalStages = stagesIdAndStats, jobEnd = jobEnd))
+        val ji = JobEntity(jobCollect, EndUpdate(finalStages = stagesIdAndStats, jobEnd = jobEnd))
         // sink the job input (for testing)
         c.preReportSink.foreach(ss => ss(ji))
         // sink the job input serialized (as string, and as objects)
@@ -116,7 +116,7 @@ class SparklEar(c: Config) extends SparkListener {
 
   private def onSqlStart(event: SparkListenerSQLExecutionStart): Unit = {
     logger.trace("onSqlStart(...)")
-    sqlRawEvents.put(event.executionId, SqlRawEvent(event.executionId, event.sparkPlanInfo, event.description))
+    sqlRawEvents.put(event.executionId, SqlEvent(event.executionId, event.sparkPlanInfo, event.description))
   }
 
   /** This is the listener method for SQL query end
@@ -133,7 +133,7 @@ class SparklEar(c: Config) extends SparkListener {
       if (c.showSqls) {
         logger.trace(s"Handling SQL end: ${event.executionId}")
         // generate the SQL input
-        val si = SqlPreReport(sqlCollect, event)
+        val si = SqlEntity(sqlCollect, event)
         // sink the SQL input (for testing)
         c.preReportSink.foreach(ss => ss(si))
         // sink the SQL input serialized (as string, and as objects)

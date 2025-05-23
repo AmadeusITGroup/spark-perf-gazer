@@ -1,9 +1,9 @@
 package com.amadeus.sparklear.translators
 
 import com.amadeus.sparklear.Config
-import com.amadeus.sparklear.prereports.SqlPreReport
+import com.amadeus.sparklear.entities.SqlEntity
 import com.amadeus.sparklear.reports.{Report, SqlPlanNodeReport, StrReport, StrSqlReport}
-import com.amadeus.sparklear.raw.SqlRawEvent
+import com.amadeus.sparklear.events.SqlEvent
 import com.amadeus.sparklear.translators.SqlTranslator.metricToKv
 import com.amadeus.sparklear.translators.Translator.{EntityName, TranslatorName}
 import org.apache.spark.sql.execution.adaptive.{AdaptiveSparkPlanExec, ShuffleQueryStageExec}
@@ -20,7 +20,7 @@ object SqlTranslator {
 
   def metricToKv(s: (String, SQLMetric)): (String, String) = (s._2.name.getOrElse(s._1), s._2.value.toString)
 }
-sealed trait SqlTranslator[T <: Report] extends Translator[SqlPreReport, T]
+sealed trait SqlTranslator[T <: Report] extends Translator[SqlEntity, T]
 
 case object SqlPlanNodeTranslator extends SqlTranslator[SqlPlanNodeReport] {
 
@@ -55,10 +55,10 @@ case object SqlPlanNodeTranslator extends SqlTranslator[SqlPlanNodeReport] {
     Seq(currNode) ++ childNode
   }
 
-  override def toAllReports(c: Config, preReport: SqlPreReport): Seq[SqlPlanNodeReport] = {
-    val sqlId = preReport.raw.id
+  override def toAllReports(c: Config, preReport: SqlEntity): Seq[SqlPlanNodeReport] = {
+    val sqlId = preReport.start.id
     val plan = SparkInternal.executedPlan(preReport.end)
-    val nodes = convert(preReport.raw.description, "0", sqlId, plan, "")
+    val nodes = convert(preReport.start.description, "0", sqlId, plan, "")
     nodes
   }
 }
@@ -66,7 +66,7 @@ case object SqlPlanNodeTranslator extends SqlTranslator[SqlPlanNodeReport] {
 case object SqlPrettyTranslator extends SqlTranslator[StrReport] {
 
   def name: TranslatorName = "sqlpretty"
-  override def toAllReports(c: Config, report: SqlPreReport): Seq[StrReport] =
+  override def toAllReports(c: Config, report: SqlEntity): Seq[StrReport] =
     Seq(StrSqlReport(prettify(SparkInternal.executedPlan(report.end))))
 
   private def prettify(planInfo: SparkPlan, indent: String = ""): String = {

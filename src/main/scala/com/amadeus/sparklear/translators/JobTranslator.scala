@@ -1,7 +1,7 @@
 package com.amadeus.sparklear.translators
 
 import com.amadeus.sparklear.Config
-import com.amadeus.sparklear.prereports.JobPreReport
+import com.amadeus.sparklear.entities.JobEntity
 import com.amadeus.sparklear.reports.{JobReport, Report, StrJobReport, StrReport}
 import com.amadeus.sparklear.translators.Translator.{EntityName, TranslatorName}
 
@@ -11,14 +11,14 @@ object JobTranslator {
   def forName(s: TranslatorName): JobTranslator[_ <: Report] = Translator.forName(Translators)(EntityNameJob, s)
 }
 
-sealed trait JobTranslator[T <: Report] extends Translator[JobPreReport, T]
+sealed trait JobTranslator[T <: Report] extends Translator[JobEntity, T]
 
 case object JobJsonTranslator extends JobTranslator[JobReport] {
 
   override def name: TranslatorName = "jobjson"
-  override def toAllReports(c: Config, preReport: JobPreReport): Seq[JobReport] = {
-    val col = preReport.raw
-    val end = preReport.endUpdate
+  override def toAllReports(c: Config, preReport: JobEntity): Seq[JobReport] = {
+    val col = preReport.start
+    val end = preReport.end
     val (spillMb, totalExecCpuTimeSec) = end.spillAndCpu
     Seq(
       JobReport(
@@ -37,9 +37,9 @@ case object JobJsonTranslator extends JobTranslator[JobReport] {
 case object JobPrettyTranslator extends JobTranslator[StrReport] {
 
   override def name: TranslatorName = "jobpretty"
-  override def toAllReports(c: Config, preReport: JobPreReport): Seq[StrReport] = {
-    val col = preReport.raw
-    val end = preReport.endUpdate
+  override def toAllReports(c: Config, preReport: JobEntity): Seq[StrReport] = {
+    val col = preReport.start
+    val end = preReport.end
     val (spillMb, totalExecCpuTimeSec) = end.spillAndCpu
     val spillReport = if (spillMb != 0) s" SPILL_MB=$spillMb" else ""
     val header =

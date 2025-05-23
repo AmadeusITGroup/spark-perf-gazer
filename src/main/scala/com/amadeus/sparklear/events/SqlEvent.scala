@@ -1,13 +1,13 @@
-package com.amadeus.sparklear.raw
+package com.amadeus.sparklear.events
 
-import com.amadeus.sparklear.prereports.SqlPreReport
+import com.amadeus.sparklear.entities.SqlEntity
 import org.apache.spark.sql.execution.SparkPlanInfo
 
 /**
   * Raw event proving information about a SQL query
   */
-case class SqlRawEvent(
+case class SqlEvent(
   id: Long,
   plan: SparkPlanInfo,
   description: String
-) extends RawEvent[SqlPreReport]
+) extends Event[SqlEntity]

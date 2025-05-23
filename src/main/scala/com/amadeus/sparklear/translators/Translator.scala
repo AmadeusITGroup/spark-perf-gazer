@@ -1,17 +1,17 @@
 package com.amadeus.sparklear.translators
 
 import com.amadeus.sparklear.Config
-import com.amadeus.sparklear.prereports.PreReport
+import com.amadeus.sparklear.entities.Entity
 import com.amadeus.sparklear.reports.Report
 import com.amadeus.sparklear.translators.Translator.TranslatorName
 
 /**
-  * Converts a [[PreReport]] into a [[Report]]
+  * Converts a [[Entity]] into a [[Report]]
   *
-  * @tparam P the [[PreReport]] type
+  * @tparam P the [[Entity]] type
   * @tparam R the [[Report]] type
   */
-trait Translator[P <: PreReport, R <: Report] {
+trait Translator[P <: Entity, R <: Report] {
 
   /**
     * Human readable name for this translator
@@ -20,9 +20,10 @@ trait Translator[P <: PreReport, R <: Report] {
   def name: TranslatorName
 
   /**
-    * Convert a [[PreReport]] P into a collection of [[Report]] R
+    * Convert a [[Entity]] P into a collection of [[Report]] R
+ *
     * @param c the configuration to perform the conversion
-    * @param p the [[PreReport]] to convert
+    * @param p the [[Entity]] to convert
     * @return the collection of [[Report]] generated
     */
   def toAllReports(c: Config, p: P): Seq[R]
