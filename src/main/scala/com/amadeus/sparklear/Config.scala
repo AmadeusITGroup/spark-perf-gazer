@@ -10,12 +10,10 @@ import com.amadeus.sparklear.translators.{
 }
 import com.amadeus.sparklear.prereports.PreReport
 import com.amadeus.sparklear.reports.Report
-import com.amadeus.sparklear.reports.glasses.Glass
+import com.amadeus.sparklear.reports.filters.Filter
 import com.amadeus.sparklear.translators.Translator.StringReport
 
-/**
-  *
-  * @param stringReportPrefix prefix to use when a [[StringReport]] is generated (help end-user discriminate SparklEar in logs)
+/** @param stringReportPrefix prefix to use when a [[StringReport]] is generated (help end-user discriminate SparklEar in logs)
   * @param showSqls whether to expose to end-user SQL queries level reports
   * @param showJobs whether to expose to end-user job level reports
   * @param showStages whether to expose to end-user stage level reports
@@ -25,7 +23,7 @@ import com.amadeus.sparklear.translators.Translator.StringReport
   * @param sqlTranslator translator to use to generate [[Report]] for SQL queries
   * @param jobTranslator translator to use to generate [[Report]] for jobs
   * @param stageTranslator translator to use to generate [[Report]] for stages
-  * @param glasses filters to use on [[Report]]
+  * @param filters filters to use on [[Report]]
   * @param maxCacheSize maximum amount of elements [[RawEvent]] to keep in memory (per category)
   *                     too large and could cause OOM on the driver, and too small could cause incomplete reports
   *                     generated, so try stay around 200 to 1000 unless you really know what you're doing.
@@ -41,7 +39,7 @@ case class Config(
   sqlTranslatorName: String = SqlPlanNodeTranslator.name,
   jobTranslatorName: String = JobJsonTranslator.name,
   stageTranslatorName: String = StageJson.name,
-  glasses: Seq[Glass] = Seq.empty[Glass],
+  filters: Seq[Filter] = Seq.empty[Filter],
   maxCacheSize: Int = Config.DefaultCacheSize
 ) {
   // TODO: use these to avoid collecting (at the source) some objects if won't be used

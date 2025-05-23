@@ -1,7 +1,7 @@
 package com.amadeus.sparklear
 
 import com.amadeus.sparklear.reports.SqlPlanNodeReport
-import com.amadeus.sparklear.reports.glasses.SqlNodeGlass
+import com.amadeus.sparklear.reports.filters.SqlNodeFilter
 import com.amadeus.testfwk._
 import io.delta.tables.DeltaTable
 
@@ -33,16 +33,16 @@ class ReadCsvToDeltaSpec
           // DF TABLE: iata_code, icao_code, ..., name, ..., country_name, country_code, ...
           val df = DeltaTable.forPath(subdir(tmpDir, "deltadir1")).toDF
           val cfg = defaultTestConfig.withOnlySqlEnabled
-            .withGlasses(
+            .withFilters(
               Seq(
-                SqlNodeGlass(
+                SqlNodeFilter(
                   nodeNameRegex = Some(".*Filter.*"),
                   parentNodeNameRegex = Some(".*WholeStageCodegen.*")
                 ),
-                SqlNodeGlass(
+                SqlNodeFilter(
                   nodeNameRegex = Some(".*Scan.*")
                 ),
-                SqlNodeGlass(
+                SqlNodeFilter(
                   nodeNameRegex = Some(".*Join.*")
                 )
               )

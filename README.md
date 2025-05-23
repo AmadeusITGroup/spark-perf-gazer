@@ -53,7 +53,7 @@ A `Report` is a type that represents the report unit shared with the end-user.
 
 It is the `Translator` that *translates* a `PreReport` into a `Report`.
 
-A `Glass` is a filter that operates on `Report`s, so that the end-user can have some control to focus specific aspects of
+A `Filter` is a filter that operates on `Report`s, so that the end-user can have some control to focus specific aspects of
 their Spark ETL (like *file pruning* for instance).
 
 You can find here a diagram connecting all classes involved in the data transformation from raw (coming from Spark) until
@@ -106,7 +106,7 @@ Settings -> Editor -> Code Style -> Scala -> Formatter: ScalaFMT
 - [ ] Use it in PRD projects (json2star, snowflake-push, ...)
 - [ ] Improve README to include comparison with other similar solution
 - [x] Add test case with a join
-- [ ] Any glass applies to any Report (could it be a performance issue if 100 glasses passed?)
+- [ ] Any filter applies to any Report (could it be a performance issue if 100 filter passed?)
 - [x] This project must be dependency-free, so there is a fix to do on the logger library
 - [ ] Review the CappedMap (JMH benchmark?)
 - [ ] Add the missing link of SQL queries with children SQL queries

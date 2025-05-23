@@ -28,14 +28,14 @@ trait Translator[P <: PreReport, R <: Report] {
   def toAllReports(c: Config, p: P): Seq[R]
 
   /**
-    * Same as [[toAllReports()]] but the addition of glasses applied to filter [[Report]]s
+    * Same as [[toAllReports()]] but the addition of filters applied to filter [[Report]]s
     */
   def toReports(c: Config, p: P): Seq[R] = {
     val rep = toAllReports(c, p)
-    val frep = if (c.glasses.isEmpty) { // no glasses? return all
+    val frep = if (c.filters.isEmpty) { // no filters? return all
       rep
     } else {
-      rep.filter(r => c.glasses.exists(g => g.eligible(r))) // glasses? filter
+      rep.filter(r => c.filters.exists(g => g.eligible(r))) // filters? filter
     }
     frep
   }

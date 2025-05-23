@@ -4,7 +4,7 @@ import com.amadeus.sparklear.Config
 import com.amadeus.sparklear.translators.{JobTranslator, SqlTranslator, StageTranslator}
 import com.amadeus.sparklear.prereports.PreReport
 import com.amadeus.sparklear.reports.Report
-import com.amadeus.sparklear.reports.glasses.{Glass, SqlNodeGlass}
+import com.amadeus.sparklear.reports.filters.{Filter, SqlNodeFilter}
 import com.amadeus.sparklear.translators.Translator.TranslatorName
 
 trait ConfigSupport {
@@ -18,7 +18,7 @@ trait ConfigSupport {
 
     def withAllDisabled: Config = c.copy(showSqls = false, showJobs = false, showStages = false)
     def withOnlySqlEnabled: Config = c.copy(showSqls = true, showJobs = false, showStages = false)
-    def withGlasses(g: Seq[Glass]): Config = c.copy(glasses = g)
+    def withFilters(g: Seq[Filter]): Config = c.copy(filters = g)
     def withStringSink(ss: String => Unit): Config = c.copy(stringReportSink = Some(ss))
     def withReportSink(ss: Report => Unit): Config = c.copy(reportSink = Some(ss))
     def withPreReportSink(ss: PreReport => Unit): Config = c.copy(preReportSink = Some(ss))

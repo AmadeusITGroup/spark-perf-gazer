@@ -1,7 +1,7 @@
 package com.amadeus.sparklear
 
 import com.amadeus.sparklear.translators.{JobPrettyTranslator, SqlPlanNodeTranslator, SqlPrettyTranslator, StagePrettyTranslator}
-import com.amadeus.sparklear.reports.glasses.SqlNodeGlass
+import com.amadeus.sparklear.reports.filters.SqlNodeFilter
 import com.amadeus.testfwk.SinkSupport.AllSinks
 import com.amadeus.testfwk.{ConfigSupport, JsonSupport, OptdSupport, SimpleSpec, SinkSupport, SparkSupport}
 
@@ -46,15 +46,15 @@ class ReadCsvToNoopSpec
 
         it("should build SQL preReports (SqlPlanNodeTranslator filtered by nodeName)") {
           val inputSql = sinks.sqlPreReports.head
-          val g = Seq(SqlNodeGlass(nodeNameRegex = Some(".*ByExpr.*")))
-          val cfg = defaultTestConfig.withAllEnabled.withGlasses(g)
+          val g = Seq(SqlNodeFilter(nodeNameRegex = Some(".*ByExpr.*")))
+          val cfg = defaultTestConfig.withAllEnabled.withFilters(g)
           val r = SqlPlanNodeTranslator.toReports(cfg, inputSql)
           r.map(i => (i.sqlId, i.jobName, i.nodeName)) should be(Seq((1, "testjob", "OverwriteByExpression")))
         }
         it("should build SQL preReports (SqlPlanNodeTranslator filtered by metric)") {
           val inputSql = sinks.sqlPreReports.head
-          val g = Seq(SqlNodeGlass(metricRegex = Some("number of files read")))
-          val cfg = defaultTestConfig.withAllEnabled.withGlasses(g)
+          val g = Seq(SqlNodeFilter(metricRegex = Some("number of files read")))
+          val cfg = defaultTestConfig.withAllEnabled.withFilters(g)
           val r = SqlPlanNodeTranslator.toReports(cfg, inputSql)
           r.map(_.nodeName) should be(Seq("Scan csv "))
         }

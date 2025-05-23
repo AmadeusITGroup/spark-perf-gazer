@@ -1,4 +1,4 @@
-package com.amadeus.sparklear.reports.glasses
+package com.amadeus.sparklear.reports.filters
 
 import com.amadeus.sparklear.reports.{Report, SqlPlanNodeReport}
 
@@ -12,13 +12,13 @@ import com.amadeus.sparklear.reports.{Report, SqlPlanNodeReport}
   *                    a match in one metric is enough to keep the [[SqlPlanNodeReport]]
   * @param isLeaf expression to filter on leaf value
   */
-case class SqlNodeGlass(
+case class SqlNodeFilter(
   jobNameRegex: Option[String] = None,
   nodeNameRegex: Option[String] = None,
   parentNodeNameRegex: Option[String] = None,
   metricRegex: Option[String] = None,
   isLeaf: Option[Boolean] = None
-) extends Glass {
+) extends Filter {
 
   private def check(report: SqlPlanNodeReport): Boolean = {
     val j = jobNameRegex.map(r => report.jobName.matches(r)).getOrElse(true)
