@@ -1,11 +1,11 @@
 package com.amadeus.sparklear.prereports
 
 import com.amadeus.sparklear.annotations.Unstable
-import com.amadeus.sparklear.collects.JobCollect
-import com.amadeus.sparklear.collects.JobCollect.EndUpdate
+import com.amadeus.sparklear.raw.JobRawEvent
+import com.amadeus.sparklear.raw.JobRawEvent.EndUpdate
 
 @Unstable
 case class JobPreReport(
-  collect: JobCollect,
+  raw: JobRawEvent,
   endUpdate: EndUpdate
 ) extends PreReport

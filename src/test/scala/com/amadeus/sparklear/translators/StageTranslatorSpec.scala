@@ -1,6 +1,6 @@
 package com.amadeus.sparklear.translators
 
-import com.amadeus.sparklear.collects.StageCollect
+import com.amadeus.sparklear.raw.StageRawEvent
 import com.amadeus.sparklear.prereports.StagePreReport
 import com.amadeus.sparklear.reports.{SqlPlanNodeReport, StrReport, StrStageReport}
 import com.amadeus.testfwk.{ConfigSupport, SimpleSpec}
@@ -9,7 +9,7 @@ import org.apache.spark.Fixtures2
 class StageTranslatorSpec extends SimpleSpec with ConfigSupport {
   describe(s"The ${StageTranslator.getClass.getName}") {
     it("should generate reports in a basic scenario") {
-      val reportStage = StagePreReport(StageCollect(Fixtures2.Stage1.stageInfo))
+      val reportStage = StagePreReport(StageRawEvent(Fixtures2.Stage1.stageInfo))
       val cfg = defaultTestConfig
       val rs = StagePrettyTranslator.toReports(cfg, reportStage)
       rs shouldEqual (

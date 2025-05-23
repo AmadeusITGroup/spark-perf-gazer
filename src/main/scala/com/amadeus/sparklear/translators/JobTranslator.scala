@@ -17,7 +17,7 @@ case object JobJsonTranslator extends JobTranslator[JobReport] {
 
   override def name: TranslatorName = "jobjson"
   override def toAllReports(c: Config, preReport: JobPreReport): Seq[JobReport] = {
-    val col = preReport.collect
+    val col = preReport.raw
     val end = preReport.endUpdate
     val (spillMb, totalExecCpuTimeSec) = end.spillAndCpu
     Seq(
@@ -38,7 +38,7 @@ case object JobPrettyTranslator extends JobTranslator[StrReport] {
 
   override def name: TranslatorName = "jobpretty"
   override def toAllReports(c: Config, preReport: JobPreReport): Seq[StrReport] = {
-    val col = preReport.collect
+    val col = preReport.raw
     val end = preReport.endUpdate
     val (spillMb, totalExecCpuTimeSec) = end.spillAndCpu
     val spillReport = if (spillMb != 0) s" SPILL_MB=$spillMb" else ""

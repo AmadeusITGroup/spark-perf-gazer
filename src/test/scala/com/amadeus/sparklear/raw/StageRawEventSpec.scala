@@ -1,13 +1,13 @@
-package com.amadeus.sparklear.collects
+package com.amadeus.sparklear.raw
 
 import com.amadeus.testfwk.SimpleSpec
 import org.apache.spark.Fixtures2
 import org.scalamock.scalatest.MockFactory
 
-class StageCollectSpec extends SimpleSpec with MockFactory {
-  describe(s"The ${StageCollect.getClass.getSimpleName}") {
+class StageRawEventSpec extends SimpleSpec with MockFactory {
+  describe(s"The ${StageRawEvent.getClass.getSimpleName}") {
     it("should generate correct metrics") {
-      val rs = StageCollect(Fixtures2.Stage1.stageInfo)
+      val rs = StageRawEvent(Fixtures2.Stage1.stageInfo)
       rs.execCpuSecs shouldEqual (77)
       rs.execRunSecs shouldEqual (98)
       rs.execjvmGCSecs shouldEqual (13)

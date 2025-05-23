@@ -2,8 +2,8 @@ package com.amadeus.sparklear
 
 import com.amadeus.sparklear.prereports.{JobPreReport, PreReport, SqlPreReport, StagePreReport}
 import com.amadeus.sparklear.utils.CappedConcurrentHashMap
-import com.amadeus.sparklear.collects.JobCollect.EndUpdate
-import com.amadeus.sparklear.collects.{JobCollect, SqlCollect, StageCollect}
+import com.amadeus.sparklear.raw.JobRawEvent.EndUpdate
+import com.amadeus.sparklear.raw.{JobRawEvent, SqlRawEvent, StageRawEvent}
 import org.apache.spark.scheduler._
 import org.apache.spark.sql.execution.ui._
 
@@ -23,10 +23,10 @@ class SparklEar(c: Config) extends SparkListener {
   type JobKey = Int
   type StageKey = Int
 
-  // Maps to keep sqls + jobs + stages collects (initial information) until some completion
-  private val sqlCollects = new CappedConcurrentHashMap[SqlKey, SqlCollect](c.maxCacheSize)
-  private val jobCollects = new CappedConcurrentHashMap[JobKey, JobCollect](c.maxCacheSize)
-  private val stageCollects = new CappedConcurrentHashMap[StageKey, StageCollect](c.maxCacheSize)
+  // Maps to keep sqls + jobs + stages raw events (initial information) until some completion
+  private val sqlRawEvents = new CappedConcurrentHashMap[SqlKey, SqlRawEvent](c.maxCacheSize)
+  private val jobRawEvents = new CappedConcurrentHashMap[JobKey, JobRawEvent](c.maxCacheSize)
+  private val stageRawEvents = new CappedConcurrentHashMap[StageKey, StageRawEvent](c.maxCacheSize)
 
   /** LISTENERS
     */
@@ -38,10 +38,10 @@ class SparklEar(c: Config) extends SparkListener {
   override def onStageCompleted(stageCompleted: SparkListenerStageCompleted): Unit = {
     logger.trace("onStageCompleted(...)")
     // generate a stage collect
-    val sw = StageCollect(stageCompleted.stageInfo)
+    val sw = StageRawEvent(stageCompleted.stageInfo)
 
     // store stage collect for the use in jobs
-    stageCollects.put(stageCompleted.stageInfo.stageId, sw)
+    stageRawEvents.put(stageCompleted.stageInfo.stageId, sw)
 
     if (c.showStages) {
       logger.trace(s"Handling Stage end: ${stageCompleted.stageInfo.stageId}")
@@ -61,7 +61,7 @@ class SparklEar(c: Config) extends SparkListener {
 
   override def onJobStart(jobStart: SparkListenerJobStart): Unit = {
     logger.trace("onJobStart(...)")
-    jobCollects.put(jobStart.jobId, JobCollect.from(jobStart))
+    jobRawEvents.put(jobStart.jobId, JobRawEvent.from(jobStart))
   }
 
   /** This is the listener method for job end
@@ -71,10 +71,10 @@ class SparklEar(c: Config) extends SparkListener {
   override def onJobEnd(jobEnd: SparkListenerJobEnd): Unit = {
     logger.trace("onJobEnd(...)")
     val jobId = jobEnd.jobId
-    val jobCollectOpt = Option(jobCollects.get(jobId)) // retrieve initial image of job (it could have been purged)
+    val jobCollectOpt = Option(jobRawEvents.get(jobId)) // retrieve initial image of job (it could have been purged)
     jobCollectOpt.foreach { jobCollect =>
       val stagesIdAndStats = jobCollect.initialStages.map { sd => // retrieve image of stages
-        (sd, Option(stageCollects.get(sd.id)))
+        (sd, Option(stageRawEvents.get(sd.id)))
       }
 
       if (c.showJobs) {
@@ -91,9 +91,9 @@ class SparklEar(c: Config) extends SparkListener {
       }
 
       // purge
-      jobCollects.remove(jobId)
+      jobRawEvents.remove(jobId)
       val stageIds = jobCollect.initialStages.map(_.id)
-      stageIds.foreach(i => stageCollects.remove(i))
+      stageIds.foreach(i => stageRawEvents.remove(i))
     }
   }
 
@@ -116,7 +116,7 @@ class SparklEar(c: Config) extends SparkListener {
 
   private def onSqlStart(event: SparkListenerSQLExecutionStart): Unit = {
     logger.trace("onSqlStart(...)")
-    sqlCollects.put(event.executionId, SqlCollect(event.executionId, event.sparkPlanInfo, event.description))
+    sqlRawEvents.put(event.executionId, SqlRawEvent(event.executionId, event.sparkPlanInfo, event.description))
   }
 
   /** This is the listener method for SQL query end
@@ -127,7 +127,7 @@ class SparklEar(c: Config) extends SparkListener {
     logger.trace("onSqlEnd(...)")
 
     // get the initial sql collect information (it could have been purged)
-    val sqlCollectOpt = Option(sqlCollects.get(event.executionId))
+    val sqlCollectOpt = Option(sqlRawEvents.get(event.executionId))
 
     sqlCollectOpt.foreach { sqlCollect =>
       if (c.showSqls) {
@@ -144,7 +144,7 @@ class SparklEar(c: Config) extends SparkListener {
       }
 
       // purge
-      sqlCollects.remove(event.executionId)
+      sqlRawEvents.remove(event.executionId)
     }
   }
 

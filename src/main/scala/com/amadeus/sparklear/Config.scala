@@ -26,7 +26,7 @@ import com.amadeus.sparklear.translators.Translator.StringReport
   * @param jobTranslator translator to use to generate [[Report]] for jobs
   * @param stageTranslator translator to use to generate [[Report]] for stages
   * @param glasses filters to use on [[Report]]
-  * @param maxCacheSize maximum amount of elements [[Collect]] to keep in memory (per category)
+  * @param maxCacheSize maximum amount of elements [[RawEvent]] to keep in memory (per category)
   *                     too large and could cause OOM on the driver, and too small could cause incomplete reports
   *                     generated, so try stay around 200 to 1000 unless you really know what you're doing.
   */

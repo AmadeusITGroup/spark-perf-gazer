@@ -1,10 +1,13 @@
-package com.amadeus.sparklear.collects
+package com.amadeus.sparklear.raw
 
 import com.amadeus.sparklear.prereports.SqlPreReport
 import org.apache.spark.sql.execution.SparkPlanInfo
 
-case class SqlCollect(
+/**
+  * Raw event proving information about a SQL query
+  */
+case class SqlRawEvent(
   id: Long,
   plan: SparkPlanInfo,
   description: String
-) extends Collect[SqlPreReport]
+) extends RawEvent[SqlPreReport]

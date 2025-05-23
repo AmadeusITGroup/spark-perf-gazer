@@ -1,9 +1,12 @@
-package com.amadeus.sparklear.collects
+package com.amadeus.sparklear.raw
 
 import com.amadeus.sparklear.prereports.StagePreReport
 import org.apache.spark.scheduler.StageInfo
 
-case class StageCollect(stageInfo: StageInfo) extends Collect[StagePreReport] {
+/**
+  * Raw event proving information about a stage
+  */
+case class StageRawEvent(stageInfo: StageInfo) extends RawEvent[StagePreReport] {
   val spillMb = if (stageInfo.taskMetrics.memoryBytesSpilled > 0) {
     Some(stageInfo.taskMetrics.memoryBytesSpilled / 1024 / 1024)
   } else {

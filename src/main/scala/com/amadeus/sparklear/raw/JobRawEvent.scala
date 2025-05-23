@@ -1,22 +1,25 @@
-package com.amadeus.sparklear.collects
+package com.amadeus.sparklear.raw
 
 import com.amadeus.sparklear.prereports.JobPreReport
 import org.apache.spark.scheduler.{SparkListenerJobEnd, SparkListenerJobStart, StageInfo}
 
 import java.util.Properties
 
-case class JobCollect(
+/**
+  * Raw event proving information about a Job
+  */
+case class JobRawEvent(
   name: String,
   group: String,
   sqlId: String,
   initialStages: Seq[StageRef]
-) extends Collect[JobPreReport] {}
+) extends RawEvent[JobPreReport] {}
 
-object JobCollect {
+object JobRawEvent {
 
   case class EndUpdate(
-    finalStages: Seq[(StageRef, Option[StageCollect])],
-    jobEnd: SparkListenerJobEnd
+                        finalStages: Seq[(StageRef, Option[StageRawEvent])],
+                        jobEnd: SparkListenerJobEnd
   ) {
     def spillAndCpu: (Long, Long) = {
       val spillMb = finalStages.collect { case (_, Some(stgStats)) => stgStats.spillMb }.flatten.sum
@@ -30,15 +33,15 @@ object JobCollect {
   private val SPARK_JOB_GROUP_ID = "spark.jobGroup.id"
   private val SPARK_SQL_EXECUTION_ID = "spark.sql.execution.id"
 
-  def from(jobStart: SparkListenerJobStart): JobCollect = {
+  def from(jobStart: SparkListenerJobStart): JobRawEvent = {
     from(jobStart.stageInfos, jobStart.properties)
   }
-  def from(stageInfos: Seq[StageInfo], properties: Properties): JobCollect = {
+  private def from(stageInfos: Seq[StageInfo], properties: Properties): JobRawEvent = {
     val d = sanitize(properties.getProperty(SPARK_JOB_DESCRIPTION))
     val g = sanitize(properties.getProperty(SPARK_JOB_GROUP_ID))
     val i = properties.getProperty(SPARK_SQL_EXECUTION_ID)
     val s = stageInfos.map(i => StageRef(i.stageId, i.numTasks)).sortBy(_.id)
-    JobCollect(name = d, group = g, sqlId = i, initialStages = s)
+    JobRawEvent(name = d, group = g, sqlId = i, initialStages = s)
   }
 
   private def sanitize(s: String): String = {

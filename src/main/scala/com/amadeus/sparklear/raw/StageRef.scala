@@ -1,4 +1,4 @@
-package com.amadeus.sparklear.collects
+package com.amadeus.sparklear.raw
 
 case class StageRef(
   id: Int,

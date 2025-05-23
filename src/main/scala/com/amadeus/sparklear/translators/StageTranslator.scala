@@ -25,10 +25,10 @@ case object StageJson extends StageTranslator {
 case object StagePrettyTranslator extends StageTranslator {
   override def name: TranslatorName = "stagepretty"
   override def toAllReports(c: Config, r: StagePreReport): Seq[StrReport] = {
-    val p = r.w
+    val p = r.raw
     val spillRep = p.spillMb.map(i => s" SPILL_MB=$i").mkString
     val attemptRep = s""
-    val s = s"STAGE ID=${r.w.stageInfo.stageId} READ_MB=${p.inputReadMb} WRITE_MB=${p.outputWriteMb} SHUFFLE_READ_MB=${p.shuffleReadMb} " +
+    val s = s"STAGE ID=${r.raw.stageInfo.stageId} READ_MB=${p.inputReadMb} WRITE_MB=${p.outputWriteMb} SHUFFLE_READ_MB=${p.shuffleReadMb} " +
       s"SHUFFLE_WRITE_MB=${p.shuffleWriteMb} EXEC_CPU_SECS=${p.execCpuSecs} EXEC_RUN_SECS=${p.execRunSecs} EXEC_JVM_GC_SECS=${p.execjvmGCSecs} ATTEMPT=${p.attempt}$spillRep"
     Seq(StrStageReport(s))
   }

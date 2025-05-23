@@ -3,7 +3,7 @@ package com.amadeus.sparklear.translators
 import com.amadeus.sparklear.Config
 import com.amadeus.sparklear.prereports.SqlPreReport
 import com.amadeus.sparklear.reports.{Report, SqlPlanNodeReport, StrReport, StrSqlReport}
-import com.amadeus.sparklear.collects.SqlCollect
+import com.amadeus.sparklear.raw.SqlRawEvent
 import com.amadeus.sparklear.translators.SqlTranslator.metricToKv
 import com.amadeus.sparklear.translators.Translator.{EntityName, TranslatorName}
 import org.apache.spark.sql.execution.adaptive.{AdaptiveSparkPlanExec, ShuffleQueryStageExec}
@@ -56,9 +56,9 @@ case object SqlPlanNodeTranslator extends SqlTranslator[SqlPlanNodeReport] {
   }
 
   override def toAllReports(c: Config, preReport: SqlPreReport): Seq[SqlPlanNodeReport] = {
-    val sqlId = preReport.collect.id
+    val sqlId = preReport.raw.id
     val plan = SparkInternal.executedPlan(preReport.end)
-    val nodes = convert(preReport.collect.description, "0", sqlId, plan, "")
+    val nodes = convert(preReport.raw.description, "0", sqlId, plan, "")
     nodes
   }
 }

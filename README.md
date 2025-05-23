@@ -36,7 +36,7 @@ The core class is `SparklEar`, which can be instantiated easily when providing a
 It can be registered as `Spark` listener via `spark.sparkContext.addSparkListener(...)`.
 It will then listen to multiple events coming from `Spark`.
 
-The event objects are collected in the form of `Collect`. These are typically classes like: 
+The event objects at the launch of the query/job/stage are wrapped by `RawEvent`. The event objects wrapped are classes like: 
 
 - `org.apache.spark...StageInfo`
 - `org.apache.spark...SparkListenerJobEnd`
@@ -44,8 +44,9 @@ The event objects are collected in the form of `Collect`. These are typically cl
 
 When a SQL query, or a job, or a stage finishes, it triggers a callback mechanism. 
 
-When the inputs are requested to `SparklEar`, all collected `Collect`s are inspected and transformed into `PreReport`s according
-to the type of `Collect`.
+When the inputs are requested to `SparklEar`, all collected `RawEvent`s are inspected and transformed into `PreReport`s at the end
+of the query/job/stage execution enriched with some extra information only available then, according
+to the type of `RawEvent`.
 
 A `PreReport` is transformed into one (or multiple) `Report`/s.
 A `Report` is a type that represents the report unit shared with the end-user.
@@ -61,18 +62,18 @@ they become a `Report` ready to be exposed to the end-user.
 ```
 TRAITS
 ------------------------------------------------------------------------------------------------------------------------
-<SparkEventDataType>  --> X<:Collect    --->  PreReport -----> (Translator) -----> Report ---> invoke notification(Report)
-                          Y<:Collect  
+<SparkEventDataType>  --> X<:RawEvent    --->  PreReport -----> (Translator) -----> Report ---> sink(Report)
+                          Y<:RawEvent  
 ------------------------------------------------------------------------------------------------------------------------
 
 SUBTYPES
 ------------------------------------------------------------------------------------------------------------------------
- SparkListenerJobEnd      SqlCollect ----+-> SqlPreReport --->   (...)   +-------> StrReport (by SqlTranslator)
- StageInfo                MetricCollect /                                 \------> SqlPlanNodeReport (by SqlTranslator)
+ SparkListenerJobEnd      SqlRawEvent ----+-> SqlPreReport --->   (...)   +-------> StrReport (by SqlTranslator)
+ StageInfo                MetricRawEvent /                                 \------> SqlPlanNodeReport (by SqlTranslator)
  ...
-                          JobCollect ----+-> JobPreReport --->   (...)   +-------> JobReport (by JobTranslator)
+                          JobRawEvent ----+-> JobPreReport --->   (...)   +-------> JobReport (by JobTranslator)
                                         /                                 \------> StrReport (by JobTranslator)
-                          StageCollect ----> StagePreReport ->   (...)   +-------> StageReport (by StageTranslator)
+                          StageRawEvent ----> StagePreReport ->   (...)   +-------> StageReport (by StageTranslator)
                                                                          \-------> StrReport (by StageTranslator)
 ```
 
