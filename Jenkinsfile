@@ -1,5 +1,5 @@
 #!/usr/bin/env groovy
-@Library(['pipeline-framework', 'pipeline-toolbox', 'faas']) _
+@Library(['pipeline-framework', 'pipeline-toolbox']) _
 String dockerRepository = "dockerhub.rnd.amadeus.net:5005"
 String dockerImageFullName = "dihdlk-app:v2"
 
