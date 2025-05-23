@@ -14,9 +14,9 @@ import com.amadeus.sparklear.reports.filters.Filter
 import com.amadeus.sparklear.translators.Translator.StringReport
 
 /** @param stringReportPrefix prefix to use when a [[StringReport]] is generated (help end-user discriminate SparklEar in logs)
-  * @param showSqls           whether to expose to end-user SQL queries level reports
-  * @param showJobs           whether to expose to end-user job level reports
-  * @param showStages         whether to expose to end-user stage level reports
+  * @param sqlEnabled           whether to expose to end-user SQL queries level reports
+  * @param jobsEnabled           whether to expose to end-user job level reports
+  * @param stagesEnabled         whether to expose to end-user stage level reports
   * @param preReportSink      (internal) method to use as sink for completed [[Entity]] instances
   * @param stringReportSink   optional method to use as sink for completed [[Report]] instances (as string)
   * @param reportSink         optional method to use as sink for completed [[Report]] instances
@@ -30,9 +30,9 @@ import com.amadeus.sparklear.translators.Translator.StringReport
   */
 case class Config(
   stringReportPrefix: String = Config.DefaultStringReportPrefix,
-  showSqls: Boolean = true,
-  showJobs: Boolean = true,
-  showStages: Boolean = false,
+  sqlEnabled: Boolean = true,
+  jobsEnabled: Boolean = true,
+  stagesEnabled: Boolean = false,
   preReportSink: Option[Entity => Unit] = None, // for testing purposes
   stringReportSink: Option[StringReport => Unit] = None,
   reportSink: Option[Report => Unit] = None,

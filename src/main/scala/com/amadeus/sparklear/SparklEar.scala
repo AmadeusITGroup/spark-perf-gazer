@@ -43,7 +43,7 @@ class SparklEar(c: Config) extends SparkListener {
     // store stage collect for the use in jobs
     stageRawEvents.put(stageCompleted.stageInfo.stageId, sw)
 
-    if (c.showStages) {
+    if (c.stagesEnabled) {
       logger.trace(s"Handling Stage end: ${stageCompleted.stageInfo.stageId}")
       // generate the stage input
       val si = StageEntity(sw)
@@ -77,7 +77,7 @@ class SparklEar(c: Config) extends SparkListener {
         (sd, Option(stageRawEvents.get(sd.id)))
       }
 
-      if (c.showJobs) {
+      if (c.jobsEnabled) {
         logger.trace(s"Handling Job end: ${jobEnd.jobId}")
         // generate the job input
         val ji = JobEntity(jobCollect, EndUpdate(finalStages = stagesIdAndStats, jobEnd = jobEnd))
@@ -130,7 +130,7 @@ class SparklEar(c: Config) extends SparkListener {
     val sqlCollectOpt = Option(sqlRawEvents.get(event.executionId))
 
     sqlCollectOpt.foreach { sqlCollect =>
-      if (c.showSqls) {
+      if (c.sqlEnabled) {
         logger.trace(s"Handling SQL end: ${event.executionId}")
         // generate the SQL input
         val si = SqlEntity(sqlCollect, event)
