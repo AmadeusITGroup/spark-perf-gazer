@@ -1,12 +1,12 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.entities.{JobEntity, Entity, SqlEntity, StageEntity}
+import com.amadeus.sparklear.entities.{Entity, JobEntity, SqlEntity, StageEntity}
 import com.amadeus.sparklear.utils.CappedConcurrentHashMap
 import com.amadeus.sparklear.events.JobEvent.EndUpdate
 import com.amadeus.sparklear.events.{JobEvent, SqlEvent, StageEvent}
+import com.amadeus.sparklear.reports.{JobReport, SqlReport, StageReport}
 import org.apache.spark.scheduler._
 import org.apache.spark.sql.execution.ui._
-
 import org.slf4j.{Logger, LoggerFactory}
 
 /** This listener displays in the Spark Driver STDOUT some
@@ -48,7 +48,7 @@ class SparklEar(c: Config) extends SparkListener {
       // generate the stage input
       val si = StageEntity(sw)
       // sink the stage input serialized (as string, and as objects)
-      c.stageTranslator.toReports(c, si).foreach(c.sink.sink)
+      c.sink.sink(StageReport.fromEntityToReport(si))
     } else {
       logger.trace(s"Ignoring Stage end: ${stageCompleted.stageInfo.stageId}")
     }
@@ -79,7 +79,7 @@ class SparklEar(c: Config) extends SparkListener {
         // generate the job input
         val ji = JobEntity(jobCollect, EndUpdate(finalStages = stagesIdAndStats, jobEnd = jobEnd))
         // sink the job input serialized (as string, and as objects)
-        c.jobTranslator.toReports(c, ji).foreach(c.sink.sink)
+        c.sink.sink(JobReport.fromEntityToReport(ji))
       } else {
         logger.trace(s"Ignoring Job end: ${jobEnd.jobId}")
       }
@@ -129,7 +129,7 @@ class SparklEar(c: Config) extends SparkListener {
         // generate the SQL input
         val si = SqlEntity(sqlCollect, event)
         // sink the SQL input serialized (as string, and as objects)
-        c.sqlTranslator.toReports(c, si).foreach(c.sink.sink)
+        c.sink.sink(SqlReport.fromEntityToReport(si))
       } else {
         logger.trace(s"Ignoring SQL end: ${event.executionId}")
       }
@@ -137,6 +137,10 @@ class SparklEar(c: Config) extends SparkListener {
       // purge
       sqlRawEvents.remove(event.executionId)
     }
+  }
+
+  override def onApplicationEnd(event: SparkListenerApplicationEnd): Unit = {
+    logger.trace(s"onApplicationEnd: duration=${event.time}")
   }
 
 }

@@ -1,6 +1,6 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.reports.SqlPlanNodeReport
+import com.amadeus.sparklear.reports.{SqlNode, SqlReport}
 import com.amadeus.testfwk._
 import com.amadeus.testfwk.filters.SqlNodeFilter
 import io.delta.tables.DeltaTable
@@ -50,7 +50,7 @@ class ReadCsvToDeltaSpec
               jobNameRegex = Some("jobfilter")
             )
             val actual = sinks.reports
-              .collect { case i: SqlPlanNodeReport => i }
+              .collect { case i: SqlReport => i.nodes }.flatten
               .filter(r => f.eligible(r))
               .map(i => (i.jobName, i.metrics))
             actual should equal(Seq(("jobfilter", Map("number of output rows" -> "16"))))
@@ -101,7 +101,7 @@ class ReadCsvToDeltaSpec
               isLeaf = Some(true)
             )
             val actual = sinks.reports
-              .collect { case i: SqlPlanNodeReport => i }
+              .collect { case i: SqlReport => i.nodes }.flatten
               .filter(r => f.eligible(r))
               .map(i => (i.jobName, i.metrics("number of files read"), i.metrics("number of output rows")))
             actual.size should equal(2) // one for the build side and one for the probe side
@@ -114,7 +114,7 @@ class ReadCsvToDeltaSpec
               jobNameRegex = Some("jobjoin")
             )
             val actual = sinks.reports
-              .collect { case i: SqlPlanNodeReport => i }
+              .collect { case i: SqlReport => i.nodes }.flatten
               .filter(r => f.eligible(r))
               .map(i => (i.jobName, i.metrics))
             actual should equal(Seq(("jobjoin", Map("number of output rows" -> "2"))))

@@ -3,14 +3,14 @@ package com.amadeus.sparklear.translators
 import com.amadeus.sparklear.events.JobEvent.EndUpdate
 import com.amadeus.sparklear.events.{JobEvent, StageEvent, StageRef}
 import com.amadeus.sparklear.entities.JobEntity
-import com.amadeus.sparklear.reports.StrJobReport
+import com.amadeus.sparklear.reports.JobReport
 import com.amadeus.testfwk.{ConfigSupport, SimpleSpec}
 import org.apache.spark.Fixtures2
 import org.apache.spark.scheduler.{JobSucceeded, SparkListenerJobEnd}
 
 class JobTranslatorSpec extends SimpleSpec with ConfigSupport {
 
-  describe(s"${JobPrettyTranslator.getClass.getSimpleName}") {
+  describe(s"${JobReport.getClass.getSimpleName}") {
     it("should generate a simple job report") {
       val c = defaultTestConfig
       val jc = JobEvent(
@@ -26,8 +26,16 @@ class JobTranslatorSpec extends SimpleSpec with ConfigSupport {
         jobEnd = SparkListenerJobEnd(7, 0L, JobSucceeded)
       )
       val p = JobEntity(jc, eu)
-      val r = JobPrettyTranslator.toReports(c, p)
-      r should equal(Seq(StrJobReport("JOB ID=7 GROUP='group' NAME='job' SQL_ID=3 SPILL_MB=3 STAGES=0 TOTAL_CPU_SEC=77")))
+      val r = JobReport.fromEntityToReport(p)
+      r should equal(
+        JobReport(
+          jobId = 7,
+          groupId = "group",
+          jobName = "job",
+          sqlId = "3",
+          stages = 0
+        )
+      )
     }
   }
 

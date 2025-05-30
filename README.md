@@ -64,21 +64,18 @@ they become a `Report` ready to be exposed to the end-user.
 
 ```
 TRAITS
-------------------------------------------------------------------------------------------------------------------------
-X<:Event -----------> Entity -----> (Translator) -----> Report (ready to be sent to the sink)
+-----------------------------------------------------------------
+X<:Event -----------> Entity ---------> Report -------> Sink
 Y<:Event  
-------------------------------------------------------------------------------------------------------------------------
-
+-----------------------------------------------------------------
 CLASSES
-------------------------------------------------------------------------------------------------------------------------
-SqlEvent ---------> SqlEntity --->   (...)   +-------> StrReport (by SqlTranslator)
-                                              \------> SqlPlanNodeReport (by SqlTranslator)
+-----------------------------------------------------------------
+SqlEvent ---------> SqlEntity --------> SqlReport
                           
-JobEvent -------+-> JobEntity --->   (...)   +-------> JobReport (by JobTranslator)
-StageEvent(s)--/                              \------> StrReport (by JobTranslator)
+JobEvent -------+-> JobEntity --------> JobReport
+StageEvent(s)--/                             
                         
-StageEvent -------> StageEntity ->   (...)   +-------> StageReport (by StageTranslator)
-                                              \-------> StrReport (by StageTranslator)
+StageEvent -------> StageEntity ------> StageReport
 ```
 
 #### Build

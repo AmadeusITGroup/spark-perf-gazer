@@ -2,21 +2,28 @@ package com.amadeus.sparklear.translators
 
 import com.amadeus.sparklear.events.StageEvent
 import com.amadeus.sparklear.entities.StageEntity
-import com.amadeus.sparklear.reports.{SqlPlanNodeReport, StrReport, StrStageReport}
+import com.amadeus.sparklear.reports.StageReport
 import com.amadeus.testfwk.{ConfigSupport, SimpleSpec}
 import org.apache.spark.Fixtures2
 
 class StageTranslatorSpec extends SimpleSpec with ConfigSupport {
-  describe(s"The ${StageTranslator.getClass.getName}") {
+  describe(s"The ${StageReport.getClass.getName}") {
     it("should generate reports in a basic scenario") {
       val reportStage = StageEntity(StageEvent(Fixtures2.Stage1.stageInfo))
       val cfg = defaultTestConfig
-      val rs = StagePrettyTranslator.toReports(cfg, reportStage)
+      val rs = StageReport.fromEntityToReport(reportStage)
       rs shouldEqual (
-        List(
-          StrStageReport(
-            "STAGE ID=1 READ_MB=5 WRITE_MB=74 SHUFFLE_READ_MB=75 SHUFFLE_WRITE_MB=76 EXEC_CPU_SECS=77 EXEC_RUN_SECS=98 EXEC_JVM_GC_SECS=13 ATTEMPT=8 SPILL_MB=3"
-          )
+        StageReport(
+          stageId = 1,
+          readMb = 5,
+          writeMb = 74,
+          shuffleReadMb = 75,
+          shuffleWriteMb = 76,
+          execCpuSecs = 77,
+          execRunSecs = 98,
+          execJvmGcSecs = 13,
+          attempt = 8,
+          spillMb = 3L
         )
       )
     }

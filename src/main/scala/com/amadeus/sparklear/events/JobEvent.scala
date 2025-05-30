@@ -17,15 +17,9 @@ case class JobEvent(
 object JobEvent {
 
   case class EndUpdate(
-    finalStages: Seq[(StageRef, Option[StageEvent])],
+    finalStages: Seq[(StageRef, Option[StageEvent])], // TODO can be removed, keep stage stuff at stage level
     jobEnd: SparkListenerJobEnd
-  ) {
-    def spillAndCpu: (Long, Long) = {
-      val spillMb = finalStages.collect { case (_, Some(stgStats)) => stgStats.spillMb }.flatten.sum
-      val totalExecCpuTimeSec = finalStages.collect { case (_, Some(stgStats)) => stgStats.execCpuSecs }.sum
-      (spillMb, totalExecCpuTimeSec)
-    }
-  }
+  )
 
   // Copied from org.apache.spark.context to keep them in this package
   private val SPARK_JOB_DESCRIPTION = "spark.job.description"

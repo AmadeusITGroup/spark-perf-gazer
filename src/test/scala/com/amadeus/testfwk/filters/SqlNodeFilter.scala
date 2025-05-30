@@ -1,6 +1,6 @@
 package com.amadeus.testfwk.filters
 
-import com.amadeus.sparklear.reports.{Report, SqlPlanNodeReport}
+import com.amadeus.sparklear.reports.{Report, SqlNode}
 
 /**
   * Glass for SQL plan nodes
@@ -9,7 +9,7 @@ import com.amadeus.sparklear.reports.{Report, SqlPlanNodeReport}
   * @param nodeNameRegex regex on the node name (Join, Project, Scan, ...)
   * @param parentNodeNameRegex regex on the parent node name
   * @param metricRegex regex on the metric name (number of files read, ...)
-  *                    a match in one metric is enough to keep the [[SqlPlanNodeReport]]
+  *                    a match in one metric is enough to keep the [[SqlNode]]
   * @param isLeaf expression to filter on leaf value
   */
 case class SqlNodeFilter(
@@ -20,7 +20,7 @@ case class SqlNodeFilter(
   isLeaf: Option[Boolean] = None
 ) extends Filter {
 
-  def eligible(report: SqlPlanNodeReport): Boolean = {
+  def eligible(report: SqlNode): Boolean = {
     val j = jobNameRegex.map(r => report.jobName.matches(r)).getOrElse(true)
     val n = nodeNameRegex.map(r => report.nodeName.matches(r)).getOrElse(true)
     val p = parentNodeNameRegex.map(r => report.parentNodeName.matches(r)).getOrElse(true)

@@ -1,13 +1,5 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.translators.{
-  JobJsonTranslator,
-  JobTranslator,
-  SqlPlanNodeTranslator,
-  SqlTranslator,
-  StageJsonTranslator,
-  StageTranslator
-}
 import com.amadeus.sparklear.reports.Report
 
 /** @param sqlEnabled         whether to expose to end-user SQL queries level reports
@@ -26,11 +18,6 @@ case class Config(
   maxCacheSize: Int = Config.DefaultCacheSize // TODO: no default, user must be aware of this
 ) {
   // TODO: use these to avoid collecting (at the source) some objects if won't be used
-
-  // TODO adapt to have all information and not only this translators' one
-  val sqlTranslator: SqlTranslator[_ <: Report] = SqlTranslator.forName(SqlPlanNodeTranslator.name)
-  val jobTranslator: JobTranslator[_ <: Report] = JobTranslator.forName(JobJsonTranslator.name)
-  val stageTranslator: StageTranslator = StageTranslator.forName(StageJsonTranslator.name)
 }
 
 object Config {

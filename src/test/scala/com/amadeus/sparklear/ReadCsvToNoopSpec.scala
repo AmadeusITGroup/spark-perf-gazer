@@ -1,6 +1,5 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.translators.SqlPlanNodeTranslator
 import com.amadeus.testfwk.SinkSupport.TestableSink
 import com.amadeus.testfwk.{ConfigSupport, JsonSupport, OptdSupport, SimpleSpec, SinkSupport, SparkSupport}
 
@@ -32,7 +31,7 @@ class ReadCsvToNoopSpec
         df.write.format("noop").mode("overwrite").save()
 
         it("should build some preReports") {
-          //sinks.entities.size shouldBe 3
+          sinks.reports.size shouldBe 3
         }
 
         it("should build SQL preReports (SqlPlanNodeTranslator)") {
