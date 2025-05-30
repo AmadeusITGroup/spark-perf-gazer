@@ -36,7 +36,10 @@ The core class is `SparklEar`, which can be instantiated easily when providing a
 It can be registered as `Spark` listener via `spark.sparkContext.addSparkListener(...)`.
 It will then listen to multiple events coming from `Spark`.
 
-The event objects at the launch of the query/job/stage are wrapped by `Event`. The event objects wrapped are classes like: 
+Some event objects at query/job/stage level are stored in memory for later processing.
+Those events are wrapped by subtypes of `Event`. They are mostly start events, with some exceptions.
+These are preserved in a `CappedConcurrentHashMap` that has a maximum size so that memory usage is limited.
+The Spark events wrapped are related to classes like: 
 
 - `org.apache.spark...StageInfo`
 - `org.apache.spark...SparkListenerJobEnd`
@@ -102,6 +105,12 @@ Settings -> Editor -> Code Style -> Scala -> Formatter: ScalaFMT
 ```
 
 # TODOs
+
+- [ ] onApplicationEnd (for shutdown hook)
+- [ ] remove filter completely
+- [ ] batch and dump API
+- [ ] batch and dump API default implementation (parquet / json)
+- [ ] event stage end => stage entity
 
 - [x] Add diagram to explain basic architecture
 - [ ] Use it in PRD projects (json2star, snowflake-push, ...)
