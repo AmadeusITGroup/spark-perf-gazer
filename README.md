@@ -103,10 +103,10 @@ Settings -> Editor -> Code Style -> Scala -> Formatter: ScalaFMT
 
 # TODOs
 
-- [ ] onApplicationEnd (for shutdown hook)
-- [ ] remove filter completely
+- [x] remove filter completely
 - [ ] batch and dump API (make it Seq)
 - [ ] batch and dump API default implementation (parquet / json)
+- [ ] onApplicationEnd (for shutdown hook)
 - [x] event stage end, update README
 - [x] make sink a type
 
@@ -114,7 +114,6 @@ Settings -> Editor -> Code Style -> Scala -> Formatter: ScalaFMT
 - [ ] Use it in PRD projects (json2star, snowflake-push, ...)
 - [ ] Improve README to include comparison with other similar solution
 - [x] Add test case with a join
-- [ ] Any filter applies to any Report (could it be a performance issue if 100 filter passed?)
 - [x] This project must be dependency-free, so there is a fix to do on the logger library
 - [ ] Review the CappedMap (JMH benchmark?)
 - [ ] Add the missing link of SQL queries with children SQL queries

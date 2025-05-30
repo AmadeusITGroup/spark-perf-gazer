@@ -1,5 +1,6 @@
 package com.amadeus.sparklear
 
+import com.amadeus.sparklear.reports.SqlReport
 import com.amadeus.testfwk.SinkSupport.TestableSink
 import com.amadeus.testfwk.{ConfigSupport, JsonSupport, OptdSupport, SimpleSpec, SinkSupport, SparkSupport}
 
@@ -35,11 +36,11 @@ class ReadCsvToNoopSpec
         }
 
         it("should build SQL preReports (SqlPlanNodeTranslator)") {
-          //val inputSql = sinks.sqlPreReports.head
-          //val r = SqlPlanNodeTranslator.toAllReports(cfg, inputSql)
-          //r.size should be(2)
-          //r.map(i => (i.sqlId, i.jobName, i.nodeName)).head should be(1, "testjob", "OverwriteByExpression")
-          //r.map(i => (i.sqlId, i.jobName, i.nodeName)).last should be(1, "testjob", "Scan csv ")
+          val inputSql = sinks.reports.collect{ case r: SqlReport => r}.head
+          val r = inputSql.nodes
+          r.size should be(2)
+          r.map(i => (i.sqlId, i.jobName, i.nodeName)).head should be(1, "testjob", "() OverwriteByExpression")
+          r.map(i => (i.sqlId, i.jobName, i.nodeName)).last should be(1, "testjob", "() Scan csv ")
         }
 
         it("should build SQL preReports (SqlPlanNodeTranslator filtered by nodeName)") {
