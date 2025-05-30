@@ -1,6 +1,6 @@
 package com.amadeus.sparklear.reports
 
-import com.amadeus.sparklear.translators.Translator.{EntityName, StringReport}
+import com.amadeus.sparklear.translators.Translator.EntityName
 
 /**
   * The end-user information sharing unit
@@ -10,5 +10,6 @@ import com.amadeus.sparklear.translators.Translator.{EntityName, StringReport}
   */
 trait Report {
   def entity: EntityName
-  def asStringReport: StringReport
+  // def dataframe: ... TODO
+  //def asJson: String = asJson(this)(DefaultFormats) // TODO: use a more efficient serialization
 }

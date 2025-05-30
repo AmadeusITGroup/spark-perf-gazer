@@ -7,6 +7,7 @@ class CappedConcurrentHashMap[K, V](cap: Int) {
   private val m = new ConcurrentHashMap[K, V](cap)
   def put(k: K, v: V)(implicit cmp: Ordering[K]): V = {
     if (m.size() >= cap) {
+      // TODO add support to report how many removals took place
       m.remove(m.keys().asScala.min)
     }
     m.put(k, v)

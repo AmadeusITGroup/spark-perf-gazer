@@ -1,8 +1,8 @@
 package com.amadeus.sparklear
 
 import com.amadeus.sparklear.reports.SqlPlanNodeReport
-import com.amadeus.sparklear.reports.filters.SqlNodeFilter
 import com.amadeus.testfwk._
+import com.amadeus.testfwk.filters.SqlNodeFilter
 import io.delta.tables.DeltaTable
 
 import java.nio.file.Path
@@ -29,25 +29,22 @@ class ReadCsvToDeltaSpec
         val df = readOptd(spark)
         df.write.format("delta").mode("overwrite").save(subdir(tmpDir, "deltadir1"))
 
-        withAllSinks { sinks =>
+        withTestableSink { sinks =>
           // DF TABLE: iata_code, icao_code, ..., name, ..., country_name, country_code, ...
           val df = DeltaTable.forPath(subdir(tmpDir, "deltadir1")).toDF
-          val cfg = defaultTestConfig.withOnlySqlEnabled
-            .withFilters(
-              Seq(
-                SqlNodeFilter(
-                  nodeNameRegex = Some(".*Filter.*"),
-                  parentNodeNameRegex = Some(".*WholeStageCodegen.*")
-                ),
-                SqlNodeFilter(
-                  nodeNameRegex = Some(".*Scan.*")
-                ),
-                SqlNodeFilter(
-                  nodeNameRegex = Some(".*Join.*")
-                )
-              )
+          val cfg = defaultTestConfig.withOnlySqlEnabled.withSink(sinks)
+          val filters = Seq( // TODO: apply
+            SqlNodeFilter(
+              nodeNameRegex = Some(".*Filter.*"),
+              parentNodeNameRegex = Some(".*WholeStageCodegen.*")
+            ),
+            SqlNodeFilter(
+              nodeNameRegex = Some(".*Scan.*")
+            ),
+            SqlNodeFilter(
+              nodeNameRegex = Some(".*Join.*")
             )
-            .withSinks(sinks)
+          )
           val eventsListener = new SparklEar(cfg)
           spark.sparkContext.addSparkListener(eventsListener)
 
@@ -72,7 +69,7 @@ class ReadCsvToDeltaSpec
               .filter(_.nodeName.contains("Filter"))
               .filter(i => i.jobName.contains("jobfilter"))
               .map(i => (i.jobName, i.metrics))
-            actual should equal(Seq(("jobfilter", Map("number of output rows"-> "16"))))
+            actual should equal(Seq(("jobfilter", Map("number of output rows" -> "16"))))
           }
           spark.sparkContext.setJobDescription("jobjoin")
           val df3 = df

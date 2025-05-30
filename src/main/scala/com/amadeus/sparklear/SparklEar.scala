@@ -47,11 +47,8 @@ class SparklEar(c: Config) extends SparkListener {
       logger.trace(s"Handling Stage end: ${stageCompleted.stageInfo.stageId}")
       // generate the stage input
       val si = StageEntity(sw)
-      // sink the stage input (for testing)
-      c.preReportSink.foreach(ss => ss(si))
       // sink the stage input serialized (as string, and as objects)
-      c.reportSink.foreach(ss => c.stageTranslator.toReports(c, si).map(ss))
-      c.stringReportSink.foreach(ss => c.stageTranslator.toStringReports(c, si).map(ss))
+      c.stageTranslator.toReports(c, si).foreach(c.sink.sink)
     } else {
       logger.trace(s"Ignoring Stage end: ${stageCompleted.stageInfo.stageId}")
     }
@@ -81,11 +78,8 @@ class SparklEar(c: Config) extends SparkListener {
         logger.trace(s"Handling Job end: ${jobEnd.jobId}")
         // generate the job input
         val ji = JobEntity(jobCollect, EndUpdate(finalStages = stagesIdAndStats, jobEnd = jobEnd))
-        // sink the job input (for testing)
-        c.preReportSink.foreach(ss => ss(ji))
         // sink the job input serialized (as string, and as objects)
-        c.reportSink.foreach(ss => c.jobTranslator.toReports(c, ji).map(ss))
-        c.stringReportSink.foreach(ss => c.jobTranslator.toStringReports(c, ji).map(ss))
+        c.jobTranslator.toReports(c, ji).foreach(c.sink.sink)
       } else {
         logger.trace(s"Ignoring Job end: ${jobEnd.jobId}")
       }
@@ -134,11 +128,8 @@ class SparklEar(c: Config) extends SparkListener {
         logger.trace(s"Handling SQL end: ${event.executionId}")
         // generate the SQL input
         val si = SqlEntity(sqlCollect, event)
-        // sink the SQL input (for testing)
-        c.preReportSink.foreach(ss => ss(si))
         // sink the SQL input serialized (as string, and as objects)
-        c.reportSink.foreach(ss => c.sqlTranslator.toReports(c, si).map(ss))
-        c.stringReportSink.foreach(ss => c.sqlTranslator.toStringReports(c, si).map(ss))
+        c.sqlTranslator.toReports(c, si).foreach(c.sink.sink)
       } else {
         logger.trace(s"Ignoring SQL end: ${event.executionId}")
       }

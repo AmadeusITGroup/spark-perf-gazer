@@ -1,4 +1,4 @@
-package com.amadeus.sparklear.reports.filters
+package com.amadeus.testfwk.filters
 
 import com.amadeus.sparklear.reports.{Report, SqlPlanNodeReport}
 
@@ -20,18 +20,13 @@ case class SqlNodeFilter(
   isLeaf: Option[Boolean] = None
 ) extends Filter {
 
-  private def check(report: SqlPlanNodeReport): Boolean = {
+  def eligible(report: SqlPlanNodeReport): Boolean = {
     val j = jobNameRegex.map(r => report.jobName.matches(r)).getOrElse(true)
     val n = nodeNameRegex.map(r => report.nodeName.matches(r)).getOrElse(true)
     val p = parentNodeNameRegex.map(r => report.parentNodeName.matches(r)).getOrElse(true)
     val m = metricRegex.map(r => report.metrics.exists { case (n, _) => n.matches(r) }).getOrElse(true)
     val l = isLeaf.map(i => report.isLeaf == i).getOrElse(true)
     j && n && p && m && l
-  }
-
-  override def eligible(r: Report): Boolean = r match {
-    case i: SqlPlanNodeReport => check(i)
-    case _ => true
   }
 
 }

@@ -21,7 +21,7 @@ trait Translator[P <: Entity, R <: Report] {
 
   /**
     * Convert a [[Entity]] P into a collection of [[Report]] R
- *
+    *
     * @param c the configuration to perform the conversion
     * @param p the [[Entity]] to convert
     * @return the collection of [[Report]] generated
@@ -31,26 +31,11 @@ trait Translator[P <: Entity, R <: Report] {
   /**
     * Same as [[toAllReports()]] but the addition of filters applied to filter [[Report]]s
     */
-  def toReports(c: Config, p: P): Seq[R] = {
-    val rep = toAllReports(c, p)
-    val frep = if (c.filters.isEmpty) { // no filters? return all
-      rep
-    } else {
-      rep.filter(r => c.filters.exists(g => g.eligible(r))) // filters? filter
-    }
-    frep
-  }
-
-  /**
-    * Same as [[toReports()]] but [[Report]] are represented as [[Translator.StringReport]]
-    */
-  def toStringReports(c: Config, p: P): Seq[Translator.StringReport] =
-    toReports(c, p).map(l => s"${c.stringReportPrefix}${l.entity} ${l.asStringReport}")
+  def toReports(c: Config, p: P): Seq[R] = toAllReports(c, p)
 }
 
 object Translator {
   type TranslatorName = String
-  type StringReport = String
   type EntityName = String
 
   def forName[T <: Translator[_, _]](s: Seq[T])(e: EntityName, n: TranslatorName): T =

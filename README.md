@@ -108,9 +108,10 @@ Settings -> Editor -> Code Style -> Scala -> Formatter: ScalaFMT
 
 - [ ] onApplicationEnd (for shutdown hook)
 - [ ] remove filter completely
-- [ ] batch and dump API
+- [ ] batch and dump API (make it Seq)
 - [ ] batch and dump API default implementation (parquet / json)
-- [ ] event stage end => stage entity
+- [x] event stage end, update README
+- [x] make sink a type
 
 - [x] Add diagram to explain basic architecture
 - [ ] Use it in PRD projects (json2star, snowflake-push, ...)

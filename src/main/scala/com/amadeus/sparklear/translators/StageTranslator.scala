@@ -9,13 +9,13 @@ import org.json4s.jackson.Serialization.{write => asJson}
 
 object StageTranslator {
   val EntityNameStage: EntityName = "STAGE"
-  val Translators: Seq[StageTranslator] = Seq(StageJson, StagePrettyTranslator)
+  val Translators: Seq[StageTranslator] = Seq(StageJsonTranslator, StagePrettyTranslator)
   def forName(s: TranslatorName): StageTranslator = Translator.forName(Translators)(EntityNameStage, s)
 }
 
 sealed trait StageTranslator extends Translator[StageEntity, StrReport]
 
-case object StageJson extends StageTranslator {
+case object StageJsonTranslator extends StageTranslator {
   override def name: TranslatorName = "stagejson"
   override def toAllReports(c: Config, p: StageEntity): Seq[StrReport] = {
     Seq(StrStageReport(asJson(p)(DefaultFormats)))
