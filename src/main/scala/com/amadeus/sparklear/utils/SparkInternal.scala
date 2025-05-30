@@ -6,4 +6,8 @@ object SparkInternal {
   def executedPlan(event: SparkListenerSQLExecutionEnd): SparkPlan = {
     event.qe.executedPlan
   }
+
+  def queryExecution(event: SparkListenerSQLExecutionEnd): QueryExecution = {
+    event.qe
+  }
 }

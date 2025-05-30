@@ -30,7 +30,7 @@ class ReadCsvToNoopSpec
         spark.sparkContext.setJobGroup("testgroup", "testjob")
         df.write.format("noop").mode("overwrite").save()
 
-        it("should build some preReports") {
+        it("should build some reports") {
           sinks.reports.size shouldBe 3
         }
 

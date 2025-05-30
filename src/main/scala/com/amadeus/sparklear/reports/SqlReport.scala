@@ -1,7 +1,8 @@
 package com.amadeus.sparklear.reports
 
 import com.amadeus.sparklear.entities.SqlEntity
-import org.apache.spark.sql.execution.SparkPlan
+import org.apache.spark.sql.catalyst.plans.QueryPlan
+import org.apache.spark.sql.execution.{ExtendedMode, FormattedMode, QueryExecution, SparkPlan}
 import org.apache.spark.sql.execution.adaptive.{AdaptiveSparkPlanExec, ShuffleQueryStageExec}
 import org.apache.spark.sql.execution.metric.SQLMetric
 import org.apache.spark.sql.execution.ui.SparkInternal
@@ -17,9 +18,23 @@ case class SqlReport(
 
 object SqlReport extends Translator[SqlEntity, SqlReport] {
 
-  private def convert(
+  /** Convert a [[Entity]] P into a collection of [[Report]] R
+    *
+    * @param c the configuration to perform the conversion
+    * @param p the [[Entity]] to buildNodes
+    * @return the collection of [[Report]] generated
+    */
+  override def fromEntityToReport(report: SqlEntity): SqlReport = {
+    val details = describe(SparkInternal.queryExecution(report.end))
+    SqlReport(
+      details = details,
+      nodes = asNodes(report)
+    )
+  }
+
+  private def buildNodes(
     jobName: String,
-    baseCoord: String,
+    baseCoordinates: String,
     sqlId: Long,
     plan: SparkPlan,
     parentNodeName: String
@@ -34,44 +49,22 @@ object SqlReport extends Translator[SqlEntity, SqlReport] {
     val currNode = SqlNode(
       sqlId = sqlId,
       jobName = jobName,
-      nodeName = plan.nodeName,
-      coordinates = baseCoord,
+      nodeName = s"(${plan.getTagValue(QueryPlan.OP_ID_TAG).mkString}) ${plan.nodeName}",
+      coordinates = baseCoordinates,
       metrics = metrics.map(metricToKv),
       isLeaf = children.isEmpty,
       parentNodeName = parentNodeName
     )
     val childNode = children.zipWithIndex.flatMap { case (pi, i) =>
-      convert(jobName, baseCoord + s".${i}", sqlId, pi, plan.nodeName)
+      buildNodes(jobName, baseCoordinates + s".${i}", sqlId, pi, plan.nodeName)
     }
     Seq(currNode) ++ childNode
   }
 
-  /** Convert a [[Entity]] P into a collection of [[Report]] R
-    *
-    * @param c the configuration to perform the conversion
-    * @param p the [[Entity]] to convert
-    * @return the collection of [[Report]] generated
-    */
-  override def fromEntityToReport(report: SqlEntity): SqlReport =
-    SqlReport(
-      details = prettify(SparkInternal.executedPlan(report.end)),
-      nodes = asNodes(report)
-    )
-
-  private def prettify(planInfo: SparkPlan, indent: String = ""): String = {
-    val builder = new StringBuilder()
-    builder.append(s"${indent}Operator ${planInfo.nodeName}\n")
-    //if (planInfo.metadata.nonEmpty) {
-    //  builder.append(s"${indent}- Metadata: ${planInfo.metadata}\n")
-    //}
-    if (planInfo.metrics.nonEmpty) {
-      builder.append(s"${indent}- Metrics: ${planInfo.metrics.map(metricToKv).mkString(",")}\n")
-    }
-    // Recursively prettify children
-    planInfo.children.foreach { childInfo =>
-      builder.append(prettify(childInfo, s"$indent      "))
-    }
-    builder.toString()
+  private def describe(qe: QueryExecution): String = {
+    val s = qe.explainString(ExtendedMode) // TODO check formatted as well
+    println(s)
+    s
   }
 
   private def metricToKv(s: (String, SQLMetric)): (String, String) =
@@ -80,7 +73,7 @@ object SqlReport extends Translator[SqlEntity, SqlReport] {
   private def asNodes(sqlEntity: SqlEntity): Seq[SqlNode] = {
     val sqlId = sqlEntity.start.id
     val plan = SparkInternal.executedPlan(sqlEntity.end)
-    val nodes = convert(sqlEntity.start.description, "0", sqlId, plan, "")
+    val nodes = buildNodes(sqlEntity.start.description, "0", sqlId, plan, "")
     nodes
   }
 
