@@ -106,7 +106,8 @@ Settings -> Editor -> Code Style -> Scala -> Formatter: ScalaFMT
 - [x] remove filter completely
 - [ ] batch and dump API (make it Seq)
 - [ ] batch and dump API default implementation (parquet / json)
-- [ ] onApplicationEnd (for shutdown hook)
+- [ ] retrieve id of Spark SQL query (as per execution plan () notation)
+- [P] onApplicationEnd (for shutdown hook)
 - [x] event stage end, update README
 - [x] make sink a type
 
