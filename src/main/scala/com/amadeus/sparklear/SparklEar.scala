@@ -17,6 +17,7 @@ import org.slf4j.{Logger, LoggerFactory}
   */
 class SparklEar(c: Config) extends SparkListener {
 
+
   implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
 
   type SqlKey = Long
@@ -141,6 +142,7 @@ class SparklEar(c: Config) extends SparkListener {
 
   override def onApplicationEnd(event: SparkListenerApplicationEnd): Unit = {
     logger.trace(s"onApplicationEnd: duration=${event.time}")
+    c.sink.finalizeSink()
   }
 
 }

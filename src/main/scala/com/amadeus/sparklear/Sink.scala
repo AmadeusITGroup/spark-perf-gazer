@@ -9,4 +9,6 @@ trait Sink {
   // def sink(r: Report): Unit
   // UPDATE make it Seq[Report]
   def sink(reports: Seq[Report]): Unit
+
+  def finalizeSink(): Unit
 }
