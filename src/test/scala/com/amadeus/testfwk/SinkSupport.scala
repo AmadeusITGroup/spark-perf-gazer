@@ -7,6 +7,8 @@ import com.amadeus.testfwk.SinkSupport.TestableSink
 import scala.collection.mutable.ListBuffer
 
 object SinkSupport {
+  // UPDATE make it Seq[Report]
+  /*
   class TestableSink(
     val reports: ListBuffer[Report] = new ListBuffer[Report](),
     stdout: Boolean = false
@@ -16,7 +18,18 @@ object SinkSupport {
       reports.+=(i)
     }
   }
+  */
+  class TestableSink(
+    val reports: ListBuffer[Report] = new ListBuffer[Report](),
+    stdout: Boolean = false
+  ) extends Sink {
+    override def sink(rs: Seq[Report]): Unit = {
+      if (stdout) { rs.foreach(println) } // scalastyle:ignore regex
+      reports ++= rs
+    }
+  }
 }
+
 trait SinkSupport {
   def withTestableSink[T](testCode: TestableSink => T): T = {
     val testableSink = new TestableSink()

@@ -48,7 +48,7 @@ class SparklEar(c: Config) extends SparkListener {
       // generate the stage input
       val si = StageEntity(sw)
       // sink the stage input serialized (as string, and as objects)
-      c.sink.sink(StageReport.fromEntityToReport(si))
+      c.sink.sink(Seq(StageReport.fromEntityToReport(si) : StageReport))
     } else {
       logger.trace(s"Ignoring Stage end: ${stageCompleted.stageInfo.stageId}")
     }
@@ -79,7 +79,7 @@ class SparklEar(c: Config) extends SparkListener {
         // generate the job input
         val ji = JobEntity(jobCollect, EndUpdate(finalStages = stagesIdAndStats, jobEnd = jobEnd))
         // sink the job input serialized (as string, and as objects)
-        c.sink.sink(JobReport.fromEntityToReport(ji))
+        c.sink.sink(Seq(JobReport.fromEntityToReport(ji) : JobReport))
       } else {
         logger.trace(s"Ignoring Job end: ${jobEnd.jobId}")
       }
@@ -129,7 +129,7 @@ class SparklEar(c: Config) extends SparkListener {
         // generate the SQL input
         val si = SqlEntity(sqlCollect, event)
         // sink the SQL input serialized (as string, and as objects)
-        c.sink.sink(SqlReport.fromEntityToReport(si))
+        c.sink.sink(Seq(SqlReport.fromEntityToReport(si) : SqlReport))
       } else {
         logger.trace(s"Ignoring SQL end: ${event.executionId}")
       }
