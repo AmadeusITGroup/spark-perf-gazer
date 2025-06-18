@@ -62,14 +62,15 @@ object SinkSupport {
     }
 
     def finalizeSink(): Unit = {
-      // write reports in destination
-      if (debug) { println(s"JsonSink Debug : finalizing sink, writing to $destination (${reports.size} reports).") }
-      val json: String = write(reports)
-      writer.println(json)
+      if ( reports.nonEmpty ) {
+        // write reports in destination
+        if (debug) { println(s"JsonSink Debug : finalizing sink, writing to $destination (${reports.size} reports).") }
+        val json: String = write(reports)
+        writer.println(json)
 
-      // clear reports
-      reports.clear()
-
+        // clear reports
+        reports.clear()
+      }
       // Flush and close writer
       writer.flush()
       writer.close()
