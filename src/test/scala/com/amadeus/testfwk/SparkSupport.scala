@@ -46,10 +46,7 @@ trait SparkSupport {
   }
 
   def withSpark[T](conf: List[(String, String)] = DefaultConfigs)(testCode: SparkSession => T): T = {
-    // withSparkInternal(conf)(testCode)(_.stop())
-    withSparkInternal(conf)(testCode) { spark =>
-      spark.stop()
-    }
+    withSparkInternal(conf)(testCode)(_.stop())
   }
 
   def withSparkAndUi[T](conf: List[(String, String)] = DefaultConfigs)(testCode: SparkSession => T): T =
