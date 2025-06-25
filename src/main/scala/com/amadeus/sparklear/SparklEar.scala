@@ -142,7 +142,7 @@ class SparklEar(c: Config) extends SparkListener {
 
   override def onApplicationEnd(event: SparkListenerApplicationEnd): Unit = {
     logger.trace(s"onApplicationEnd: duration=${event.time}")
-    c.sink.finalizeSink()
+    c.sink.flush()
   }
 
 }

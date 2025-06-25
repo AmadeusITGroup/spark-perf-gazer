@@ -10,5 +10,5 @@ trait Sink {
   // UPDATE make it Seq[Report]
   def sink(reports: Seq[Report]): Unit
 
-  def finalizeSink(): Unit
+  def flush(): Unit
 }

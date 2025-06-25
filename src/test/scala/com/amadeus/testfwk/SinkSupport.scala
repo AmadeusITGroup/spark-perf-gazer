@@ -1,8 +1,8 @@
 package com.amadeus.testfwk
 
-import com.amadeus.sparklear.Sink
+import com.amadeus.sparklear.{Sink, JsonSink}
 import com.amadeus.sparklear.reports.Report
-import com.amadeus.testfwk.SinkSupport.{TestableSink, JsonSink}
+import com.amadeus.testfwk.SinkSupport.TestableSink
 import scala.collection.mutable.ListBuffer
 
 // Imports for JsonSink
@@ -34,47 +34,8 @@ object SinkSupport {
       reports ++= rs
     }
 
-    def finalizeSink(): Unit = { }
-  }
-
-  class JsonSink(
-    val reports: ListBuffer[Report] = new ListBuffer[Report](),
-    destination: String = "src/test/json-sink/test.json",
-    writeBatchSize: Int = 5,
-    debug: Boolean = true
-  ) extends Sink {
-    implicit val formats: AnyRef with Formats = Serialization.formats(NoTypeHints)
-    private val writer = new PrintWriter(new FileWriter(destination, true))
-
-    override def sink(rs: Seq[Report]): Unit = {
-      // appends new reports in sink
-      reports ++= rs
-
-      if ( reports.size >= writeBatchSize ) {
-        // write reports in destination
-        if (debug) { println(s"JsonSink Debug : reached writeBatchSize threshold, writing to $destination (${reports.size} reports).") }
-        val json: String = write(reports)
-        writer.println(json)
-
-        // clear reports
-        reports.clear()
-      }
-    }
-
-    def finalizeSink(): Unit = {
-      if ( reports.nonEmpty ) {
-        // write reports in destination
-        if (debug) { println(s"JsonSink Debug : finalizing sink, writing to $destination (${reports.size} reports).") }
-        val json: String = write(reports)
-        writer.println(json)
-
-        // clear reports
-        reports.clear()
-      }
-      // Flush and close writer
-      writer.flush()
-      writer.close()
-      if (debug) { println(f"JsonSink Debug : writer closed.") }
+    override def flush(): Unit = {
+      reports.clear()
     }
   }
 }

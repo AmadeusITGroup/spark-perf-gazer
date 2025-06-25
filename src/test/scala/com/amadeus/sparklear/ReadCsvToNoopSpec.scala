@@ -1,7 +1,7 @@
 package com.amadeus.sparklear
 
 import com.amadeus.sparklear.reports.SqlReport
-import com.amadeus.testfwk.SinkSupport.{TestableSink, JsonSink}
+import com.amadeus.testfwk.SinkSupport.TestableSink
 import com.amadeus.testfwk.{ConfigSupport, JsonSupport, OptdSupport, SimpleSpec, SinkSupport, SparkSupport}
 
 
@@ -29,7 +29,11 @@ class ReadCsvToNoopSpec
         spark.sparkContext.addSparkListener(emptyEventsListener)
 
         // setup to write reports in json sink
-        val jsonSinks = new JsonSink()
+        val jsonSinks = new JsonSink(
+          destination = "src/test/json-sink/test.json",
+          writeBatchSize = 5,
+          debug = true
+        )
         val jsonEventsListener = new SparklEar(cfg.withAllEnabled.withSink(jsonSinks))
         spark.sparkContext.addSparkListener(jsonEventsListener)
 
