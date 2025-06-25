@@ -1,7 +1,6 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.reports.Report
-
+import com.amadeus.sparklear.reports.{Report, SqlReport, JobReport, StageReport}
 import org.json4s.jackson.Serialization
 import org.json4s.{Formats, NoTypeHints}
 import org.json4s.jackson.Serialization.write
@@ -13,42 +12,79 @@ import scala.collection.mutable.ListBuffer
   * Sink of a collection of reports
   */
 class JsonSink (
-  destination: String = "src/test/json-sink/test.json",
+  destination: String = "src/test/json-sink",
   writeBatchSize: Int = 5,
   debug: Boolean = true
 ) extends Sink {
-  private val reports: ListBuffer[Report] = new ListBuffer[Report]()
+  private var reportsCount: Int = 0
+  private val SqlReports: ListBuffer[SqlReport] = new ListBuffer[SqlReport]()
+  private val JobReports: ListBuffer[JobReport] = new ListBuffer[JobReport]()
+  private val StageReports: ListBuffer[StageReport] = new ListBuffer[StageReport]()
+
   implicit val formats: AnyRef with Formats = Serialization.formats(NoTypeHints)
-  private val writer = new PrintWriter(new FileWriter(destination, true))
+  private val SqlReportsWriter = new PrintWriter(new FileWriter(s"$destination/sql-reports.json", true))
+  private val JobReportsWriter = new PrintWriter(new FileWriter(s"$destination/job-reports.json", true))
+  private val StageReportsWriter = new PrintWriter(new FileWriter(s"$destination/stage-reports.json", true))
 
-  override def sink(rs: Seq[Report]): Unit = {
-    // appends new reports in sink
-    reports ++= rs
-
-    if ( reports.size >= writeBatchSize ) {
-      // write reports in destination
-      if (debug) { println(s"JsonSink Debug : reached writeBatchSize threshold, writing to $destination (${reports.size} reports).") }
-      val json: String = write(reports)
-      writer.println(json)
+  private def writeReports() = {
+    if (SqlReports.nonEmpty) {
+      if (debug) {
+        println(s"JsonSink Debug : reached writeBatchSize threshold, writing to $destination/sql-reports.json (${SqlReports.size} reports).")
+      }
+      val json: String = write(SqlReports)
+      SqlReportsWriter.println(json)
 
       // clear reports
-      reports.clear()
+      SqlReports.clear()
+    }
+    if (JobReports.nonEmpty) {
+      if (debug) {
+        println(s"JsonSink Debug : reached writeBatchSize threshold, writing to $destination/job-reports.json (${JobReports.size} reports).")
+      }
+      val json: String = write(JobReports)
+      JobReportsWriter.println(json)
+
+      // clear reports
+      JobReports.clear()
+    }
+    if (StageReports.nonEmpty) {
+      if (debug) {
+        println(s"JsonSink Debug : reached writeBatchSize threshold, writing to $destination/stage-reports.json (${StageReports.size} reports).")
+      }
+      val json: String = write(StageReports)
+      StageReportsWriter.println(json)
+
+      // clear reports
+      StageReports.clear()
+    }
+  }
+
+  override def sink(rs: Seq[Report]): Unit = {
+    reportsCount += rs.size
+
+    // appends new reports in sink
+    rs.map {
+      case sql: SqlReport => SqlReports ++= Seq(sql)
+      case job: JobReport => JobReports ++= Seq(job)
+      case stage: StageReport => StageReports ++= Seq(stage)
+    }
+
+    if ( reportsCount >= writeBatchSize ) {
+      writeReports()
+      reportsCount = 0
     }
   }
 
   override def flush(): Unit = {
-    if ( reports.nonEmpty ) {
-      // write reports in destination
-      if (debug) { println(s"JsonSink Debug : finalizing sink, writing to $destination (${reports.size} reports).") }
-      val json: String = write(reports)
-      writer.println(json)
+    writeReports()
 
-      // clear reports
-      reports.clear()
-    }
-    // Flush and close writer
-    writer.flush()
-    writer.close()
-    if (debug) { println(f"JsonSink Debug : writer closed.") }
+    // Flush and close writers
+    SqlReportsWriter.flush()
+    SqlReportsWriter.close()
+    JobReportsWriter.flush()
+    JobReportsWriter.close()
+    StageReportsWriter.flush()
+    StageReportsWriter.close()
+    if (debug) { println(f"JsonSink Debug : writers closed.") }
   }
 }

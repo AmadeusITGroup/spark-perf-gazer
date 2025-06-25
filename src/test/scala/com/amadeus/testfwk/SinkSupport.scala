@@ -14,17 +14,16 @@ import org.json4s.Formats
 
 object SinkSupport {
   // UPDATE make it Seq[Report]
-  /*
-  class TestableSink(
-    val reports: ListBuffer[Report] = new ListBuffer[Report](),
-    stdout: Boolean = false
-  ) extends Sink {
-    override def sink(i: Report): Unit = {
-      if (stdout) { println(i) } // scalastyle:ignore regex
-      reports.+=(i)
-    }
-  }
-  */
+  // class TestableSink(
+  //  val reports: ListBuffer[Report] = new ListBuffer[Report](),
+  //   stdout: Boolean = false
+  // ) extends Sink {
+  //   override def sink(i: Report): Unit = {
+  //     if (stdout) { println(i) } // scalastyle:ignore regex
+  //     reports.+=(i)
+  //   }
+  // }
+
   class TestableSink(
     val reports: ListBuffer[Report] = new ListBuffer[Report](),
     stdout: Boolean = false
@@ -34,9 +33,7 @@ object SinkSupport {
       reports ++= rs
     }
 
-    override def flush(): Unit = {
-      reports.clear()
-    }
+    override def flush(): Unit = { }
   }
 }
 

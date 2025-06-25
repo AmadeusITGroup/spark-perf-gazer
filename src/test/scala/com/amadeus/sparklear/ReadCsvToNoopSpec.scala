@@ -29,15 +29,26 @@ class ReadCsvToNoopSpec
         spark.sparkContext.addSparkListener(emptyEventsListener)
 
         // setup to write reports in json sink
-        val jsonSinks = new JsonSink(
-          destination = "src/test/json-sink/test.json",
-          writeBatchSize = 5,
+        // val jsonSinks = new JsonSink(
+        //   destination = "src/test/json-sink",
+        //  writeBatchSize = 5,
+        //  debug = true
+        // )
+        // val jsonEventsListener = new SparklEar(cfg.withAllEnabled.withSink(jsonSinks))
+        // spark.sparkContext.addSparkListener(jsonEventsListener)
+
+        // setup to write reports in json sink
+        val parquetSinks = new ParquetSink(
+          // spark = spark,
+          destination = "src/test/parquet-sink",
+          writeBatchSize = 1,
           debug = true
         )
-        val jsonEventsListener = new SparklEar(cfg.withAllEnabled.withSink(jsonSinks))
-        spark.sparkContext.addSparkListener(jsonEventsListener)
+        val parquetEventsListener = new SparklEar(cfg.withAllEnabled.withSink(parquetSinks))
+        spark.sparkContext.addSparkListener(parquetEventsListener)
 
         spark.sparkContext.setJobGroup("testgroup", "testjob")
+        // df.show()
         df.write.format("noop").mode("overwrite").save()
 
         it("should build some reports") {
