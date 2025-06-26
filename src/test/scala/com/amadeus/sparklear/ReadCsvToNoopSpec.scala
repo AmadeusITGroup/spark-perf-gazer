@@ -39,7 +39,7 @@ class ReadCsvToNoopSpec
 
         // setup to write reports in json sink
         val parquetSinks = new ParquetSink(
-          // spark = spark,
+          spark = spark,
           destination = "src/test/parquet-sink",
           writeBatchSize = 1,
           debug = true
@@ -48,6 +48,7 @@ class ReadCsvToNoopSpec
         spark.sparkContext.addSparkListener(parquetEventsListener)
 
         spark.sparkContext.setJobGroup("testgroup", "testjob")
+        println(s"DEBUG : Spark Seesion used : ${spark.sparkContext}")
         // df.show()
         df.write.format("noop").mode("overwrite").save()
 

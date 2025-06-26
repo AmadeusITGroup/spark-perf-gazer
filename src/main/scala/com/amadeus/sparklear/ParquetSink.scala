@@ -12,12 +12,12 @@ import org.apache.spark.sql.{SparkSession, DataFrame}
   * Sink of a collection of reports
   */
 class ParquetSink(
-  // spark: SparkSession,
+  spark: SparkSession,
   destination: String = "src/test/parquet-sink",
   writeBatchSize: Int = 5,
   debug: Boolean = true
 ) extends Sink {
-  val spark: SparkSession = SparkSession.builder().getOrCreate()
+  // val spark: SparkSession = SparkSession.builder().getOrCreate()
   import spark.implicits._
 
   private var reportsCount: Int = 0
@@ -29,13 +29,20 @@ class ParquetSink(
   implicit val formats: AnyRef with Formats = Serialization.formats(NoTypeHints)
 
   private def writeReports(): Unit = {
+    println(s"ParquetSink Debug : Spark Seesion used : ${spark.sparkContext}")
+
     if (SqlReports.nonEmpty) {
       if (debug) {
         println(s"ParquetSink Debug : reached writeBatchSize threshold, writing to $destination/sql-reports.parquet (${SqlReports.size} reports).")
       }
       val dfSqlReports: DataFrame = SqlReports.toDF
       dfSqlReports.show()
-      dfSqlReports.write.mode(writeMode).parquet(s"$destination/sql-reports.parquet")
+      try {
+        dfSqlReports.write.mode(writeMode).parquet(s"$destination/sql-reports.parquet")
+      }
+      catch {
+        case e: Exception => println(e.getMessage())
+      }
 
       // clear reports
       SqlReports.clear()
@@ -46,7 +53,12 @@ class ParquetSink(
       }
       val dfJobReports: DataFrame = JobReports.toDF
       dfJobReports.show()
-      dfJobReports.write.mode(writeMode).parquet(s"$destination/job-reports.parquet")
+      try {
+        dfJobReports.write.mode(writeMode).parquet(s"$destination/job-reports.parquet")
+      }
+      catch {
+        case e: Exception => println(e.getMessage())
+      }
 
       // clear reports
       JobReports.clear()
@@ -57,7 +69,12 @@ class ParquetSink(
       }
       val dfStageReports: DataFrame = StageReports.toDF
       dfStageReports.show()
-      dfStageReports.write.mode(writeMode).parquet(s"$destination/stage-reports.parquet")
+      try {
+        dfStageReports.write.mode(writeMode).parquet(s"$destination/stage-reports.parquet")
+      }
+      catch {
+        case e: Exception => println(e.getMessage())
+      }
 
       // clear reports
       StageReports.clear()
@@ -82,6 +99,9 @@ class ParquetSink(
   }
 
   override def flush(): Unit = {
+    if (debug) {
+      println(s"ParquetSink Debug : flush sink")
+    }
     writeReports()
   }
 }
