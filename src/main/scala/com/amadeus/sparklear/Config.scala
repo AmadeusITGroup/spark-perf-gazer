@@ -14,7 +14,7 @@ case class Config(
   sqlEnabled: Boolean = true,
   jobsEnabled: Boolean = true,
   stagesEnabled: Boolean = false,
-  sink: Sink = NoopSink, // TODO: no default
+  sink: Sink = LogSink,
   maxCacheSize: Int = Config.DefaultCacheSize // TODO: no default, user must be aware of this
 ) {
   // TODO: use these to avoid collecting (at the source) some objects if won't be used
