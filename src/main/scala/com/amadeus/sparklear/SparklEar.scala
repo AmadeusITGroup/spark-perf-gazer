@@ -21,12 +21,10 @@ class SparklEar(c: Config) extends SparkListener {
 
   type SqlKey = Long
   type JobKey = Int
-  type StageKey = Int
 
   // Maps to keep sqls + jobs + stages raw events (initial information) until some completion
-  private val sqlRawEvents = new CappedConcurrentHashMap[SqlKey, SqlEvent](c.maxCacheSize)
-  private val jobRawEvents = new CappedConcurrentHashMap[JobKey, JobEvent](c.maxCacheSize)
-  private val stageRawEvents = new CappedConcurrentHashMap[StageKey, StageEvent](c.maxCacheSize)
+  private val sqlStartEvents = new CappedConcurrentHashMap[SqlKey, SqlEvent]("sql", c.maxCacheSize)
+  private val jobStartEvents = new CappedConcurrentHashMap[JobKey, JobEvent]("job", c.maxCacheSize)
 
   /** LISTENERS
     */
@@ -39,9 +37,6 @@ class SparklEar(c: Config) extends SparkListener {
     logger.trace("onStageCompleted(...)")
     // generate a stage event
     val sw = StageEvent(stageCompleted.stageInfo)
-    // store stage collect for the use in jobs
-    stageRawEvents.put(stageCompleted.stageInfo.stageId, sw)
-
     if (c.stagesEnabled) {
       logger.trace("Handling Stage end: {}", stageCompleted.stageInfo.stageId)
       // generate the stage input
@@ -51,13 +46,11 @@ class SparklEar(c: Config) extends SparkListener {
     } else {
       logger.trace("Ignoring Stage end: {}", stageCompleted.stageInfo.stageId)
     }
-
-    // nothing to purge
   }
 
   override def onJobStart(jobStart: SparkListenerJobStart): Unit = {
     logger.trace("onJobStart(...)")
-    jobRawEvents.put(jobStart.jobId, JobEvent.from(jobStart))
+    jobStartEvents.put(jobStart.jobId, JobEvent.from(jobStart))
   }
 
   /** This is the listener method for job end
@@ -67,26 +60,18 @@ class SparklEar(c: Config) extends SparkListener {
   override def onJobEnd(jobEnd: SparkListenerJobEnd): Unit = {
     logger.trace("onJobEnd(...)")
     val jobId = jobEnd.jobId
-    val jobCollectOpt = Option(jobRawEvents.get(jobId)) // retrieve initial image of job (it could have been purged)
-    jobCollectOpt.foreach { jobCollect =>
-      val stagesIdAndStats = jobCollect.initialStages.map { sd => // retrieve image of stages
-        (sd, Option(stageRawEvents.get(sd.id)))
-      }
-
+    val jobStartOpt = Option(jobStartEvents.get(jobId)) // retrieve initial image of job
+    jobStartOpt.foreach { jobStart =>
       if (c.jobsEnabled) {
-        // generate the job input
-        val ji = JobEntity(jobCollect, EndUpdate(finalStages = stagesIdAndStats, jobEnd = jobEnd))
-        // sink the job input serialized (as string, and as objects)
         logger.trace("Handling Job end: {}", jobEnd.jobId)
+        val ji = JobEntity(start = jobStart, end = EndUpdate(jobEnd = jobEnd))
         c.sink.sink(JobReport.fromEntityToReport(ji))
       } else {
         logger.trace("Ignoring Job end: {}", jobEnd.jobId)
       }
 
       // purge
-      jobRawEvents.remove(jobId)
-      val stageIds = jobCollect.initialStages.map(_.id)
-      stageIds.foreach(i => stageRawEvents.remove(i))
+      jobStartEvents.remove(jobId)
     }
   }
 
@@ -109,7 +94,7 @@ class SparklEar(c: Config) extends SparkListener {
 
   private def onSqlStart(event: SparkListenerSQLExecutionStart): Unit = {
     logger.trace("onSqlStart(...)")
-    sqlRawEvents.put(event.executionId, SqlEvent(event.executionId, event.sparkPlanInfo, event.description))
+    sqlStartEvents.put(event.executionId, SqlEvent(event.executionId, event.description))
   }
 
   /** This is the listener method for SQL query end
@@ -120,13 +105,13 @@ class SparklEar(c: Config) extends SparkListener {
     logger.trace("onSqlEnd(...)")
 
     // get the initial sql collect information (it could have been purged)
-    val sqlCollectOpt = Option(sqlRawEvents.get(event.executionId))
+    val sqlStartOpt = Option(sqlStartEvents.get(event.executionId))
 
-    sqlCollectOpt.foreach { sqlCollect =>
+    sqlStartOpt.foreach { sqlStart =>
       if (c.sqlEnabled) {
         logger.trace("Handling SQL end: {}", event.executionId)
         // generate the SQL input
-        val si = SqlEntity(sqlCollect, event)
+        val si = SqlEntity(start = sqlStart, end = event)
         // sink the SQL input serialized (as string, and as objects)
         c.sink.sink(SqlReport.fromEntityToReport(si))
       } else {
@@ -134,7 +119,7 @@ class SparklEar(c: Config) extends SparkListener {
       }
 
       // purge
-      sqlRawEvents.remove(event.executionId)
+      sqlStartEvents.remove(event.executionId)
     }
   }
 

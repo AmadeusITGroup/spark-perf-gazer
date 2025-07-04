@@ -5,7 +5,7 @@ import com.amadeus.testfwk.SimpleSpec
 class CappedConcurrentHashMapSpec extends SimpleSpec {
   describe("The concurrent and safe map") {
     it("should put elements") {
-      val m = new CappedConcurrentHashMap[Int, Int](3)
+      val m = new CappedConcurrentHashMap[Int, Int]("b", 3)
       m.size shouldEqual(0)
       m.put(1, 10)
       m.keys.toSet shouldEqual Set(1)
@@ -15,7 +15,7 @@ class CappedConcurrentHashMapSpec extends SimpleSpec {
       m.keys.toSet shouldEqual Set(1, 2, 3)
     }
     it("should remove elements") {
-      val m = new CappedConcurrentHashMap[Int, Int](3)
+      val m = new CappedConcurrentHashMap[Int, Int]("b", 3)
       m.size shouldEqual(0)
       m.put(1, 10)
       m.keys.toSet shouldEqual Set(1)
@@ -25,7 +25,7 @@ class CappedConcurrentHashMapSpec extends SimpleSpec {
       m.keys.toSet shouldEqual Set(2)
     }
     it("should be limited and in eviction discard the minimum key element") {
-      val m = new CappedConcurrentHashMap[Int, Int](3)
+      val m = new CappedConcurrentHashMap[Int, Int]("b", 3)
       m.size shouldEqual(0)
       m.put(1, 10)
       m.put(2, 20)

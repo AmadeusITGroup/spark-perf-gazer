@@ -8,22 +8,26 @@ case class JobReport(
   jobId: Long,
   groupId: String,
   jobName: String,
+  jobStartTime: Long,
+  jobDuration: Long,
   sqlId: String,
-  stages: Int
+  stages: Seq[Int]
 ) extends Report {
-  override def asJson: Json = toJson(this)(DefaultFormats) // TODO: use a more efficient serialization
+  override def asJson: Json = toJson(this)(DefaultFormats)
 }
 
 object JobReport extends Translator[JobEntity, JobReport] {
   override def fromEntityToReport(e: JobEntity): JobReport = {
-    val col = e.start
-    val end = e.end
+    val startEvt = e.start
+    val endEvt = e.end
     JobReport(
-      jobId = end.jobEnd.jobId,
-      groupId = col.group,
-      jobName = col.name,
-      sqlId = col.sqlId,
-      stages = col.initialStages.size
+      jobId = endEvt.jobEnd.jobId,
+      jobStartTime = startEvt.startTime,
+      jobDuration = endEvt.jobEnd.time,
+      groupId = startEvt.group,
+      jobName = startEvt.name,
+      sqlId = startEvt.sqlId,
+      stages = startEvt.initialStages.map(_.id)
     )
   }
 }

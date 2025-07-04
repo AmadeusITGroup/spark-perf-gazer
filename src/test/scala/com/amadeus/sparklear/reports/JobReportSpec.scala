@@ -11,17 +11,15 @@ class JobReportSpec extends SimpleSpec with ConfigSupport {
 
   describe(s"${JobReport.getClass.getSimpleName}") {
     it("should generate a simple job report") {
-      val c = defaultTestConfig
       val jc = JobEvent(
         name = "job",
         group = "group",
         sqlId = "3",
-        initialStages = Seq.empty[StageRef]
+        initialStages = Seq(StageRef(id = 0, nroTasks = 0)),
+        id = 7,
+        startTime = 0L,
       )
-      val si = Fixtures2.Stage1.stageInfo
-      val sc = StageEvent(si)
       val eu = EndUpdate(
-        finalStages = Seq((StageRef(1, 1), Some(sc))),
         jobEnd = SparkListenerJobEnd(7, 0L, JobSucceeded)
       )
       val p = JobEntity(jc, eu)
@@ -32,7 +30,9 @@ class JobReportSpec extends SimpleSpec with ConfigSupport {
           groupId = "group",
           jobName = "job",
           sqlId = "3",
-          stages = 0
+          stages = Seq(0),
+          jobStartTime = 0L,
+          jobDuration = 0L
         )
       )
     }

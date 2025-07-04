@@ -13,15 +13,15 @@ class StageReportSpec extends SimpleSpec with ConfigSupport {
       rs shouldEqual (
         StageReport(
           stageId = 1,
-          readMb = 5,
-          writeMb = 74,
-          shuffleReadMb = 75,
-          shuffleWriteMb = 76,
-          execCpuSecs = 77,
-          execRunSecs = 98,
-          execJvmGcSecs = 13,
+          readBytes = 5L*1024*1024,
+          writeBytes = 74L*1024*1024,
+          shuffleReadBytes = 75L*1024*1024,
+          shuffleWriteBytes = 76L*1024*1024,
+          execCpuNs = 77L*1000*1000*1000,
+          execRunNs = 98L*1000*1000*1000,
+          execJvmGcNs = 13L*1000*1000*1000,
           attempt = 8,
-          spillMb = 3L
+          spillBytes = 3L*1024*1024
         )
       )
     }
