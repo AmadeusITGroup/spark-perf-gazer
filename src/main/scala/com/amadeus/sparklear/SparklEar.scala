@@ -37,20 +37,19 @@ class SparklEar(c: Config) extends SparkListener {
     */
   override def onStageCompleted(stageCompleted: SparkListenerStageCompleted): Unit = {
     logger.trace("onStageCompleted(...)")
-    // generate a stage collect
+    // generate a stage event
     val sw = StageEvent(stageCompleted.stageInfo)
-
     // store stage collect for the use in jobs
     stageRawEvents.put(stageCompleted.stageInfo.stageId, sw)
 
     if (c.stagesEnabled) {
-      logger.trace(s"Handling Stage end: ${stageCompleted.stageInfo.stageId}")
+      logger.trace("Handling Stage end: {}", stageCompleted.stageInfo.stageId)
       // generate the stage input
       val si = StageEntity(sw)
       // sink the stage input serialized (as string, and as objects)
       c.sink.sink(StageReport.fromEntityToReport(si))
     } else {
-      logger.trace(s"Ignoring Stage end: ${stageCompleted.stageInfo.stageId}")
+      logger.trace("Ignoring Stage end: {}", stageCompleted.stageInfo.stageId)
     }
 
     // nothing to purge
@@ -75,13 +74,13 @@ class SparklEar(c: Config) extends SparkListener {
       }
 
       if (c.jobsEnabled) {
-        logger.trace(s"Handling Job end: ${jobEnd.jobId}")
         // generate the job input
         val ji = JobEntity(jobCollect, EndUpdate(finalStages = stagesIdAndStats, jobEnd = jobEnd))
         // sink the job input serialized (as string, and as objects)
+        logger.trace("Handling Job end: {}", jobEnd.jobId)
         c.sink.sink(JobReport.fromEntityToReport(ji))
       } else {
-        logger.trace(s"Ignoring Job end: ${jobEnd.jobId}")
+        logger.trace("Ignoring Job end: {}", jobEnd.jobId)
       }
 
       // purge
@@ -100,7 +99,7 @@ class SparklEar(c: Config) extends SparkListener {
       case event: SparkListenerSQLExecutionEnd =>
         onSqlEnd(event)
       case e =>
-        logger.trace(s"Event ignored: ${e.getClass.getName}")
+        logger.trace("Event ignored: {}", e.getClass.getName)
       //case _: SparkListenerSQLAdaptiveSQLMetricUpdates =>
       // TODO: ignored for now, maybe adds more metrics?
       //case _: SparkListenerSQLAdaptiveExecutionUpdate =>
@@ -125,13 +124,13 @@ class SparklEar(c: Config) extends SparkListener {
 
     sqlCollectOpt.foreach { sqlCollect =>
       if (c.sqlEnabled) {
-        logger.trace(s"Handling SQL end: ${event.executionId}")
+        logger.trace("Handling SQL end: {}", event.executionId)
         // generate the SQL input
         val si = SqlEntity(sqlCollect, event)
         // sink the SQL input serialized (as string, and as objects)
         c.sink.sink(SqlReport.fromEntityToReport(si))
       } else {
-        logger.trace(s"Ignoring SQL end: ${event.executionId}")
+        logger.trace("Ignoring SQL end: {}", event.executionId)
       }
 
       // purge
@@ -140,7 +139,7 @@ class SparklEar(c: Config) extends SparkListener {
   }
 
   override def onApplicationEnd(event: SparkListenerApplicationEnd): Unit = {
-    logger.trace(s"onApplicationEnd: duration=${event.time}")
+    logger.trace("onApplicationEnd: duration={}", event.time)
   }
 
 }
