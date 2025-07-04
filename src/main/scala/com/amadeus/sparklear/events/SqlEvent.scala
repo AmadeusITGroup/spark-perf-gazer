@@ -8,6 +8,5 @@ import org.apache.spark.sql.execution.SparkPlanInfo
   */
 case class SqlEvent(
   id: Long,
-  plan: SparkPlanInfo,
   description: String
 ) extends Event[SqlEntity]

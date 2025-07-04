@@ -41,7 +41,6 @@ object Fixtures {
     val rootSqlReport = SqlEntity(
       start = SqlEvent(
         id  = 1,
-        plan = planInfo1,
         description = "toto"
       ),
       end = null
