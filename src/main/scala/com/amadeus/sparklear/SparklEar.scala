@@ -42,7 +42,7 @@ class SparklEar(c: Config) extends SparkListener {
       // generate the stage input
       val si = StageEntity(sw)
       // sink the stage input serialized (as string, and as objects)
-      c.sink.sink(StageReport.fromEntityToReport(si))
+      c.sink.sink(Seq(StageReport.fromEntityToReport(si) : StageReport))
     } else {
       logger.trace("Ignoring Stage end: {}", stageCompleted.stageInfo.stageId)
     }
@@ -61,11 +61,13 @@ class SparklEar(c: Config) extends SparkListener {
     logger.trace("onJobEnd(...)")
     val jobId = jobEnd.jobId
     val jobStartOpt = Option(jobStartEvents.get(jobId)) // retrieve initial image of job
+    var jobReports: Seq[JobReport] = Seq()
     jobStartOpt.foreach { jobStart =>
       if (c.jobsEnabled) {
         logger.trace("Handling Job end: {}", jobEnd.jobId)
         val ji = JobEntity(start = jobStart, end = EndUpdate(jobEnd = jobEnd))
-        c.sink.sink(JobReport.fromEntityToReport(ji))
+        // c.sink.sink(Seq(JobReport.fromEntityToReport(ji) : JobReport))
+        jobReports ++= Seq(JobReport.fromEntityToReport(ji) : JobReport)
       } else {
         logger.trace("Ignoring Job end: {}", jobEnd.jobId)
       }
@@ -73,6 +75,7 @@ class SparklEar(c: Config) extends SparkListener {
       // purge
       jobStartEvents.remove(jobId)
     }
+    c.sink.sink(jobReports)
   }
 
   override def onOtherEvent(event: SparkListenerEvent): Unit = {
@@ -106,14 +109,15 @@ class SparklEar(c: Config) extends SparkListener {
 
     // get the initial sql collect information (it could have been purged)
     val sqlStartOpt = Option(sqlStartEvents.get(event.executionId))
-
+    var sqlReports: Seq[SqlReport] = Seq()
     sqlStartOpt.foreach { sqlStart =>
       if (c.sqlEnabled) {
         logger.trace("Handling SQL end: {}", event.executionId)
         // generate the SQL input
         val si = SqlEntity(start = sqlStart, end = event)
         // sink the SQL input serialized (as string, and as objects)
-        c.sink.sink(SqlReport.fromEntityToReport(si))
+        // c.sink.sink(Seq(SqlReport.fromEntityToReport(si) : SqlReport))
+        sqlReports ++= Seq(SqlReport.fromEntityToReport(si) : SqlReport)
       } else {
         logger.trace("Ignoring SQL end: {}", event.executionId)
       }
@@ -121,10 +125,11 @@ class SparklEar(c: Config) extends SparkListener {
       // purge
       sqlStartEvents.remove(event.executionId)
     }
+    c.sink.sink(sqlReports)
   }
 
   override def onApplicationEnd(event: SparkListenerApplicationEnd): Unit = {
     logger.trace("onApplicationEnd: duration={}", event.time)
+    c.sink.flush()
   }
-
 }

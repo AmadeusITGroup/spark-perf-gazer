@@ -28,7 +28,25 @@ class ReadCsvToNoopSpec
         val emptyEventsListener = new SparklEar(cfg.withAllDisabled.withSink(emptySinks))
         spark.sparkContext.addSparkListener(emptyEventsListener)
 
+        // setup to write reports in json sink
+        // val jsonSinks = new JsonSink(
+        //   destination = "src/test/json-sink",
+        //  writeBatchSize = 5,
+        //  debug = true
+        // )
+        // val jsonEventsListener = new SparklEar(cfg.withAllEnabled.withSink(jsonSinks))
+        // spark.sparkContext.addSparkListener(jsonEventsListener)
+
+        // setup to write reports in json sink
+        val parquetSinks = new ParquetSink(
+          destination = "src/test/parquet-sink",
+          writeBatchSize = 5,
+          debug = true
+        )
+        val parquetEventsListener = new SparklEar(cfg.withAllEnabled.withSink(parquetSinks))
+        spark.sparkContext.addSparkListener(parquetEventsListener)
         spark.sparkContext.setJobGroup("testgroup", "testjob")
+        println(s"DEBUG : Spark Seesion used : ${spark.sparkContext}")
         df.write.format("noop").mode("overwrite").save()
 
         it("should build some reports") {
@@ -82,8 +100,26 @@ class ReadCsvToNoopSpec
           emptySinks.reports.size should be(0)
         }
 
+        spark.sparkContext.removeSparkListener(eventsListener)
+        spark.sparkContext.removeSparkListener(emptyEventsListener)
+        spark.sparkContext.removeSparkListener(parquetEventsListener)
+
+        println(s"DEBUG : flush parquet sink")
+        parquetSinks.write()
+        parquetSinks.flush()
+
+        println(s"DEBUG : check content of src/test/parquet-sink/sql-reports.parquet")
+        val dfSqlReports = spark.read.parquet("src/test/parquet-sink/sql-reports.parquet")
+        dfSqlReports.show()
+
+        println(s"DEBUG : check content of src/test/parquet-sink/job-reports.parquet")
+        val dfJobReports = spark.read.parquet("src/test/parquet-sink/job-reports.parquet")
+        dfJobReports.show()
+
+        println(s"DEBUG : check content of src/test/parquet-sink/stage-reports.parquet")
+        val dfStageReports = spark.read.parquet("src/test/parquet-sink/stage-reports.parquet")
+        dfStageReports.show()
       }
     }
   }
-
 }
