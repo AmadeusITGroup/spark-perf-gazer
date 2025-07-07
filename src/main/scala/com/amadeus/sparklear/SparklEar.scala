@@ -73,7 +73,7 @@ class SparklEar(c: Config) extends SparkListener {
     var jobReports: Seq[JobReport] = Seq()
     jobCollectOpt.foreach { jobCollect =>
       val stagesIdAndStats = jobCollect.initialStages.map { sd => // retrieve image of stages
-        (sd, Option(stageRawEvents.get(sd.id)))
+        (sd, Option(stageRawEvents.get(sd.id))) // TODO: keep jobs independent of stages
       }
 
       if (c.jobsEnabled) {
