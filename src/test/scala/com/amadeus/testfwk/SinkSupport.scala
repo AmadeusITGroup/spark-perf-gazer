@@ -5,13 +5,6 @@ import com.amadeus.sparklear.reports.Report
 import com.amadeus.testfwk.SinkSupport.TestableSink
 import scala.collection.mutable.ListBuffer
 
-// Imports for JsonSink
-import java.io.{FileWriter, PrintWriter}
-import org.json4s.jackson.Serialization
-import org.json4s.jackson.Serialization.write
-import org.json4s.NoTypeHints
-import org.json4s.Formats
-
 object SinkSupport {
   // UPDATE make it Seq[Report]
   // class TestableSink(
@@ -32,6 +25,8 @@ object SinkSupport {
       if (stdout) { rs.foreach(println) } // scalastyle:ignore regex
       reports ++= rs
     }
+
+    override def write(): Unit = { }
 
     override def flush(): Unit = { }
   }

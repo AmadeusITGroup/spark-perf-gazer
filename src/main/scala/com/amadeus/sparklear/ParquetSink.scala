@@ -1,85 +1,50 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.reports.{JobReport, Report, SqlReport, StageReport}
+import com.amadeus.sparklear.reports.{JobGenericRecord, JobReport, Report, SqlGenericRecord, SqlReport, StageGenericRecord, StageReport}
 import org.json4s.jackson.Serialization
 import org.json4s.{Formats, NoTypeHints}
 
 import scala.collection.mutable.ListBuffer
-
-import org.apache.spark.sql.{SparkSession, DataFrame}
+import org.apache.parquet.io.OutputFile
+import org.apache.avro.Schema
+import org.apache.avro.generic.GenericRecord
+import org.apache.hadoop.conf.Configuration
+import org.apache.parquet.avro.AvroParquetWriter
+import org.apache.parquet.hadoop.ParquetWriter
+import org.apache.hadoop.fs.Path
+import org.apache.parquet.hadoop.ParquetFileWriter.Mode
+import org.apache.parquet.hadoop.util.HadoopOutputFile
 
 /**
   * Sink of a collection of reports
   */
 class ParquetSink(
-  spark: SparkSession,
+  // spark: SparkSession,
   destination: String = "src/test/parquet-sink",
   writeBatchSize: Int = 5,
   debug: Boolean = true
 ) extends Sink {
-  // val spark: SparkSession = SparkSession.builder().getOrCreate()
-  import spark.implicits._
-
   private var reportsCount: Int = 0
-  private var writeMode: String = "overwrite"
   private val SqlReports: ListBuffer[SqlReport] = new ListBuffer[SqlReport]()
   private val JobReports: ListBuffer[JobReport] = new ListBuffer[JobReport]()
   private val StageReports: ListBuffer[StageReport] = new ListBuffer[StageReport]()
 
   implicit val formats: AnyRef with Formats = Serialization.formats(NoTypeHints)
 
-  private def writeReports(): Unit = {
-    println(s"ParquetSink Debug : Spark Seesion used : ${spark.sparkContext}")
-
-    if (SqlReports.nonEmpty) {
-      if (debug) {
-        println(s"ParquetSink Debug : reached writeBatchSize threshold, writing to $destination/sql-reports.parquet (${SqlReports.size} reports).")
-      }
-      val dfSqlReports: DataFrame = SqlReports.toDF
-      dfSqlReports.show()
-      try {
-        dfSqlReports.write.mode(writeMode).parquet(s"$destination/sql-reports.parquet")
-      }
-      catch {
-        case e: Exception => println(e.getMessage())
-      }
-
-      // clear reports
-      SqlReports.clear()
-    }
-    if (JobReports.nonEmpty) {
-      if (debug) {
-        println(s"ParquetSink Debug : reached writeBatchSize threshold, writing to $destination/job-reports.parquet (${JobReports.size} reports).")
-      }
-      val dfJobReports: DataFrame = JobReports.toDF
-      dfJobReports.show()
-      try {
-        dfJobReports.write.mode(writeMode).parquet(s"$destination/job-reports.parquet")
-      }
-      catch {
-        case e: Exception => println(e.getMessage())
-      }
-
-      // clear reports
-      JobReports.clear()
-    }
-    if (StageReports.nonEmpty) {
-      if (debug) {
-        println(s"ParquetSink Debug : reached writeBatchSize threshold, writing to $destination/stage-reports.parquet (${StageReports.size} reports).")
-      }
-      val dfStageReports: DataFrame = StageReports.toDF
-      dfStageReports.show()
-      try {
-        dfStageReports.write.mode(writeMode).parquet(s"$destination/stage-reports.parquet")
-      }
-      catch {
-        case e: Exception => println(e.getMessage())
-      }
-
-      // clear reports
-      StageReports.clear()
-    }
+  private def getAvroParquetWriter(Path: String, Schema: Schema) : ParquetWriter[GenericRecord] = {
+    val OutputPath = new Path(Path)
+    val OutputFile: OutputFile = HadoopOutputFile.fromPath(OutputPath, new Configuration())
+    AvroParquetWriter
+      .builder(OutputFile)
+      .withSchema(Schema)
+      .withWriteMode(Mode.OVERWRITE)
+      .build()
   }
+
+  // Create Parquet writers
+  private val SqlReportsWriter: ParquetWriter[GenericRecord] = getAvroParquetWriter(s"$destination/sql-reports.parquet", SqlGenericRecord.reportSchema)
+  private val JobReportsWriter: ParquetWriter[GenericRecord] = getAvroParquetWriter(s"$destination/job-reports.parquet", JobGenericRecord.reportSchema)
+  private val StageReportsWriter: ParquetWriter[GenericRecord] = getAvroParquetWriter(s"$destination/stage-reports.parquet", StageGenericRecord.reportSchema)
 
   override def sink(rs: Seq[Report]): Unit = {
     reportsCount += rs.size
@@ -92,16 +57,74 @@ class ParquetSink(
     }
 
     if ( reportsCount >= writeBatchSize ) {
-      writeReports()
+      println(s"ParquetSink Debug : reached writeBatchSize threshold, writing reports ...")
+      write()
       reportsCount = 0
-      writeMode = "append"
+    }
+  }
+
+  def write(): Unit = {
+    if (SqlReports.nonEmpty) {
+      val SqlReportsRecords: Seq[GenericRecord] = SqlReports.map { report =>
+        SqlGenericRecord.fromReportToGenericRecord(report)
+      }
+
+      // Write all records in a single loop
+      if (debug) {
+        println(s"ParquetSink Debug : writing to $destination/sql-reports.parquet (${SqlReportsRecords.size} reports).")
+      }
+      SqlReportsRecords.foreach(SqlReportsWriter.write)
+      //SqlReportsWriter.wait()
+
+      // clear reports
+      if (debug) { println("ParquetSink Debug : SqlReports.clear()") }
+      SqlReports.clear()
+    }
+    if (JobReports.nonEmpty) {
+      // Convert all JobReports to GenericRecords first
+      val JobReportsRecords: Seq[GenericRecord] = JobReports.map { report =>
+        JobGenericRecord.fromReportToGenericRecord(report)
+      }
+
+      // Write all records in a single loop
+      if (debug) {
+        println(s"ParquetSink Debug : writing to $destination/job-reports.parquet (${JobReportsRecords.size} reports).")
+      }
+      JobReportsRecords.foreach(JobReportsWriter.write)
+      //JobReportsWriter.wait()
+
+      // clear reports
+      if (debug) { println("ParquetSink Debug : JobReports.clear()") }
+      JobReports.clear()
+    }
+    if (StageReports.nonEmpty) {
+      // Convert all StageReports to GenericRecords first
+      val StageReportsRecords: Seq[GenericRecord] = StageReports.map { report =>
+        StageGenericRecord.fromReportToGenericRecord(report)
+      }
+
+      // Write all records in a single loop
+      if (debug) {
+        println(s"ParquetSink Debug : writing to $destination/stage-reports.parquet (${StageReportsRecords.size} reports).")
+      }
+      StageReportsRecords.foreach(StageReportsWriter.write)
+      //StageReportsWriter.wait()
+
+      // clear reports
+      if (debug) { println("ParquetSink Debug : StageReports.clear()") }
+      StageReports.clear()
     }
   }
 
   override def flush(): Unit = {
-    if (debug) {
-      println(s"ParquetSink Debug : flush sink")
-    }
-    writeReports()
+    if (debug) { println(f"ParquetSink Debug : flush") }
+    write()
+
+    // Flush and close writers
+    StageReportsWriter.close()
+    JobReportsWriter.close()
+    SqlReportsWriter.close()
+
+    if (debug) { println(f"ParquetSink Debug : writers closed.") }
   }
 }

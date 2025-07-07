@@ -7,5 +7,7 @@ object NoopSink extends Sink {
   // override def sink(r: Report): Unit = { }
   override def sink(reports: Seq[Report]): Unit = { }
 
+  override def write(): Unit = { }
+
   override def flush(): Unit = { }
 }

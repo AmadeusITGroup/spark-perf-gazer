@@ -26,39 +26,6 @@ class JsonSink (
   private val JobReportsWriter = new PrintWriter(new FileWriter(s"$destination/job-reports.json", true))
   private val StageReportsWriter = new PrintWriter(new FileWriter(s"$destination/stage-reports.json", true))
 
-  private def writeReports() = {
-    if (SqlReports.nonEmpty) {
-      if (debug) {
-        println(s"JsonSink Debug : reached writeBatchSize threshold, writing to $destination/sql-reports.json (${SqlReports.size} reports).")
-      }
-      val json: String = write(SqlReports)
-      SqlReportsWriter.println(json)
-
-      // clear reports
-      SqlReports.clear()
-    }
-    if (JobReports.nonEmpty) {
-      if (debug) {
-        println(s"JsonSink Debug : reached writeBatchSize threshold, writing to $destination/job-reports.json (${JobReports.size} reports).")
-      }
-      val json: String = write(JobReports)
-      JobReportsWriter.println(json)
-
-      // clear reports
-      JobReports.clear()
-    }
-    if (StageReports.nonEmpty) {
-      if (debug) {
-        println(s"JsonSink Debug : reached writeBatchSize threshold, writing to $destination/stage-reports.json (${StageReports.size} reports).")
-      }
-      val json: String = write(StageReports)
-      StageReportsWriter.println(json)
-
-      // clear reports
-      StageReports.clear()
-    }
-  }
-
   override def sink(rs: Seq[Report]): Unit = {
     reportsCount += rs.size
 
@@ -70,13 +37,47 @@ class JsonSink (
     }
 
     if ( reportsCount >= writeBatchSize ) {
-      writeReports()
+      println(s"JsonSink Debug : reached writeBatchSize threshold, writing reports.")
+      write()
       reportsCount = 0
     }
   }
 
+  override def write(): Unit = {
+    if (SqlReports.nonEmpty) {
+      if (debug) {
+        println(s"JsonSink Debug : writing to $destination/sql-reports.json (${SqlReports.size} reports).")
+      }
+      val json: String = org.json4s.jackson.Serialization.write(SqlReports)
+      SqlReportsWriter.println(json)
+
+      // clear reports
+      SqlReports.clear()
+    }
+    if (JobReports.nonEmpty) {
+      if (debug) {
+        println(s"JsonSink Debug : writing to $destination/job-reports.json (${JobReports.size} reports).")
+      }
+      val json: String = org.json4s.jackson.Serialization.write(JobReports)
+      JobReportsWriter.println(json)
+
+      // clear reports
+      JobReports.clear()
+    }
+    if (StageReports.nonEmpty) {
+      if (debug) {
+        println(s"JsonSink Debug : writing to $destination/stage-reports.json (${StageReports.size} reports).")
+      }
+      val json: String = org.json4s.jackson.Serialization.write(StageReports)
+      StageReportsWriter.println(json)
+
+      // clear reports
+      StageReports.clear()
+    }
+  }
+
   override def flush(): Unit = {
-    writeReports()
+    write()
 
     // Flush and close writers
     SqlReportsWriter.flush()
@@ -85,6 +86,7 @@ class JsonSink (
     JobReportsWriter.close()
     StageReportsWriter.flush()
     StageReportsWriter.close()
+
     if (debug) { println(f"JsonSink Debug : writers closed.") }
   }
 }
