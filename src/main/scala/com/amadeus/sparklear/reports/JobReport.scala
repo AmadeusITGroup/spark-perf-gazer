@@ -6,6 +6,7 @@ import org.json4s.jackson.Serialization.{write => toJson}
 
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericRecord}
+import scala.collection.JavaConverters._
 
 case class JobReport(
   jobId: Long,
@@ -45,8 +46,10 @@ object JobGenericRecord extends GenericTranslator[JobReport, GenericRecord] {
              |   {"name": "jobId", "type": "long"},
              |   {"name": "groupId", "type": "string"},
              |   {"name": "jobName", "type": "string"},
-             |   {"name": "sqlId", "type": ["null", "string"]},
-             |   {"name": "stages", "type": "int"}
+             |   {"name": "jobStartTime", "type": "long"},
+             |   {"name": "jobDuration", "type": "long"},
+             |   {"name": "sqlId", "type": "string"},
+             |   { "name": "stages", "type": { "type": "array", "items": "int" } }
              | ]
              |}""".stripMargin)
 
@@ -55,8 +58,10 @@ object JobGenericRecord extends GenericTranslator[JobReport, GenericRecord] {
     record.put("jobId", r.jobId)
     record.put("groupId", r.groupId)
     record.put("jobName", r.jobName)
+    record.put("jobStartTime", r.jobStartTime)
+    record.put("jobDuration", r.jobDuration)
     record.put("sqlId", r.sqlId)
-    record.put("stages", r.stages)
+    record.put("stages", r.stages.asJava)
     record
   }
 }

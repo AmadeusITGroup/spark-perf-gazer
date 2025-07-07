@@ -9,7 +9,6 @@ object Sample extends SparkSupport with OptdSupport with ConfigSupport with Sink
       val df = readOptd(spark)
       val cfg = defaultTestConfig.withAllEnabled
       val parquetSinks = new ParquetSink(
-        spark = spark,
         destination = "src/test/parquet-sink",
         writeBatchSize = 1,
         debug = true

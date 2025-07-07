@@ -105,7 +105,6 @@ class ReadCsvToNoopSpec
         spark.sparkContext.removeSparkListener(parquetEventsListener)
 
         println(s"DEBUG : flush parquet sink")
-        parquetSinks.write()
         parquetSinks.flush()
 
         println(s"DEBUG : check content of src/test/parquet-sink/sql-reports.parquet")

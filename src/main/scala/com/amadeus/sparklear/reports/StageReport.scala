@@ -49,30 +49,30 @@ object StageGenericRecord extends GenericTranslator[StageReport, GenericRecord] 
              | "name": "Root",
              | "fields": [
              |   {"name": "stageId", "type": "int"},
-             |   {"name": "readMb", "type": "long"},
-             |   {"name": "writeMb", "type": "long"},
-             |   {"name": "shuffleReadMb", "type": "long"},
-             |   {"name": "shuffleWriteMb", "type": "long"},
-             |   {"name": "execCpuSecs", "type": "long"},
-             |   {"name": "execRunSecs", "type": "long"},
-             |   {"name": "execJvmGcSecs", "type": "long"},
+             |   {"name": "readBytes", "type": "long"},
+             |   {"name": "writeBytes", "type": "long"},
+             |   {"name": "shuffleReadBytes", "type": "long"},
+             |   {"name": "shuffleWriteBytes", "type": "long"},
+             |   {"name": "execCpuNs", "type": "long"},
+             |   {"name": "execRunNs", "type": "long"},
+             |   {"name": "execJvmGcNs", "type": "long"},
              |   {"name": "attempt", "type": "int"},
-             |   {"name": "spillMb", "type": "long"}
+             |   {"name": "spillBytes", "type": "long"}
              | ]
              |}""".stripMargin)
 
   override def fromReportToGenericRecord(r: StageReport): GenericRecord = {
     val record = new GenericData.Record(reportSchema)
     record.put("stageId", r.stageId)
-    record.put("readMb", r.readMb)
-    record.put("writeMb", r.writeMb)
-    record.put("shuffleReadMb", r.shuffleReadMb)
-    record.put("shuffleWriteMb", r.shuffleWriteMb)
-    record.put("execCpuSecs", r.execCpuSecs)
-    record.put("execRunSecs", r.execRunSecs)
-    record.put("execJvmGcSecs", r.execJvmGcSecs)
+    record.put("readBytes", r.readBytes)
+    record.put("writeBytes", r.writeBytes)
+    record.put("shuffleReadBytes", r.shuffleReadBytes)
+    record.put("shuffleWriteBytes", r.shuffleWriteBytes)
+    record.put("execCpuNs", r.execCpuNs)
+    record.put("execRunNs", r.execRunNs)
+    record.put("execJvmGcNs", r.execJvmGcNs)
     record.put("attempt", r.attempt)
-    record.put("spillMb", r.spillMb)
+    record.put("spillBytes", r.spillBytes)
     record
   }
 }
