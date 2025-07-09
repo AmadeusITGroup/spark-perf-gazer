@@ -46,11 +46,10 @@ class ReadCsvToNoopSpec
         val parquetEventsListener = new SparklEar(cfg.withAllEnabled.withSink(parquetSinks))
         spark.sparkContext.addSparkListener(parquetEventsListener)
         spark.sparkContext.setJobGroup("testgroup", "testjob")
-        println(s"DEBUG : Spark Seesion used : ${spark.sparkContext}")
         df.write.format("noop").mode("overwrite").save()
 
         it("should build some reports") {
-          sinks.reports.size shouldBe 3
+          sinks.reports.size shouldBe 4
         }
 
         it("should build SQL nodes with job name and node name") {
@@ -107,17 +106,21 @@ class ReadCsvToNoopSpec
         println(s"DEBUG : flush parquet sink")
         parquetSinks.flush()
 
-        println(s"DEBUG : check content of src/test/parquet-sink/sql-reports.parquet")
+        println("DEBUG : check content of src/test/parquet-sink/sql-reports.parquet")
         val dfSqlReports = spark.read.parquet("src/test/parquet-sink/sql-reports.parquet")
         dfSqlReports.show()
 
-        println(s"DEBUG : check content of src/test/parquet-sink/job-reports.parquet")
+        println("DEBUG : check content of src/test/parquet-sink/job-reports.parquet")
         val dfJobReports = spark.read.parquet("src/test/parquet-sink/job-reports.parquet")
         dfJobReports.show()
 
-        println(s"DEBUG : check content of src/test/parquet-sink/stage-reports.parquet")
+        println("DEBUG : check content of src/test/parquet-sink/stage-reports.parquet")
         val dfStageReports = spark.read.parquet("src/test/parquet-sink/stage-reports.parquet")
         dfStageReports.show()
+
+        println("DEBUG : check content of src/test/parquet-sink/task-reports.parquet")
+        val dfTaskReports = spark.read.parquet("src/test/parquet-sink/task-reports.parquet")
+        dfTaskReports.show()
       }
     }
   }

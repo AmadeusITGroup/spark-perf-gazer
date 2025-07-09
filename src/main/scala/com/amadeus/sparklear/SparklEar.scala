@@ -1,10 +1,10 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.entities.{Entity, JobEntity, SqlEntity, StageEntity}
+import com.amadeus.sparklear.entities.{Entity, JobEntity, SqlEntity, StageEntity, TaskEntity}
 import com.amadeus.sparklear.utils.CappedConcurrentHashMap
 import com.amadeus.sparklear.events.JobEvent.EndUpdate
-import com.amadeus.sparklear.events.{JobEvent, SqlEvent, StageEvent}
-import com.amadeus.sparklear.reports.{JobReport, SqlReport, StageReport}
+import com.amadeus.sparklear.events.{JobEvent, SqlEvent, StageEvent, TaskEvent}
+import com.amadeus.sparklear.reports.{JobReport, SqlReport, StageReport, TaskReport}
 import org.apache.spark.scheduler._
 import org.apache.spark.sql.execution.ui._
 import org.slf4j.{Logger, LoggerFactory}
@@ -33,6 +33,21 @@ class SparklEar(c: Config) extends SparkListener {
     *
     * It is NOT a trigger for automatic purge of stages (job end will purge stages).
     */
+  override def onTaskEnd(taskEnd: SparkListenerTaskEnd): Unit = {
+    logger.trace("onTaskEnd(...)")
+    // generate a task event
+    val te = TaskEvent(taskEnd)
+    if (c.tasksEnabled) {
+      logger.trace("Handling Task end: {}", taskEnd.taskInfo.taskId)
+      // generate the task input
+      val ti = TaskEntity(te)
+      // sink the task input serialized (as string, and as objects)
+      c.sink.sink(Seq(TaskReport.fromEntityToReport(ti) : TaskReport))
+    } else {
+      logger.trace("Ignoring Task end: {}", taskEnd.taskInfo.taskId)
+    }
+  }
+
   override def onStageCompleted(stageCompleted: SparkListenerStageCompleted): Unit = {
     logger.trace("onStageCompleted(...)")
     // generate a stage event

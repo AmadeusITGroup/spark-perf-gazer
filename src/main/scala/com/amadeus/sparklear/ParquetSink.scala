@@ -1,6 +1,6 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.reports.{JobGenericRecord, JobReport, Report, SqlGenericRecord, SqlReport, StageGenericRecord, StageReport}
+import com.amadeus.sparklear.reports.{JobGenericRecord, JobReport, Report, SqlGenericRecord, SqlReport, StageGenericRecord, StageReport, TaskReport, TaskGenericRecord}
 import org.json4s.jackson.Serialization
 import org.json4s.{Formats, NoTypeHints}
 
@@ -28,6 +28,7 @@ class ParquetSink(
   private val SqlReports: ListBuffer[SqlReport] = new ListBuffer[SqlReport]()
   private val JobReports: ListBuffer[JobReport] = new ListBuffer[JobReport]()
   private val StageReports: ListBuffer[StageReport] = new ListBuffer[StageReport]()
+  private val TaskReports: ListBuffer[TaskReport] = new ListBuffer[TaskReport]()
 
   implicit val formats: AnyRef with Formats = Serialization.formats(NoTypeHints)
 
@@ -45,6 +46,7 @@ class ParquetSink(
   private val SqlReportsWriter: ParquetWriter[GenericRecord] = getAvroParquetWriter(s"$destination/sql-reports.parquet", SqlGenericRecord.reportSchema)
   private val JobReportsWriter: ParquetWriter[GenericRecord] = getAvroParquetWriter(s"$destination/job-reports.parquet", JobGenericRecord.reportSchema)
   private val StageReportsWriter: ParquetWriter[GenericRecord] = getAvroParquetWriter(s"$destination/stage-reports.parquet", StageGenericRecord.reportSchema)
+  private val TaskReportsWriter: ParquetWriter[GenericRecord] = getAvroParquetWriter(s"$destination/task-reports.parquet", TaskGenericRecord.reportSchema)
 
   override def sink(rs: Seq[Report]): Unit = {
     reportsCount += rs.size
@@ -54,6 +56,7 @@ class ParquetSink(
       case sql: SqlReport => SqlReports ++= Seq(sql)
       case job: JobReport => JobReports ++= Seq(job)
       case stage: StageReport => StageReports ++= Seq(stage)
+      case task: TaskReport => TaskReports ++= Seq(task)
     }
 
     if ( reportsCount >= writeBatchSize ) {
@@ -114,6 +117,23 @@ class ParquetSink(
       if (debug) { println("ParquetSink Debug : StageReports.clear()") }
       StageReports.clear()
     }
+    if (TaskReports.nonEmpty) {
+      // Convert all TaskReports to GenericRecords first
+      val TaskReportsRecords: Seq[GenericRecord] = TaskReports.map { report =>
+        TaskGenericRecord.fromReportToGenericRecord(report)
+      }
+
+      // Write all records in a single loop
+      if (debug) {
+        println(s"ParquetSink Debug : writing to $destination/task-reports.parquet (${TaskReportsRecords.size} reports).")
+      }
+      TaskReportsRecords.foreach(TaskReportsWriter.write)
+      //TaskReportsWriter.wait()
+
+      // clear reports
+      if (debug) { println("ParquetSink Debug : TaskReports.clear()") }
+      TaskReports.clear()
+    }
   }
 
   override def flush(): Unit = {
@@ -121,6 +141,7 @@ class ParquetSink(
     write()
 
     // Flush and close writers
+    TaskReportsWriter.close()
     StageReportsWriter.close()
     JobReportsWriter.close()
     SqlReportsWriter.close()

@@ -5,6 +5,7 @@ import com.amadeus.sparklear.reports.Report
 /** @param sqlEnabled         whether to expose to end-user SQL queries level reports
   * @param jobsEnabled        whether to expose to end-user job level reports
   * @param stagesEnabled      whether to expose to end-user stage level reports
+  * @param tasksEnabled       whether to expose to end-user task level reports
   * @param sink               optional method to use as sink for completed [[Report]] instances
   * @param maxCacheSize       maximum amount of elements [[RawEvent]] to keep in memory (per category)
   *                           too large and could cause OOM on the driver, and too small could cause incomplete reports
@@ -14,6 +15,7 @@ case class Config(
   sqlEnabled: Boolean = true,
   jobsEnabled: Boolean = true,
   stagesEnabled: Boolean = false,
+  tasksEnabled: Boolean = false,
   sink: Sink = LogSink,
   maxCacheSize: Int = Config.DefaultCacheSize // TODO: no default, user must be aware of this
 ) {

@@ -5,10 +5,10 @@ import com.amadeus.sparklear.{Config, Sink}
 trait ConfigSupport {
 
   implicit class ConfigHelper(c: Config) {
-    def withAllEnabled: Config = c.copy(sqlEnabled = true, jobsEnabled = true, stagesEnabled = true)
+    def withAllEnabled: Config = c.copy(sqlEnabled = true, jobsEnabled = true, stagesEnabled = true, tasksEnabled = true)
 
-    def withAllDisabled: Config = c.copy(sqlEnabled = false, jobsEnabled = false, stagesEnabled = false)
-    def withOnlySqlEnabled: Config = c.copy(sqlEnabled = true, jobsEnabled = false, stagesEnabled = false)
+    def withAllDisabled: Config = c.copy(sqlEnabled = false, jobsEnabled = false, stagesEnabled = false, tasksEnabled = false)
+    def withOnlySqlEnabled: Config = c.copy(sqlEnabled = true, jobsEnabled = false, stagesEnabled = false, tasksEnabled = false)
     def withSink(s: Sink): Config = c.copy(sink = s)
   }
 
