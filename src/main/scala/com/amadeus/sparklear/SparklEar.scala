@@ -90,7 +90,9 @@ class SparklEar(c: Config) extends SparkListener {
       // purge
       jobStartEvents.remove(jobId)
     }
-    c.sink.sink(jobReports)
+    if (c.jobsEnabled && jobReports.nonEmpty) {
+      c.sink.sink(jobReports)
+    }
   }
 
   override def onOtherEvent(event: SparkListenerEvent): Unit = {
@@ -140,7 +142,9 @@ class SparklEar(c: Config) extends SparkListener {
       // purge
       sqlStartEvents.remove(event.executionId)
     }
-    c.sink.sink(sqlReports)
+    if (c.sqlEnabled && sqlReports.nonEmpty) {
+      c.sink.sink(sqlReports)
+    }
   }
 
   override def onApplicationEnd(event: SparkListenerApplicationEnd): Unit = {

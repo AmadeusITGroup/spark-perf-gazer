@@ -4,6 +4,7 @@ import com.amadeus.sparklear.reports._
 import com.amadeus.testfwk.SinkSupport.TestableSink
 import com.amadeus.testfwk.{ConfigSupport, JsonSupport, OptdSupport, SimpleSpec, SinkSupport, SparkSupport}
 
+import org.apache.spark.sql.functions.{col, explode}
 
 class ReadCsvToNoopSpec
     extends SimpleSpec
@@ -37,13 +38,18 @@ class ReadCsvToNoopSpec
         // val jsonEventsListener = new SparklEar(cfg.withAllEnabled.withSink(jsonSinks))
         // spark.sparkContext.addSparkListener(jsonEventsListener)
 
+
         // setup to write reports in json sink
-        val parquetSinks = new ParquetSink(
-          destination = "src/test/parquet-sink",
-          writeBatchSize = 5,
+        val sparkApplicationId: String = spark.sparkContext.applicationId
+        val parquetSinkDestination: String = "src/test/parquet-sink"
+
+        val parquetSink = new ParquetSink(
+          sparkApplicationId = sparkApplicationId,
+          destination = parquetSinkDestination,
+          writeBatchSize = 1,
           debug = true
         )
-        val parquetEventsListener = new SparklEar(cfg.withAllEnabled.withSink(parquetSinks))
+        val parquetEventsListener = new SparklEar(cfg.withAllEnabled.withSink(parquetSink))
         spark.sparkContext.addSparkListener(parquetEventsListener)
         spark.sparkContext.setJobGroup("testgroup", "testjob")
         df.write.format("noop").mode("overwrite").save()
@@ -103,24 +109,33 @@ class ReadCsvToNoopSpec
         spark.sparkContext.removeSparkListener(emptyEventsListener)
         spark.sparkContext.removeSparkListener(parquetEventsListener)
 
-        println(s"DEBUG : flush parquet sink")
-        parquetSinks.flush()
+        println("DEBUG : flush parquet sink")
+        parquetSink.flush()
 
-        println("DEBUG : check content of src/test/parquet-sink/sql-reports.parquet")
-        val dfSqlReports = spark.read.parquet("src/test/parquet-sink/sql-reports.parquet")
+        println(s"DEBUG : check content of ${parquetSink.SqlReportsPath}")
+        val dfSqlReports = spark.read.parquet(parquetSink.SqlReportsPath)
         dfSqlReports.show()
 
-        println("DEBUG : check content of src/test/parquet-sink/job-reports.parquet")
-        val dfJobReports = spark.read.parquet("src/test/parquet-sink/job-reports.parquet")
+        println(s"DEBUG : check content of ${parquetSink.JobReportsPath}")
+        val dfJobReports = spark.read.parquet(parquetSink.JobReportsPath)
         dfJobReports.show()
 
-        println("DEBUG : check content of src/test/parquet-sink/stage-reports.parquet")
-        val dfStageReports = spark.read.parquet("src/test/parquet-sink/stage-reports.parquet")
+        println(s"DEBUG : check content of ${parquetSink.StageReportsPath}")
+        val dfStageReports = spark.read.parquet(parquetSink.StageReportsPath)
         dfStageReports.show()
 
-        println("DEBUG : check content of src/test/parquet-sink/task-reports.parquet")
-        val dfTaskReports = spark.read.parquet("src/test/parquet-sink/task-reports.parquet")
+        println(s"DEBUG : check content of ${parquetSink.TaskReportsPath}")
+        val dfTaskReports = spark.read.parquet(parquetSink.TaskReportsPath)
         dfTaskReports.show()
+
+        val dfTasks = dfJobReports
+          .withColumn("stageId", explode(col("stages")))
+          .drop("stages")
+          .join(dfStageReports, Seq("stageId"))
+          .drop(dfStageReports("stageId"))
+          .join(dfTaskReports, Seq("stageId"))
+          .drop(dfTaskReports("stageId"))
+        dfTasks.show()
       }
     }
   }
