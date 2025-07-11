@@ -3,6 +3,11 @@ package com.amadeus.sparklear
 import com.amadeus.sparklear.reports._
 import com.amadeus.testfwk._
 
+// Define your case class
+case class MakeModel(make: String, model: String)
+case class CarRegistration(registration: String, make: String, model: String, engine_size: BigDecimal)
+case class CarPrice(make: String, model: String, engine_size: BigDecimal, sale_price: Double)
+
 class SampleSkewDetectionSpec
     extends SimpleSpec
     with SparkSupport
@@ -18,7 +23,6 @@ class SampleSkewDetectionSpec
         import org.apache.spark.sql._
         import org.apache.spark.sql.functions._
         import scala.util.Random
-        import scala.math.BigDecimal
         import spark.implicits._
 
         // regular setup
@@ -26,13 +30,15 @@ class SampleSkewDetectionSpec
         val eventsListener = new SparklEar(cfg)
         spark.sparkContext.addSparkListener(eventsListener)
 
-        case class MakeModel(make: String, model: String)
+        println("DEBUG : Prepare skewed data frames")
+        spark.sparkContext.setJobDescription("Prepare skewed data frames")
+
         val makeModelSet: Seq[MakeModel] = Seq(
             MakeModel("FORD", "FIESTA")
           , MakeModel("NISSAN", "QASHQAI")
           , MakeModel("HYUNDAI", "I20")
           , MakeModel("SUZUKI", "SWIFT")
-          , MakeModel("MERCEDES_BENZ", "E CLASS")
+          , MakeModel("MERCEDED_BENZ", "E CLASS")
           , MakeModel("VAUXHALL", "CORSA")
           , MakeModel("FIAT", "500")
           , MakeModel("SKODA", "OCTAVIA")
@@ -44,32 +50,27 @@ class SampleSkewDetectionSpec
           val makeModelIndex = if (Random.nextBoolean()) 0 else Random.nextInt(makeModelSet.size)
           makeModelSet(makeModelIndex)
         }
-        def randomEngineSize(): BigDecimal = BigDecimal(s"1.${Random.nextInt(9)}")
+        def randomEngineSize() = BigDecimal(s"1.${Random.nextInt(9)}")
         def randomRegistration(): String = s"${Random.alphanumeric.take(7).mkString("")}"
-        def randomPrice(): Int = 500 + Random.nextInt(5000)
+        def randomPrice() = 500 + Random.nextInt(5000)
 
         // cars with registration for which we need to calculate the average price based on similarity
-        case class CarRegistration(registration: String, make: String, model: String, engine_size: BigDecimal)
         def randomCarRegistration(): CarRegistration = {
           val makeModel = randomMakeModel()
           CarRegistration(randomRegistration(), makeModel.make, makeModel.model, randomEngineSize())
         }
 
         // cars with prices
-        case class CarPrice(make: String, model: String, engine_size: BigDecimal, sale_price: Double)
         def randomCarPrice(): CarPrice = {
           val makeModel = randomMakeModel()
           CarPrice(makeModel.make, makeModel.model, randomEngineSize(), randomPrice())
         }
 
-        spark.sparkContext.setJobDescription("Prepare skewed data frames")
-        // Convert the sequence to a DataFrame
-        val seq_registrations: Seq[CarRegistration] = (1 to 10000).map{ i => randomCarRegistration() }
-        val small_df_registrations: DataFrame = seq_registrations.toDF()
-        val seq_prices: Seq[CarPrice] = (1 to 100000).map { i => randomCarPrice() }
-        val large_df_prices: DataFrame = seq_prices.toDF()
+        val small_df_registrations = Seq.fill(10000)(randomCarRegistration()).toDS()
+        val large_df_prices = Seq.fill(100000)(randomCarPrice()).toDS()
 
         // Join with skewed data
+        println("DEBUG : Join skewed data")
         spark.sparkContext.setJobDescription("Join skewed data")
 
         val small_df_avg_price = small_df_registrations.join(large_df_prices, Seq("make", "model"))
