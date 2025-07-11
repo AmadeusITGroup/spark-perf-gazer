@@ -80,7 +80,7 @@ class SampleSkewDetectionSpec
           .groupBy("registration")
           .agg(avg("sale_price").as("average_price"))
 
-        small_df_avg_price.show()
+        // small_df_avg_price.show()
         small_df_avg_price.write.format("noop").mode("overwrite").save()
 
         spark.sparkContext.removeSparkListener(eventsListener)
