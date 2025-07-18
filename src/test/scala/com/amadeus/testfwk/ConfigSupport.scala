@@ -4,6 +4,8 @@ import com.amadeus.sparklear.{Config, Sink}
 
 trait ConfigSupport {
 
+  val DefaultMaxCacheSize: Int = 200
+
   implicit class ConfigHelper(c: Config) {
     def withAllEnabled: Config = c.copy(sqlEnabled = true, jobsEnabled = true, stagesEnabled = true, tasksEnabled = true)
 
@@ -12,6 +14,6 @@ trait ConfigSupport {
     def withSink(s: Sink): Config = c.copy(sink = s)
   }
 
-  def defaultTestConfig: Config = Config()
+  def defaultTestConfig: Config = Config(maxCacheSize = DefaultMaxCacheSize)
 
 }

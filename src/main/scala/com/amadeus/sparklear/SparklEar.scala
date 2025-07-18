@@ -34,36 +34,28 @@ class SparklEar(c: Config) extends SparkListener {
     * It is NOT a trigger for automatic purge of stages (job end will purge stages).
     */
   override def onTaskEnd(taskEnd: SparkListenerTaskEnd): Unit = {
-    logger.trace("onTaskEnd(...)")
     if (c.tasksEnabled) {
-      logger.trace("Handling Task end: {}", taskEnd.taskInfo.taskId)
-      // generate a task event
+      logger.trace("onTaskEnd(...) id = {}", taskEnd.taskInfo.taskId)
       val te = TaskEvent(taskEnd)
-      // generate the task input
       val ti = TaskEntity(te)
-      // sink the task input
-      c.sink.sink(Seq(TaskReport.fromEntityToReport(ti) : TaskReport))
+      c.sink.sink(Seq(TaskReport.fromEntityToReport(ti): TaskReport))
     }
   }
 
   override def onStageCompleted(stageCompleted: SparkListenerStageCompleted): Unit = {
-    logger.trace("onStageCompleted(...)")
     if (c.stagesEnabled) {
-      logger.trace("Handling Stage end: {}", stageCompleted.stageInfo.stageId)
-      // generate a stage event
+      logger.trace("onStageCompleted(...) id = {}", stageCompleted.stageInfo.stageId)
       val sw = StageEvent(stageCompleted.stageInfo)
-      // generate the stage input
       val si = StageEntity(sw)
-      // sink the stage input
-      c.sink.sink(Seq(StageReport.fromEntityToReport(si) : StageReport))
-    } else {
-      logger.trace("Ignoring Stage end: {}", stageCompleted.stageInfo.stageId)
+      c.sink.sink(Seq(StageReport.fromEntityToReport(si): StageReport))
     }
   }
 
   override def onJobStart(jobStart: SparkListenerJobStart): Unit = {
-    logger.trace("onJobStart(...)")
-    jobStartEvents.put(jobStart.jobId, JobEvent.from(jobStart))
+    if (c.jobsEnabled) {
+      logger.trace("onJobStart(...) id = {}", jobStart.jobId)
+      jobStartEvents.put(jobStart.jobId, JobEvent.from(jobStart))
+    }
   }
 
   /** This is the listener method for job end
@@ -71,29 +63,22 @@ class SparklEar(c: Config) extends SparkListener {
     * It is a trigger for automatic purge of job and stages.
     */
   override def onJobEnd(jobEnd: SparkListenerJobEnd): Unit = {
-    logger.trace("onJobEnd(...)")
-    val jobId = jobEnd.jobId
-    val jobStartOpt = Option(jobStartEvents.get(jobId)) // retrieve initial image of job
-    var jobReports: Seq[JobReport] = Seq()
-    jobStartOpt.foreach { jobStart =>
-      if (c.jobsEnabled) {
-        logger.trace("Handling Job end: {}", jobEnd.jobId)
-        val ji = JobEntity(start = jobStart, end = EndUpdate(jobEnd = jobEnd))
-        jobReports ++= Seq(JobReport.fromEntityToReport(ji) : JobReport)
-      } else {
-        logger.trace("Ignoring Job end: {}", jobEnd.jobId)
+    if (c.jobsEnabled) {
+      logger.trace("onJobEnd(...), id = {}", jobEnd.jobId)
+      val jobStartOpt = Option(jobStartEvents.get(jobEnd.jobId)) // retrieve initial image of job
+      jobStartOpt match {
+        case Some(jobStart) =>
+          val ji = JobEntity(start = jobStart, end = EndUpdate(jobEnd = jobEnd))
+          val jobReports = Seq(JobReport.fromEntityToReport(ji): JobReport)
+          c.sink.sink(jobReports)
+          jobStartEvents.remove(jobEnd.jobId)
+        case None =>
+          logger.warn("Job start event not found for jobId: {}", jobEnd.jobId)
       }
-
-      // purge
-      jobStartEvents.remove(jobId)
-    }
-    if (c.jobsEnabled && jobReports.nonEmpty) {
-      c.sink.sink(jobReports)
     }
   }
 
   override def onOtherEvent(event: SparkListenerEvent): Unit = {
-    logger.trace("onOtherEvent(...)")
     event match {
       case event: SparkListenerSQLExecutionStart =>
         onSqlStart(event)
@@ -110,8 +95,10 @@ class SparklEar(c: Config) extends SparkListener {
   }
 
   private def onSqlStart(event: SparkListenerSQLExecutionStart): Unit = {
-    logger.trace("onSqlStart(...)")
-    sqlStartEvents.put(event.executionId, SqlEvent(event.executionId, event.description))
+    if (c.sqlEnabled) {
+      logger.trace("onSqlStart(...), id = {}", event.executionId)
+      sqlStartEvents.put(event.executionId, SqlEvent(event.executionId, event.description))
+    }
   }
 
   /** This is the listener method for SQL query end
@@ -119,26 +106,17 @@ class SparklEar(c: Config) extends SparkListener {
     * It is a trigger for automatic purge of SQL queries and involved metrics.
     */
   private def onSqlEnd(event: SparkListenerSQLExecutionEnd): Unit = {
-    logger.trace("onSqlEnd(...)")
-
-    // get the initial sql collect information (it could have been purged)
-    val sqlStartOpt = Option(sqlStartEvents.get(event.executionId))
-    var sqlReports: Seq[SqlReport] = Seq()
-    sqlStartOpt.foreach { sqlStart =>
-      if (c.sqlEnabled) {
-        logger.trace("Handling SQL end: {}", event.executionId)
-        // generate the SQL input
-        val si = SqlEntity(start = sqlStart, end = event)
-        sqlReports ++= Seq(SqlReport.fromEntityToReport(si) : SqlReport)
-      } else {
-        logger.trace("Ignoring SQL end: {}", event.executionId)
+    if (c.sqlEnabled) {
+      logger.trace("onSqlEnd(...) id = {}", event.executionId)
+      val sqlStartOpt = Option(sqlStartEvents.get(event.executionId))
+      sqlStartOpt match {
+        case Some(sqlStart) =>
+          val si = SqlEntity(start = sqlStart, end = event)
+          c.sink.sink(Seq(SqlReport.fromEntityToReport(si)))
+          sqlStartEvents.remove(event.executionId)
+        case None =>
+          logger.warn("SQL start event not found for executionId: {}", event.executionId)
       }
-
-      // purge
-      sqlStartEvents.remove(event.executionId)
-    }
-    if (c.sqlEnabled && sqlReports.nonEmpty) {
-      c.sink.sink(sqlReports)
     }
   }
 

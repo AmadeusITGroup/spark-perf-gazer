@@ -9,14 +9,18 @@ class CappedConcurrentHashMap[K, V](name: String, cap: Int) {
   import scala.collection.JavaConverters._
   private val m = new ConcurrentHashMap[K, V](cap)
   def put(k: K, v: V)(implicit cmp: Ordering[K]): V = {
+    logger.trace("[PUT] Current size of map {}: {}", name, m.size())
     if (m.size() >= cap) {
       logger.error("Max size reached for {}, removing the oldest element", name)
-      // TODO add support to report how many removals took place
+      // TODO removing one by one could have bad performance, consider using a more efficient clean (e.g. configurable %)
       m.remove(m.keys().asScala.min)
     }
     m.put(k, v)
   }
-  def remove(k: K): V = m.remove(k)
+  def remove(k: K): V = {
+    logger.trace("[REMOVE] Current size of map {}: {}", name, m.size())
+    m.remove(k)
+  }
   def get(k: K): V = m.get(k)
   def size: Int = m.size()
   private[utils] def keys: Iterator[K] = m.keys().asScala
