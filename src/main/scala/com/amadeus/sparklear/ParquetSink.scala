@@ -31,7 +31,6 @@ class ParquetSink(
   implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
 
   private var reportsCount: Int = 0
-  private var currentBatchCount: Int = 0
   private val SqlReports: ListBuffer[SqlReport] = new ListBuffer[SqlReport]()
   private val JobReports: ListBuffer[JobReport] = new ListBuffer[JobReport]()
   private val StageReports: ListBuffer[StageReport] = new ListBuffer[StageReport]()
@@ -50,10 +49,10 @@ class ParquetSink(
   }
 
   // Create Parquet writers
-  val SqlReportsPath: String = s"$destination/sql-reports-$sparkApplicationId.parquet"
-  val JobReportsPath: String = s"$destination/job-reports-$sparkApplicationId.parquet"
-  val StageReportsPath: String = s"$destination/stage-reports-$sparkApplicationId.parquet"
-  val TaskReportsPath: String = s"$destination/task-reports-$sparkApplicationId.parquet"
+  val SqlReportsPath: String = s"$destination/$sparkApplicationId/sql-reports.parquet"
+  val JobReportsPath: String = s"$destination/$sparkApplicationId/job-reports.parquet"
+  val StageReportsPath: String = s"$destination/$sparkApplicationId/stage-reports.parquet"
+  val TaskReportsPath: String = s"$destination/$sparkApplicationId/task-reports.parquet"
 
   override def sink(report: Report): Unit = {
     reportsCount += 1
@@ -74,12 +73,11 @@ class ParquetSink(
   }
 
   def write(): Unit = {
-    currentBatchCount += 1
-    val currentTimestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_hhmmss"))
-    val currentSqlReportsPath: String = s"$SqlReportsPath/$currentBatchCount-$currentTimestamp.parquet"
-    val currentJobReportsPath: String = s"$JobReportsPath/$currentBatchCount-$currentTimestamp.parquet"
-    val currentStageReportsPath: String = s"$StageReportsPath/$currentBatchCount-$currentTimestamp.parquet"
-    val currentTaskReportsPath: String = s"$TaskReportsPath/$currentBatchCount-$currentTimestamp.parquet"
+    val uuid: String = java.util.UUID.randomUUID().toString
+    val currentSqlReportsPath: String = s"$SqlReportsPath/$uuid.parquet"
+    val currentJobReportsPath: String = s"$JobReportsPath/$uuid.parquet"
+    val currentStageReportsPath: String = s"$StageReportsPath/$uuid.parquet"
+    val currentTaskReportsPath: String = s"$TaskReportsPath/$uuid.parquet"
 
     if (SqlReports.nonEmpty) {
       val SqlReportsWriter: ParquetWriter[GenericRecord] = getAvroParquetWriter(currentSqlReportsPath, SqlGenericRecord.reportSchema)

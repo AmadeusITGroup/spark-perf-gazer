@@ -26,10 +26,14 @@ trait SinkSupport {
     val testableSink = new TestableSink()
     testCode(testableSink)
   }
-  def withJsonSink[T](testCode: JsonSink => T): T = {
+  def withJsonSink[T](sparkApplicationId: String,
+                      parquetSinkDestination: String,
+                      writeBatchSize: Int)
+                     (testCode: JsonSink => T): T = {
     val jsonSink = new JsonSink(
-      destination = "src/test/json-sink"
-    )
+      sparkApplicationId = sparkApplicationId,
+      destination = parquetSinkDestination,
+      writeBatchSize = writeBatchSize)
     testCode(jsonSink)
   }
   def withParquetSink[T](sparkApplicationId: String,
