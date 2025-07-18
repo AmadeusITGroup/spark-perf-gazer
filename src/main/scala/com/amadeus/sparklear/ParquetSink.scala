@@ -55,11 +55,11 @@ class ParquetSink(
   val StageReportsPath: String = s"$destination/stage-reports-$sparkApplicationId.parquet"
   val TaskReportsPath: String = s"$destination/task-reports-$sparkApplicationId.parquet"
 
-  override def sink(rs: Seq[Report]): Unit = {
-    reportsCount += rs.size
+  override def sink(report: Report): Unit = {
+    reportsCount += 1
 
     // appends new reports in sink
-    rs.map {
+    report match {
       case sql: SqlReport => SqlReports ++= Seq(sql)
       case job: JobReport => JobReports ++= Seq(job)
       case stage: StageReport => StageReports ++= Seq(stage)

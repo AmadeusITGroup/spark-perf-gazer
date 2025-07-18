@@ -28,11 +28,11 @@ class JsonSink (
   private val JobReportsWriter = new PrintWriter(new FileWriter(s"$destination/job-reports.json", true))
   private val StageReportsWriter = new PrintWriter(new FileWriter(s"$destination/stage-reports.json", true))
 
-  override def sink(rs: Seq[Report]): Unit = {
-    reportsCount += rs.size
+  override def sink(report: Report): Unit = {
+    reportsCount += 1
 
     // appends new reports in sink
-    rs.map {
+    report match {
       case sql: SqlReport => SqlReports ++= Seq(sql)
       case job: JobReport => JobReports ++= Seq(job)
       case stage: StageReport => StageReports ++= Seq(stage)
