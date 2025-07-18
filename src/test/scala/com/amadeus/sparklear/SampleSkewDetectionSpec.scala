@@ -19,7 +19,7 @@ class SampleSkewDetectionSpec
   describe("The listener for skew detection") {
     withSpark() { spark =>
       withParquetSink(
-        spark.sparkContext.applicationId, "src/test/parquet-sink", 5, debug = true) { parquetSink =>
+        spark.sparkContext.applicationId, "src/test/parquet-sink", 5) { parquetSink =>
         import org.apache.spark.sql._
         import org.apache.spark.sql.functions._
         import scala.util.Random
@@ -30,7 +30,6 @@ class SampleSkewDetectionSpec
         val eventsListener = new SparklEar(cfg)
         spark.sparkContext.addSparkListener(eventsListener)
 
-        println("DEBUG : Prepare skewed data frames")
         spark.sparkContext.setJobDescription("Prepare skewed data frames")
 
         val makeModelSet: Seq[MakeModel] = Seq(
@@ -70,7 +69,6 @@ class SampleSkewDetectionSpec
         val large_df_prices = Seq.fill(100000)(randomCarPrice()).toDS()
 
         // Join with skewed data
-        println("DEBUG : Join skewed data")
         spark.sparkContext.setJobDescription("Join skewed data")
 
         val small_df_avg_price = small_df_registrations.join(large_df_prices, Seq("make", "model"))
@@ -80,26 +78,36 @@ class SampleSkewDetectionSpec
           .groupBy("registration")
           .agg(avg("sale_price").as("average_price"))
 
-        // small_df_avg_price.show()
         small_df_avg_price.write.format("noop").mode("overwrite").save()
 
+        Thread.sleep(3000)
         spark.sparkContext.removeSparkListener(eventsListener)
-
-        println("DEBUG : flush parquet sink")
         parquetSink.flush()
 
-        println(s"DEBUG : check content of ${parquetSink.SqlReportsPath}")
         val dfSqlReports = spark.read.parquet(parquetSink.SqlReportsPath)
+        val dfSqlReportsCnt = dfSqlReports.count()
+        it("should save SQL reports in parquet file") {
+          dfSqlReportsCnt shouldBe 1
+        }
         dfSqlReports.show()
 
-        println(s"DEBUG : check content of ${parquetSink.JobReportsPath}")
         val dfJobReports = spark.read.parquet(parquetSink.JobReportsPath)
+        val dfJobReportsCnt = dfJobReports.count()
+        it("should save Job reports in parquet file") {
+          dfJobReportsCnt should be > 1L
+        }
 
-        println(s"DEBUG : check content of ${parquetSink.StageReportsPath}")
         val dfStageReports = spark.read.parquet(parquetSink.StageReportsPath)
+        val dfStageReportsCnt = dfStageReports.count()
+        it("should save Stage reports in parquet file") {
+          dfStageReportsCnt should be > 1L
+        }
 
-        println(s"DEBUG : check content of ${parquetSink.TaskReportsPath}")
         val dfTaskReports = spark.read.parquet(parquetSink.TaskReportsPath)
+        val dfTaskReportsCnt = dfTaskReports.count()
+        it("should save Task reports in parquet file") {
+          dfTaskReportsCnt should be > 1L
+        }
 
         val dfTasks = dfJobReports
           .withColumn("stageId", explode(col("stages")))

@@ -34,14 +34,12 @@ trait SinkSupport {
   }
   def withParquetSink[T](sparkApplicationId: String,
                          parquetSinkDestination: String,
-                         writeBatchSize: Int,
-                         debug: Boolean)
+                         writeBatchSize: Int)
                         (testCode: ParquetSink => T): T = {
     val parquetSink = new ParquetSink(
       sparkApplicationId = sparkApplicationId,
       destination = parquetSinkDestination,
-      writeBatchSize = writeBatchSize,
-      debug = debug)
+      writeBatchSize = writeBatchSize)
     testCode(parquetSink)
   }
 }
