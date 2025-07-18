@@ -94,15 +94,12 @@ class SampleSkewDetectionSpec
 
         println(s"DEBUG : check content of ${parquetSink.JobReportsPath}")
         val dfJobReports = spark.read.parquet(parquetSink.JobReportsPath)
-        dfJobReports.show()
 
         println(s"DEBUG : check content of ${parquetSink.StageReportsPath}")
         val dfStageReports = spark.read.parquet(parquetSink.StageReportsPath)
-        dfStageReports.show()
 
         println(s"DEBUG : check content of ${parquetSink.TaskReportsPath}")
         val dfTaskReports = spark.read.parquet(parquetSink.TaskReportsPath)
-        dfTaskReports.show()
 
         val dfTasks = dfJobReports
           .withColumn("stageId", explode(col("stages")))
