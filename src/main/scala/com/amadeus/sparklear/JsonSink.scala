@@ -50,6 +50,7 @@ class JsonSink (
       }
       val json: String = org.json4s.jackson.Serialization.write(SqlReports)
       SqlReportsWriter.println(json)
+      SqlReportsWriter.flush()
 
       // clear reports
       SqlReports.clear()
@@ -60,6 +61,7 @@ class JsonSink (
       }
       val json: String = org.json4s.jackson.Serialization.write(JobReports)
       JobReportsWriter.println(json)
+      JobReportsWriter.flush()
 
       // clear reports
       JobReports.clear()
@@ -70,6 +72,7 @@ class JsonSink (
       }
       val json: String = org.json4s.jackson.Serialization.write(StageReports)
       StageReportsWriter.println(json)
+      StageReportsWriter.flush()
 
       // clear reports
       StageReports.clear()
