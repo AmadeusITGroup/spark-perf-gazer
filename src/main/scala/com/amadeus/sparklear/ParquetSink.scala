@@ -1,6 +1,7 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.reports.{JobGenericRecord, JobReport, Report, SqlGenericRecord, SqlReport, StageGenericRecord, StageReport, TaskReport, TaskGenericRecord}
+import com.amadeus.sparklear.LogSink.getClass
+import com.amadeus.sparklear.reports.{JobGenericRecord, JobReport, Report, SqlGenericRecord, SqlReport, StageGenericRecord, StageReport, TaskGenericRecord, TaskReport}
 import org.json4s.jackson.Serialization
 import org.json4s.{Formats, NoTypeHints}
 
@@ -14,6 +15,7 @@ import org.apache.parquet.hadoop.ParquetWriter
 import org.apache.hadoop.fs.Path
 import org.apache.parquet.hadoop.ParquetFileWriter.Mode
 import org.apache.parquet.hadoop.util.HadoopOutputFile
+import org.slf4j.{Logger, LoggerFactory}
 
 /**
   * Sink of a collection of reports
@@ -21,9 +23,10 @@ import org.apache.parquet.hadoop.util.HadoopOutputFile
 class ParquetSink(
   sparkApplicationId: String,
   destination: String,
-  writeBatchSize: Int = 5,
-  debug: Boolean = true
+  writeBatchSize: Int = 5
 ) extends Sink {
+  implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
+
   private var reportsCount: Int = 0
   private val SqlReports: ListBuffer[SqlReport] = new ListBuffer[SqlReport]()
   private val JobReports: ListBuffer[JobReport] = new ListBuffer[JobReport]()
@@ -65,7 +68,7 @@ class ParquetSink(
     }
 
     if ( reportsCount >= writeBatchSize ) {
-      println("ParquetSink Debug : reached writeBatchSize threshold, writing reports ...")
+      logger.debug("ParquetSink Debug : reached writeBatchSize threshold, writing reports ...")
       write()
       reportsCount = 0
     }
@@ -78,11 +81,11 @@ class ParquetSink(
       }
 
       // Write all records in a single loop
-      if (debug) { println(s"ParquetSink Debug : writing to ${SqlReportsPath} (${SqlReportsRecords.size} reports).") }
+      logger.debug("ParquetSink Debug : writing to {} ({} reports).", SqlReportsPath, SqlReportsRecords.size)
       SqlReportsRecords.foreach(SqlReportsWriter.write)
 
       // clear reports
-      if (debug) { println("ParquetSink Debug : SqlReports.clear()") }
+      logger.debug("ParquetSink Debug : SqlReports.clear()")
       SqlReports.clear()
     }
     if (JobReports.nonEmpty) {
@@ -92,11 +95,11 @@ class ParquetSink(
       }
 
       // Write all records in a single loop
-      if (debug) { println(s"ParquetSink Debug : writing to ${JobReportsPath} (${JobReportsRecords.size} reports).") }
+      logger.debug("ParquetSink Debug : writing to {} ({} reports).", JobReportsPath, JobReportsRecords.size)
       JobReportsRecords.foreach(JobReportsWriter.write)
 
       // clear reports
-      if (debug) { println("ParquetSink Debug : JobReports.clear()") }
+      logger.debug("ParquetSink Debug : JobReports.clear()")
       JobReports.clear()
     }
     if (StageReports.nonEmpty) {
@@ -106,11 +109,11 @@ class ParquetSink(
       }
 
       // Write all records in a single loop
-      if (debug) { println(s"ParquetSink Debug : writing to ${StageReportsPath} (${StageReportsRecords.size} reports).") }
+      logger.debug("ParquetSink Debug : writing to {} ({} reports).", StageReportsPath, StageReportsRecords.size)
       StageReportsRecords.foreach(StageReportsWriter.write)
 
       // clear reports
-      if (debug) { println("ParquetSink Debug : StageReports.clear()") }
+      logger.debug("ParquetSink Debug : StageReports.clear()")
       StageReports.clear()
     }
     if (TaskReports.nonEmpty) {
@@ -120,17 +123,17 @@ class ParquetSink(
       }
 
       // Write all records in a single loop
-      if (debug) { println(s"ParquetSink Debug : writing to ${TaskReportsPath} (${TaskReportsRecords.size} reports).") }
+      logger.debug("ParquetSink Debug : writing to {} ({} reports).", TaskReportsPath, TaskReportsRecords.size)
       TaskReportsRecords.foreach(TaskReportsWriter.write)
 
       // clear reports
-      if (debug) { println("ParquetSink Debug : TaskReports.clear()") }
+      logger.debug("ParquetSink Debug : TaskReports.clear()")
       TaskReports.clear()
     }
   }
 
   override def flush(): Unit = {
-    if (debug) { println("ParquetSink Debug : flush") }
+    logger.debug("ParquetSink Debug : flush")
     write()
 
     // Flush and close writers
@@ -139,6 +142,6 @@ class ParquetSink(
     JobReportsWriter.close()
     SqlReportsWriter.close()
 
-    if (debug) { println("ParquetSink Debug : writers closed.") }
+    logger.debug("ParquetSink Debug : writers closed.")
   }
 }

@@ -1,9 +1,10 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.reports.{Report, SqlReport, JobReport, StageReport}
+import com.amadeus.sparklear.reports.{JobReport, Report, SqlReport, StageReport}
 import org.json4s.jackson.Serialization
 import org.json4s.{Formats, NoTypeHints}
 import org.json4s.jackson.Serialization.write
+import org.slf4j.{Logger, LoggerFactory}
 
 import java.io.{FileWriter, PrintWriter}
 import scala.collection.mutable.ListBuffer
@@ -13,9 +14,10 @@ import scala.collection.mutable.ListBuffer
   */
 class JsonSink (
   destination: String,
-  writeBatchSize: Int = 5,
-  debug: Boolean = true
+  writeBatchSize: Int = 5
 ) extends Sink {
+  implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
+
   private var reportsCount: Int = 0
   private val SqlReports: ListBuffer[SqlReport] = new ListBuffer[SqlReport]()
   private val JobReports: ListBuffer[JobReport] = new ListBuffer[JobReport]()
@@ -37,7 +39,7 @@ class JsonSink (
     }
 
     if ( reportsCount >= writeBatchSize ) {
-      println(s"JsonSink Debug : reached writeBatchSize threshold, writing reports.")
+      logger.debug("JsonSink Debug : reached writeBatchSize threshold, writing reports.")
       write()
       reportsCount = 0
     }
@@ -45,9 +47,7 @@ class JsonSink (
 
   override def write(): Unit = {
     if (SqlReports.nonEmpty) {
-      if (debug) {
-        println(s"JsonSink Debug : writing to $destination/sql-reports.json (${SqlReports.size} reports).")
-      }
+      logger.debug("JsonSink Debug : writing to {}/sql-reports.json ({} reports).", destination, SqlReports.size)
       val json: String = org.json4s.jackson.Serialization.write(SqlReports)
       SqlReportsWriter.println(json)
 
@@ -55,9 +55,7 @@ class JsonSink (
       SqlReports.clear()
     }
     if (JobReports.nonEmpty) {
-      if (debug) {
-        println(s"JsonSink Debug : writing to $destination/job-reports.json (${JobReports.size} reports).")
-      }
+      logger.debug("JsonSink Debug : writing to {}/job-reports.json ({} reports).", destination, JobReports.size)
       val json: String = org.json4s.jackson.Serialization.write(JobReports)
       JobReportsWriter.println(json)
 
@@ -65,9 +63,7 @@ class JsonSink (
       JobReports.clear()
     }
     if (StageReports.nonEmpty) {
-      if (debug) {
-        println(s"JsonSink Debug : writing to $destination/stage-reports.json (${StageReports.size} reports).")
-      }
+      logger.debug("JsonSink Debug : writing to {}/stage-reports.json ({} reports).", destination, StageReports.size)
       val json: String = org.json4s.jackson.Serialization.write(StageReports)
       StageReportsWriter.println(json)
 
@@ -87,6 +83,6 @@ class JsonSink (
     StageReportsWriter.flush()
     StageReportsWriter.close()
 
-    if (debug) { println(f"JsonSink Debug : writers closed.") }
+    logger.debug("JsonSink Debug : writers closed.")
   }
 }

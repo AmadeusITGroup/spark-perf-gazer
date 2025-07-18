@@ -67,7 +67,6 @@ object SqlReport extends Translator[SqlEntity, SqlReport] {
 
   private def describe(qe: QueryExecution): String = {
     val s = qe.explainString(ExtendedMode) // TODO check formatted as well
-    println(s)
     s
   }
 
