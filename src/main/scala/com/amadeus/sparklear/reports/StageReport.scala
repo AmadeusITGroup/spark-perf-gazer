@@ -1,8 +1,6 @@
 package com.amadeus.sparklear.reports
 
 import com.amadeus.sparklear.entities.StageEntity
-import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization.{write => toJson}
 
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericRecord}
@@ -18,9 +16,7 @@ case class StageReport(
   execJvmGcNs: Long,
   attempt: Int,
   spillBytes: Long
-) extends Report {
-  override def asJson: Json = toJson(this)(DefaultFormats) // TODO: use a more efficient serialization
-}
+) extends Report
 
 object StageReport extends Translator[StageEntity, StageReport] {
 

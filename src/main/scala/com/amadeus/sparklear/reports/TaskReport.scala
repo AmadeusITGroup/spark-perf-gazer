@@ -1,8 +1,6 @@
 package com.amadeus.sparklear.reports
 
 import com.amadeus.sparklear.entities.TaskEntity
-import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization.{write => toJson}
 
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericRecord}
@@ -38,9 +36,7 @@ case class TaskReport(
   shuffleBytesWritten: Long,
   shuffleRecordsWritten: Long,
   shuffleWriteTime: Long
-) extends Report {
-  override def asJson: Json = toJson(this)(DefaultFormats) // TODO: use a more efficient serialization
-}
+) extends Report
 
 object TaskReport extends Translator[TaskEntity, TaskReport] {
   def fromEntityToReport(r: TaskEntity): TaskReport = {
