@@ -48,7 +48,7 @@ object JobGenericRecord extends GenericTranslator[JobReport, GenericRecord] {
              |   {"name": "jobName", "type": "string"},
              |   {"name": "jobStartTime", "type": "long"},
              |   {"name": "jobDuration", "type": "long"},
-             |   {"name": "sqlId", "type": "string"},
+             |   {"name": "sqlId", "type": ["null", { "type": "string" } ] },
              |   { "name": "stages", "type": { "type": "array", "items": "int" } }
              | ]
              |}""".stripMargin)
