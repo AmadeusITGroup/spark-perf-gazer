@@ -38,7 +38,7 @@ class SparklEar(c: Config) extends SparkListener {
       logger.trace("onTaskEnd(...) id = {}", taskEnd.taskInfo.taskId)
       val te = TaskEvent(taskEnd)
       val ti = TaskEntity(te)
-      c.sink.sink(Seq(TaskReport.fromEntityToReport(ti): TaskReport))
+      c.sink.sink(TaskReport.fromEntityToReport(ti): TaskReport)
     }
   }
 
@@ -47,7 +47,7 @@ class SparklEar(c: Config) extends SparkListener {
       logger.trace("onStageCompleted(...) id = {}", stageCompleted.stageInfo.stageId)
       val sw = StageEvent(stageCompleted.stageInfo)
       val si = StageEntity(sw)
-      c.sink.sink(Seq(StageReport.fromEntityToReport(si): StageReport))
+      c.sink.sink(StageReport.fromEntityToReport(si): StageReport)
     }
   }
 
@@ -69,8 +69,7 @@ class SparklEar(c: Config) extends SparkListener {
       jobStartOpt match {
         case Some(jobStart) =>
           val ji = JobEntity(start = jobStart, end = EndUpdate(jobEnd = jobEnd))
-          val jobReports = Seq(JobReport.fromEntityToReport(ji): JobReport)
-          c.sink.sink(jobReports)
+          c.sink.sink(JobReport.fromEntityToReport(ji))
           jobStartEvents.remove(jobEnd.jobId)
         case None =>
           logger.warn("Job start event not found for jobId: {}", jobEnd.jobId)
@@ -112,7 +111,7 @@ class SparklEar(c: Config) extends SparkListener {
       sqlStartOpt match {
         case Some(sqlStart) =>
           val si = SqlEntity(start = sqlStart, end = event)
-          c.sink.sink(Seq(SqlReport.fromEntityToReport(si)))
+          c.sink.sink(SqlReport.fromEntityToReport(si))
           sqlStartEvents.remove(event.executionId)
         case None =>
           logger.warn("SQL start event not found for executionId: {}", event.executionId)

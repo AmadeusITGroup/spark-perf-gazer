@@ -1,6 +1,6 @@
 package com.amadeus.testfwk
 
-import com.amadeus.sparklear.{Sink, JsonSink, ParquetSink}
+import com.amadeus.sparklear.{JsonSink, ParquetSink, Sink}
 import com.amadeus.sparklear.reports.Report
 import com.amadeus.testfwk.SinkSupport.TestableSink
 import scala.collection.mutable.ListBuffer
@@ -10,14 +10,14 @@ object SinkSupport {
     val reports: ListBuffer[Report] = new ListBuffer[Report](),
     stdout: Boolean = false
   ) extends Sink {
-    override def sink(rs: Seq[Report]): Unit = {
-      if (stdout) { rs.foreach(println) } // scalastyle:ignore regex
-      reports ++= rs
+    override def sink(report: Report): Unit = {
+      if (stdout) { println(report) } // scalastyle:ignore regex
+      reports += report
     }
 
-    override def write(): Unit = { }
+    override def write(): Unit = {}
 
-    override def flush(): Unit = { }
+    override def flush(): Unit = {}
   }
 }
 
