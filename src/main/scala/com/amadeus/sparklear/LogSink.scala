@@ -8,7 +8,14 @@ import org.slf4j.{Logger, LoggerFactory}
   */
 object LogSink extends Sink {
   implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
-  def sink(r: Report): Unit = {
-    logger.info(r.asJson)
+  override def sink(reports: Seq[Report]): Unit = {
+    reports.foreach( r =>
+      logger.info(r.asJson)
+    )
   }
+
+  override def write(): Unit = {}
+
+  override def flush(): Unit = {}
+
 }
