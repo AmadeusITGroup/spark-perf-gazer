@@ -80,8 +80,8 @@ class SampleSkewDetectionSpec
 
         small_df_avg_price.write.format("noop").mode("overwrite").save()
 
+        Thread.sleep(3000)
         spark.sparkContext.removeSparkListener(eventsListener)
-
         parquetSink.flush()
 
         val dfSqlReports = spark.read.parquet(parquetSink.SqlReportsPath)
