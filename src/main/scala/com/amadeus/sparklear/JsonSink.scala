@@ -3,7 +3,7 @@ package com.amadeus.sparklear
 import com.amadeus.sparklear.reports.{JobReport, Report, SqlReport, StageReport}
 import org.json4s.jackson.Serialization
 import org.json4s.{Formats, NoTypeHints}
-import org.json4s.jackson.Serialization.write
+import org.json4s.jackson.Serialization.{write => asJson}
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.io.{FileWriter, PrintWriter}
@@ -48,29 +48,26 @@ class JsonSink (
   override def write(): Unit = {
     if (SqlReports.nonEmpty) {
       logger.debug("JsonSink Debug : writing to {}/sql-reports.json ({} reports).", destination, SqlReports.size)
-      val json: String = org.json4s.jackson.Serialization.write(SqlReports)
-      SqlReportsWriter.println(json)
+      SqlReports.foreach {r =>
+        SqlReportsWriter.println(asJson(r))
+      }
       SqlReportsWriter.flush()
-
-      // clear reports
       SqlReports.clear()
     }
     if (JobReports.nonEmpty) {
       logger.debug("JsonSink Debug : writing to {}/job-reports.json ({} reports).", destination, JobReports.size)
-      val json: String = org.json4s.jackson.Serialization.write(JobReports)
-      JobReportsWriter.println(json)
+      JobReports.foreach {r =>
+        JobReportsWriter.println(asJson(r))
+      }
       JobReportsWriter.flush()
-
-      // clear reports
       JobReports.clear()
     }
     if (StageReports.nonEmpty) {
       logger.debug("JsonSink Debug : writing to {}/stage-reports.json ({} reports).", destination, StageReports.size)
-      val json: String = org.json4s.jackson.Serialization.write(StageReports)
-      StageReportsWriter.println(json)
+      StageReports.foreach {r =>
+        StageReportsWriter.println(asJson(r))
+      }
       StageReportsWriter.flush()
-
-      // clear reports
       StageReports.clear()
     }
   }
