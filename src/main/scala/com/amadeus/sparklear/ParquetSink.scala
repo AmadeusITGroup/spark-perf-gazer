@@ -19,8 +19,8 @@ import org.apache.parquet.hadoop.util.HadoopOutputFile
   * Sink of a collection of reports
   */
 class ParquetSink(
-  sparkApplicationId: String = "",
-  destination: String = "src/test/parquet-sink",
+  sparkApplicationId: String,
+  destination: String,
   writeBatchSize: Int = 5,
   debug: Boolean = true
 ) extends Sink {
@@ -32,12 +32,12 @@ class ParquetSink(
 
   implicit val formats: AnyRef with Formats = Serialization.formats(NoTypeHints)
 
-  private def getAvroParquetWriter(Path: String, Schema: Schema) : ParquetWriter[GenericRecord] = {
-    val OutputPath = new Path(Path)
-    val OutputFile: OutputFile = HadoopOutputFile.fromPath(OutputPath, new Configuration())
+  private def getAvroParquetWriter(path: String, schema: Schema) : ParquetWriter[GenericRecord] = {
+    val outputPath = new Path(path)
+    val outputFile: OutputFile = HadoopOutputFile.fromPath(outputPath, new Configuration())
     AvroParquetWriter
-      .builder(OutputFile)
-      .withSchema(Schema)
+      .builder(outputFile)
+      .withSchema(schema)
       .withWriteMode(Mode.OVERWRITE)
       .build()
   }
@@ -108,7 +108,6 @@ class ParquetSink(
       // Write all records in a single loop
       if (debug) { println(s"ParquetSink Debug : writing to ${StageReportsPath} (${StageReportsRecords.size} reports).") }
       StageReportsRecords.foreach(StageReportsWriter.write)
-      //StageReportsWriter.wait()
 
       // clear reports
       if (debug) { println("ParquetSink Debug : StageReports.clear()") }
@@ -123,7 +122,6 @@ class ParquetSink(
       // Write all records in a single loop
       if (debug) { println(s"ParquetSink Debug : writing to ${TaskReportsPath} (${TaskReportsRecords.size} reports).") }
       TaskReportsRecords.foreach(TaskReportsWriter.write)
-      //TaskReportsWriter.wait()
 
       // clear reports
       if (debug) { println("ParquetSink Debug : TaskReports.clear()") }

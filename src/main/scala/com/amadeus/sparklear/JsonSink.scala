@@ -12,7 +12,7 @@ import scala.collection.mutable.ListBuffer
   * Sink of a collection of reports
   */
 class JsonSink (
-  destination: String = "src/test/json-sink",
+  destination: String,
   writeBatchSize: Int = 5,
   debug: Boolean = true
 ) extends Sink {

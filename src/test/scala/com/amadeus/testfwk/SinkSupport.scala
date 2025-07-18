@@ -6,17 +6,6 @@ import com.amadeus.testfwk.SinkSupport.TestableSink
 import scala.collection.mutable.ListBuffer
 
 object SinkSupport {
-  // UPDATE make it Seq[Report]
-  // class TestableSink(
-  //  val reports: ListBuffer[Report] = new ListBuffer[Report](),
-  //   stdout: Boolean = false
-  // ) extends Sink {
-  //   override def sink(i: Report): Unit = {
-  //     if (stdout) { println(i) } // scalastyle:ignore regex
-  //     reports.+=(i)
-  //   }
-  // }
-
   class TestableSink(
     val reports: ListBuffer[Report] = new ListBuffer[Report](),
     stdout: Boolean = false
@@ -38,7 +27,9 @@ trait SinkSupport {
     testCode(testableSink)
   }
   def withJsonSink[T](testCode: JsonSink => T): T = {
-    val jsonSink = new JsonSink()
+    val jsonSink = new JsonSink(
+      destination = "src/test/json-sink"
+    )
     testCode(jsonSink)
   }
   def withParquetSink[T](sparkApplicationId: String,

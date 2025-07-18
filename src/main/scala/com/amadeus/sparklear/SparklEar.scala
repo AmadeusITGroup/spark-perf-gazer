@@ -35,28 +35,26 @@ class SparklEar(c: Config) extends SparkListener {
     */
   override def onTaskEnd(taskEnd: SparkListenerTaskEnd): Unit = {
     logger.trace("onTaskEnd(...)")
-    // generate a task event
-    val te = TaskEvent(taskEnd)
     if (c.tasksEnabled) {
       logger.trace("Handling Task end: {}", taskEnd.taskInfo.taskId)
+      // generate a task event
+      val te = TaskEvent(taskEnd)
       // generate the task input
       val ti = TaskEntity(te)
-      // sink the task input serialized (as string, and as objects)
+      // sink the task input
       c.sink.sink(Seq(TaskReport.fromEntityToReport(ti) : TaskReport))
-    } else {
-      logger.trace("Ignoring Task end: {}", taskEnd.taskInfo.taskId)
     }
   }
 
   override def onStageCompleted(stageCompleted: SparkListenerStageCompleted): Unit = {
     logger.trace("onStageCompleted(...)")
-    // generate a stage event
-    val sw = StageEvent(stageCompleted.stageInfo)
     if (c.stagesEnabled) {
       logger.trace("Handling Stage end: {}", stageCompleted.stageInfo.stageId)
+      // generate a stage event
+      val sw = StageEvent(stageCompleted.stageInfo)
       // generate the stage input
       val si = StageEntity(sw)
-      // sink the stage input serialized (as string, and as objects)
+      // sink the stage input
       c.sink.sink(Seq(StageReport.fromEntityToReport(si) : StageReport))
     } else {
       logger.trace("Ignoring Stage end: {}", stageCompleted.stageInfo.stageId)
@@ -81,7 +79,6 @@ class SparklEar(c: Config) extends SparkListener {
       if (c.jobsEnabled) {
         logger.trace("Handling Job end: {}", jobEnd.jobId)
         val ji = JobEntity(start = jobStart, end = EndUpdate(jobEnd = jobEnd))
-        // c.sink.sink(Seq(JobReport.fromEntityToReport(ji) : JobReport))
         jobReports ++= Seq(JobReport.fromEntityToReport(ji) : JobReport)
       } else {
         logger.trace("Ignoring Job end: {}", jobEnd.jobId)
@@ -132,8 +129,6 @@ class SparklEar(c: Config) extends SparkListener {
         logger.trace("Handling SQL end: {}", event.executionId)
         // generate the SQL input
         val si = SqlEntity(start = sqlStart, end = event)
-        // sink the SQL input serialized (as string, and as objects)
-        // c.sink.sink(Seq(SqlReport.fromEntityToReport(si) : SqlReport))
         sqlReports ++= Seq(SqlReport.fromEntityToReport(si) : SqlReport)
       } else {
         logger.trace("Ignoring SQL end: {}", event.executionId)
