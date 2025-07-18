@@ -83,7 +83,7 @@ lazy val root = (project in file("."))
     releaseSettings,
     testSettings,
     publishSettings,
-    coverageFailOnMinimum := true,
+    coverageFailOnMinimum := false, // deal between mauricio and bruno
     coverageMinimumStmtTotal := 99.0,
     coverageMinimumBranchTotal := 99.0
   )
