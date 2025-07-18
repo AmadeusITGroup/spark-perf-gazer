@@ -32,6 +32,7 @@ class ReadCsvToNoopSpec
         spark.sparkContext.setJobGroup("testgroup", "testjob")
         df.write.format("noop").mode("overwrite").save()
 
+        Thread.sleep(3000)
         spark.sparkContext.removeSparkListener(eventsListener)
         spark.sparkContext.removeSparkListener(emptyEventsListener)
 
