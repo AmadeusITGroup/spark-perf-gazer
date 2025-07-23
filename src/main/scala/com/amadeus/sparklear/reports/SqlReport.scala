@@ -6,8 +6,6 @@ import org.apache.spark.sql.execution.{ExtendedMode, FormattedMode, QueryExecuti
 import org.apache.spark.sql.execution.adaptive.{AdaptiveSparkPlanExec, ShuffleQueryStageExec}
 import org.apache.spark.sql.execution.metric.SQLMetric
 import org.apache.spark.sql.execution.ui.SparkInternal
-import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization.{write => toJson}
 
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericRecord}
@@ -16,9 +14,7 @@ import scala.collection.JavaConverters._
 case class SqlReport(
   details: String,
   nodes: Seq[SqlNode]
-) extends Report {
-  override def asJson: Json = toJson(this)(DefaultFormats) // TODO: use a more efficient serialization
-}
+) extends Report
 
 object SqlReport extends Translator[SqlEntity, SqlReport] {
 

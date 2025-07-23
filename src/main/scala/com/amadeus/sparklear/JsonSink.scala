@@ -3,7 +3,7 @@ package com.amadeus.sparklear
 import com.amadeus.sparklear.reports.{JobReport, Report, SqlReport, StageReport, TaskReport}
 import org.json4s.jackson.Serialization
 import org.json4s.{Formats, NoTypeHints}
-import org.json4s.jackson.Serialization.write
+import org.json4s.jackson.Serialization.{write => asJson}
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.io.{FileWriter, PrintWriter}
@@ -64,41 +64,31 @@ class JsonSink (
     if (SqlReports.nonEmpty) {
       logger.debug("JsonSink Debug : writing to {} ({} reports).", SqlReportsPath, SqlReports.size)
       SqlReports.foreach { r =>
-        val json: String = org.json4s.jackson.Serialization.write(r)
-        SqlReportsWriter.println(json) // scalastyle:ignore regex
+        SqlReportsWriter.println(asJson(r))
       }
       SqlReportsWriter.flush()
-
-      // clear reports
       SqlReports.clear()
     }
     if (JobReports.nonEmpty) {
       logger.debug("JsonSink Debug : writing to {} ({} reports).", JobReportsPath, JobReports.size)
       JobReports.foreach { r =>
-        val json: String = org.json4s.jackson.Serialization.write(r)
-        JobReportsWriter.println(json) // scalastyle:ignore regex
+        JobReportsWriter.println(asJson(r))
       }
       JobReportsWriter.flush()
-
-      // clear reports
       JobReports.clear()
     }
     if (StageReports.nonEmpty) {
       logger.debug("JsonSink Debug : writing to {} ({} reports).", StageReportsPath, StageReports.size)
       StageReports.foreach { r =>
-        val json: String = org.json4s.jackson.Serialization.write(r)
-        StageReportsWriter.println(json) // scalastyle:ignore regex
+        StageReportsWriter.println(asJson(r))
       }
       StageReportsWriter.flush()
-
-      // clear reports
       StageReports.clear()
     }
     if (TaskReports.nonEmpty) {
       logger.debug("JsonSink Debug : writing to {} ({} reports).", TaskReportsPath, TaskReports.size)
       TaskReports.foreach { r =>
-        val json: String = org.json4s.jackson.Serialization.write(r)
-        TaskReportsWriter.println(json) // scalastyle:ignore regex
+        TaskReportsWriter.println(asJson(r))
       }
       TaskReportsWriter.flush()
 
