@@ -15,10 +15,8 @@ class ReadCsvToNoopJsonSinkSpec
     withSpark() { spark =>
       withTmpDir { tmpDir =>
         import java.io.File
-        val folder = new File(s"$tmpDir/json-sink")
-        if ( !folder.exists() ) { folder.mkdirs() }
         val writeBatchSize = 5
-        withJsonSink(spark.sparkContext.applicationId, s"$tmpDir/json-sink", writeBatchSize) { jsonSink =>
+        withJsonSink(spark.sparkContext.applicationId, s"$tmpDir", writeBatchSize) { jsonSink =>
           import org.apache.spark.sql.functions._
 
           val df = readOptd(spark)
@@ -35,26 +33,26 @@ class ReadCsvToNoopJsonSinkSpec
           spark.sparkContext.removeSparkListener(eventsListener)
           jsonSink.flush()
 
-          val dfSqlReports = spark.read.json(jsonSink.SqlReportsPath)
+          val dfSqlReports = spark.read.json(jsonSink.sqlReportsPath)
           val dfSqlReportsCnt = dfSqlReports.count()
           it("should save SQL reports in json file") {
             dfSqlReportsCnt shouldBe 1
           }
           dfSqlReports.show()
 
-          val dfJobReports = spark.read.json(jsonSink.JobReportsPath)
+          val dfJobReports = spark.read.json(jsonSink.jobReportsPath)
           val dfJobReportsCnt = dfJobReports.count()
           it("should save Job reports in json file") {
             dfJobReportsCnt shouldBe 1
           }
 
-          val dfStageReports = spark.read.json(jsonSink.StageReportsPath)
+          val dfStageReports = spark.read.json(jsonSink.stageReportsPath)
           val dfStageReportsCnt = dfStageReports.count()
           it("should save Stage reports in json file") {
             dfStageReportsCnt shouldBe 1
           }
 
-          val dfTaskReports = spark.read.json(jsonSink.TaskReportsPath)
+          val dfTaskReports = spark.read.json(jsonSink.taskReportsPath)
           val dfTaskReportsCnt = dfTaskReports.count()
           it("should save Task reports in json file") {
             dfTaskReportsCnt shouldBe 1

@@ -24,33 +24,33 @@ class JsonSink (
   if ( !folder.exists() ) { folder.mkdirs() }
 
   private var reportsCount: Int = 0
-  private val SqlReports: ListBuffer[SqlReport] = new ListBuffer[SqlReport]()
-  private val JobReports: ListBuffer[JobReport] = new ListBuffer[JobReport]()
-  private val StageReports: ListBuffer[StageReport] = new ListBuffer[StageReport]()
-  private val TaskReports: ListBuffer[TaskReport] = new ListBuffer[TaskReport]()
+  private val sqlReports: ListBuffer[SqlReport] = new ListBuffer[SqlReport]()
+  private val jobReports: ListBuffer[JobReport] = new ListBuffer[JobReport]()
+  private val stageReports: ListBuffer[StageReport] = new ListBuffer[StageReport]()
+  private val taskReports: ListBuffer[TaskReport] = new ListBuffer[TaskReport]()
 
   implicit val formats: AnyRef with Formats = Serialization.formats(NoTypeHints)
 
   // Create Json reports writers
-  val SqlReportsPath: String = s"$destination/$sparkApplicationId/sql-reports.json"
-  val JobReportsPath: String = s"$destination/$sparkApplicationId/job-reports.json"
-  val StageReportsPath: String = s"$destination/$sparkApplicationId/stage-reports.json"
-  val TaskReportsPath: String = s"$destination/$sparkApplicationId/task-reports.json"
+  val sqlReportsPath: String = s"$destination/$sparkApplicationId/sql-reports.json"
+  val jobReportsPath: String = s"$destination/$sparkApplicationId/job-reports.json"
+  val stageReportsPath: String = s"$destination/$sparkApplicationId/stage-reports.json"
+  val taskReportsPath: String = s"$destination/$sparkApplicationId/task-reports.json"
 
-  private val SqlReportsWriter = new PrintWriter(new FileWriter(SqlReportsPath, true))
-  private val JobReportsWriter = new PrintWriter(new FileWriter(JobReportsPath, true))
-  private val StageReportsWriter = new PrintWriter(new FileWriter(StageReportsPath, true))
-  private val TaskReportsWriter = new PrintWriter(new FileWriter(TaskReportsPath, true))
+  private val sqlReportsWriter = new PrintWriter(new FileWriter(sqlReportsPath, true))
+  private val jobReportsWriter = new PrintWriter(new FileWriter(jobReportsPath, true))
+  private val stageReportsWriter = new PrintWriter(new FileWriter(stageReportsPath, true))
+  private val taskReportsWriter = new PrintWriter(new FileWriter(taskReportsPath, true))
 
   override def sink(report: Report): Unit = {
     reportsCount += 1
 
     // appends new reports in sink
     report match {
-      case sql: SqlReport => SqlReports ++= Seq(sql)
-      case job: JobReport => JobReports ++= Seq(job)
-      case stage: StageReport => StageReports ++= Seq(stage)
-      case task: TaskReport => TaskReports ++= Seq(task)
+      case sql: SqlReport => sqlReports ++= Seq(sql)
+      case job: JobReport => jobReports ++= Seq(job)
+      case stage: StageReport => stageReports ++= Seq(stage)
+      case task: TaskReport => taskReports ++= Seq(task)
     }
 
     if ( reportsCount >= writeBatchSize ) {
@@ -61,39 +61,39 @@ class JsonSink (
   }
 
   override def write(): Unit = {
-    if (SqlReports.nonEmpty) {
-      logger.debug("JsonSink Debug : writing to {} ({} reports).", SqlReportsPath, SqlReports.size)
-      SqlReports.foreach { r =>
-        SqlReportsWriter.println(asJson(r))
+    if (sqlReports.nonEmpty) {
+      logger.debug("JsonSink Debug : writing to {} ({} reports).", sqlReportsPath, sqlReports.size)
+      sqlReports.foreach { r =>
+        sqlReportsWriter.println(asJson(r)) // scalastyle:ignore regex
       }
-      SqlReportsWriter.flush()
-      SqlReports.clear()
+      sqlReportsWriter.flush()
+      sqlReports.clear()
     }
-    if (JobReports.nonEmpty) {
-      logger.debug("JsonSink Debug : writing to {} ({} reports).", JobReportsPath, JobReports.size)
-      JobReports.foreach { r =>
-        JobReportsWriter.println(asJson(r))
+    if (jobReports.nonEmpty) {
+      logger.debug("JsonSink Debug : writing to {} ({} reports).", jobReportsPath, jobReports.size)
+      jobReports.foreach { r =>
+        jobReportsWriter.println(asJson(r)) // scalastyle:ignore regex
       }
-      JobReportsWriter.flush()
-      JobReports.clear()
+      jobReportsWriter.flush()
+      jobReports.clear()
     }
-    if (StageReports.nonEmpty) {
-      logger.debug("JsonSink Debug : writing to {} ({} reports).", StageReportsPath, StageReports.size)
-      StageReports.foreach { r =>
-        StageReportsWriter.println(asJson(r))
+    if (stageReports.nonEmpty) {
+      logger.debug("JsonSink Debug : writing to {} ({} reports).", stageReportsPath, stageReports.size)
+      stageReports.foreach { r =>
+        stageReportsWriter.println(asJson(r)) // scalastyle:ignore regex
       }
-      StageReportsWriter.flush()
-      StageReports.clear()
+      stageReportsWriter.flush()
+      stageReports.clear()
     }
-    if (TaskReports.nonEmpty) {
-      logger.debug("JsonSink Debug : writing to {} ({} reports).", TaskReportsPath, TaskReports.size)
-      TaskReports.foreach { r =>
-        TaskReportsWriter.println(asJson(r))
+    if (taskReports.nonEmpty) {
+      logger.debug("JsonSink Debug : writing to {} ({} reports).", taskReportsPath, taskReports.size)
+      taskReports.foreach { r =>
+        taskReportsWriter.println(asJson(r)) // scalastyle:ignore regex
       }
-      TaskReportsWriter.flush()
+      taskReportsWriter.flush()
 
       // clear reports
-      TaskReports.clear()
+      taskReports.clear()
     }
   }
 
@@ -101,10 +101,10 @@ class JsonSink (
     write()
 
     // Flush and close writers
-    SqlReportsWriter.close()
-    JobReportsWriter.close()
-    StageReportsWriter.close()
-    TaskReportsWriter.close()
+    sqlReportsWriter.close()
+    jobReportsWriter.close()
+    stageReportsWriter.close()
+    taskReportsWriter.close()
 
     logger.debug("JsonSink Debug : writers closed.")
   }

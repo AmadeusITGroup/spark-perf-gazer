@@ -15,7 +15,7 @@ class ReadCsvToNoopParquetSinkSpec
     withSpark() { spark =>
       withTmpDir { tmpDir =>
         val writeBatchSize = 5
-        withParquetSink(spark.sparkContext.applicationId, s"$tmpDir/parquet-sink", writeBatchSize) { parquetSink =>
+        withParquetSink(spark.sparkContext.applicationId, s"$tmpDir", writeBatchSize) { parquetSink =>
           import org.apache.spark.sql.functions._
 
           val df = readOptd(spark)
@@ -32,26 +32,26 @@ class ReadCsvToNoopParquetSinkSpec
           spark.sparkContext.removeSparkListener(eventsListener)
           parquetSink.flush()
 
-          val dfSqlReports = spark.read.parquet(parquetSink.SqlReportsPath)
+          val dfSqlReports = spark.read.parquet(parquetSink.sqlReportsPath)
           val dfSqlReportsCnt = dfSqlReports.count()
           it("should save SQL reports in parquet file") {
             dfSqlReportsCnt shouldBe 1
           }
           dfSqlReports.show()
 
-          val dfJobReports = spark.read.parquet(parquetSink.JobReportsPath)
+          val dfJobReports = spark.read.parquet(parquetSink.jobReportsPath)
           val dfJobReportsCnt = dfJobReports.count()
           it("should save Job reports in parquet file") {
             dfJobReportsCnt shouldBe 1
           }
 
-          val dfStageReports = spark.read.parquet(parquetSink.StageReportsPath)
+          val dfStageReports = spark.read.parquet(parquetSink.stageReportsPath)
           val dfStageReportsCnt = dfStageReports.count()
           it("should save Stage reports in parquet file") {
             dfStageReportsCnt shouldBe 1
           }
 
-          val dfTaskReports = spark.read.parquet(parquetSink.TaskReportsPath)
+          val dfTaskReports = spark.read.parquet(parquetSink.taskReportsPath)
           val dfTaskReportsCnt = dfTaskReports.count()
           it("should save Task reports in parquet file") {
             dfTaskReportsCnt shouldBe 1
