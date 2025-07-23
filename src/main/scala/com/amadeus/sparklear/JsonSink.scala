@@ -31,7 +31,7 @@ class JsonSink (
 
   implicit val formats: AnyRef with Formats = Serialization.formats(NoTypeHints)
 
-  // Create Parquet writers
+  // Create Json reports writers
   val SqlReportsPath: String = s"$destination/$sparkApplicationId/sql-reports.json"
   val JobReportsPath: String = s"$destination/$sparkApplicationId/job-reports.json"
   val StageReportsPath: String = s"$destination/$sparkApplicationId/stage-reports.json"
