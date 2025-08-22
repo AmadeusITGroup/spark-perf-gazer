@@ -29,6 +29,7 @@ class ReadCsvToNoopJsonSinkSpec
           spark.sparkContext.setJobGroup("testgroup", "testjob")
           df.write.format("noop").mode("overwrite").save()
 
+          // Wait for listener asynchronous operations before removing it from sparkContext
           Thread.sleep(3000)
           spark.sparkContext.removeSparkListener(eventsListener)
           jsonSink.flush()
@@ -58,6 +59,7 @@ class ReadCsvToNoopJsonSinkSpec
             dfTaskReportsCnt shouldBe 1
           }
 
+          // Reconcile reports from json files
           val dfTasks = dfJobReports
             .withColumn("stageId", explode(col("stages")))
             .drop("stages")

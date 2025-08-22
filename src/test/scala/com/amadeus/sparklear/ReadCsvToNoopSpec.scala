@@ -32,6 +32,7 @@ class ReadCsvToNoopSpec
         spark.sparkContext.setJobGroup("testgroup", "testjob")
         df.write.format("noop").mode("overwrite").save()
 
+        // Wait for listener asynchronous operations before removing it from sparkContext
         Thread.sleep(3000)
         spark.sparkContext.removeSparkListener(eventsListener)
         spark.sparkContext.removeSparkListener(emptyEventsListener)
@@ -58,9 +59,9 @@ class ReadCsvToNoopSpec
         it("should build SQL reports with details") {
           val sqlReport = sinks.reports.collect{case r: SqlReport => r}.head
           val sqlDetails = sqlReport.details
-          sqlDetails should include regex ("== Parsed Logical Plan ==")
-          sqlDetails should include regex ("== Optimized Logical Plan ==")
-          sqlDetails should include regex ("== Physical Plan ==")
+          sqlDetails should include regex "== Parsed Logical Plan =="
+          sqlDetails should include regex "== Optimized Logical Plan =="
+          sqlDetails should include regex "== Physical Plan =="
         }
 
         it("should build job reports") {

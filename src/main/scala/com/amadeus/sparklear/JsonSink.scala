@@ -66,7 +66,9 @@ class JsonSink (
       sqlReports.foreach { r =>
         sqlReportsWriter.println(asJson(r)) // scalastyle:ignore regex
       }
+      // flush writer to write to disk
       sqlReportsWriter.flush()
+      // clear reports
       sqlReports.clear()
     }
     if (jobReports.nonEmpty) {
@@ -74,7 +76,9 @@ class JsonSink (
       jobReports.foreach { r =>
         jobReportsWriter.println(asJson(r)) // scalastyle:ignore regex
       }
+      // flush writer to write to disk
       jobReportsWriter.flush()
+      // clear reports
       jobReports.clear()
     }
     if (stageReports.nonEmpty) {
@@ -82,7 +86,9 @@ class JsonSink (
       stageReports.foreach { r =>
         stageReportsWriter.println(asJson(r)) // scalastyle:ignore regex
       }
+      // flush writer to write to disk
       stageReportsWriter.flush()
+      // clear reports
       stageReports.clear()
     }
     if (taskReports.nonEmpty) {
@@ -90,8 +96,8 @@ class JsonSink (
       taskReports.foreach { r =>
         taskReportsWriter.println(asJson(r)) // scalastyle:ignore regex
       }
+      // flush writer to write to disk
       taskReportsWriter.flush()
-
       // clear reports
       taskReports.clear()
     }
@@ -100,7 +106,7 @@ class JsonSink (
   override def flush(): Unit = {
     write()
 
-    // Flush and close writers
+    // close writers
     sqlReportsWriter.close()
     jobReportsWriter.close()
     stageReportsWriter.close()

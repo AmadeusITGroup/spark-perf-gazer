@@ -28,6 +28,7 @@ class ReadCsvToNoopParquetSinkSpec
           spark.sparkContext.setJobGroup("testgroup", "testjob")
           df.write.format("noop").mode("overwrite").save()
 
+          // Wait for listener asynchronous operations before removing it from sparkContext
           Thread.sleep(3000)
           spark.sparkContext.removeSparkListener(eventsListener)
           parquetSink.flush()
@@ -57,6 +58,7 @@ class ReadCsvToNoopParquetSinkSpec
             dfTaskReportsCnt shouldBe 1
           }
 
+          // Reconcile reports from parquet files
           val dfTasks = dfJobReports
             .withColumn("stageId", explode(col("stages")))
             .drop("stages")
