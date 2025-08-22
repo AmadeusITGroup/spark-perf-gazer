@@ -9,7 +9,7 @@ import org.json4s.jackson.Serialization.{write => toJson}
 
 /** Sink that logs reports in json format (info level)
   */
-object LogSink extends Sink {
+class LogSink extends Sink {
   case class Record(kind: String, report: Report)
 
   implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
@@ -20,5 +20,4 @@ object LogSink extends Sink {
   override def write(): Unit = {}
 
   override def flush(): Unit = {}
-
 }

@@ -1,6 +1,5 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.LogSink.getClass
 import com.amadeus.sparklear.reports.{JobGenericRecord, JobReport, Report, SqlGenericRecord, SqlReport, StageGenericRecord, StageReport, TaskGenericRecord, TaskReport}
 import org.json4s.jackson.Serialization
 import org.json4s.{Formats, NoTypeHints}

@@ -16,6 +16,6 @@ case class Config(
   jobsEnabled: Boolean = true,
   stagesEnabled: Boolean = false,
   tasksEnabled: Boolean = false,
-  sink: Sink = LogSink,
+  sink: Sink = new LogSink(),
   maxCacheSize: Int
 )

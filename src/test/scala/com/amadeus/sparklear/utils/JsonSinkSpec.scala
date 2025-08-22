@@ -21,10 +21,10 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
         val jsonFile = new File(s"$tmpDir/$sparkApplicationId/job-reports.json")
 
         jsonSink.sink(jr)
-        jsonFile.length() should not equal(0)
+        jsonFile.length() should not equal 0
 
         jsonSink.flush()
-        jsonFile.length() should not equal(0)
+        jsonFile.length() should not equal 0
       }
     }
     it("should write job reports with writeBatchSize = 5") {
@@ -47,7 +47,32 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
         jsonSink.sink(jr)
         jsonFile.length() should equal(0)
         jsonSink.sink(jr)
-        jsonFile.length() should not equal(0)
+        jsonFile.length() should not equal 0
+      }
+    }
+    it("should write job reports when writeBatchSize not reached and sink is flushed") {
+      withTmpDir { tmpDir =>
+        val sparkApplicationId: String = java.util.UUID.randomUUID().toString
+        val jsonSink = new JsonSink(
+          sparkApplicationId = sparkApplicationId,
+          destination = s"$tmpDir",
+          writeBatchSize = 5)
+
+        val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, 1000, "1", Seq(1))
+        val jsonFile = new File(s"$tmpDir/$sparkApplicationId/job-reports.json")
+
+        jsonSink.sink(jr)
+        jsonFile.length() should equal(0)
+        jsonSink.sink(jr)
+        jsonFile.length() should equal(0)
+        jsonSink.sink(jr)
+        jsonFile.length() should equal(0)
+        jsonSink.sink(jr)
+        jsonFile.length() should equal(0)
+
+        // flush with 4 reports in sink
+        jsonSink.flush()
+        jsonFile.length() should not equal 0
       }
     }
   }

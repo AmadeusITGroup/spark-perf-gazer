@@ -20,8 +20,8 @@ class JsonSink (
   implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
 
   import java.io.File
-  val folder = new File(s"$destination/$sparkApplicationId")
-  if ( !folder.exists() ) { folder.mkdirs() }
+  private val folder = new File(s"$destination/$sparkApplicationId")
+  if ( !folder.exists() ) { folder.mkdirs }
 
   private var reportsCount: Int = 0
   private val sqlReports: ListBuffer[SqlReport] = new ListBuffer[SqlReport]()
