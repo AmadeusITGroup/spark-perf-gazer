@@ -13,6 +13,8 @@ class StageReportSpec extends SimpleSpec with ConfigSupport {
       rs shouldEqual (
         StageReport(
           stageId = 1,
+          stageSubmissionTime = 0L,
+          stageCompletionTime = 0L,
           readBytes = 5L*1024*1024,
           writeBytes = 74L*1024*1024,
           shuffleReadBytes = 75L*1024*1024,

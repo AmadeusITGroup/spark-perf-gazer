@@ -32,7 +32,7 @@ class JobReportSpec extends SimpleSpec with ConfigSupport {
           sqlId = "3",
           stages = Seq(0),
           jobStartTime = 0L,
-          jobDuration = 0L
+          jobEndTime = 0L
         )
       )
     }

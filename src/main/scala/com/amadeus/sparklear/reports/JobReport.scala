@@ -11,7 +11,7 @@ case class JobReport(
   groupId: String,
   jobName: String,
   jobStartTime: Long,
-  jobDuration: Long,
+  jobEndTime: Long,
   sqlId: String,
   stages: Seq[Int]
 ) extends Report
@@ -23,7 +23,7 @@ object JobReport extends Translator[JobEntity, JobReport] {
     JobReport(
       jobId = endEvt.jobEnd.jobId,
       jobStartTime = startEvt.startTime,
-      jobDuration = endEvt.jobEnd.time,
+      jobEndTime = endEvt.jobEnd.time,
       groupId = startEvt.group,
       jobName = startEvt.name,
       sqlId = startEvt.sqlId,
@@ -43,7 +43,7 @@ object JobGenericRecord extends GenericTranslator[JobReport, GenericRecord] {
              |   {"name": "groupId", "type": "string"},
              |   {"name": "jobName", "type": "string"},
              |   {"name": "jobStartTime", "type": "long"},
-             |   {"name": "jobDuration", "type": "long"},
+             |   {"name": "jobEndTime", "type": "long"},
              |   {"name": "sqlId", "type": ["null", { "type": "string" } ] },
              |   { "name": "stages", "type": { "type": "array", "items": "int" } }
              | ]
@@ -55,7 +55,7 @@ object JobGenericRecord extends GenericTranslator[JobReport, GenericRecord] {
     record.put("groupId", r.groupId)
     record.put("jobName", r.jobName)
     record.put("jobStartTime", r.jobStartTime)
-    record.put("jobDuration", r.jobDuration)
+    record.put("jobEndTime", r.jobEndTime)
     record.put("sqlId", r.sqlId)
     record.put("stages", r.stages.asJava)
     record

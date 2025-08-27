@@ -17,7 +17,7 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
           destination = s"$tmpDir",
           writeBatchSize = 1)
 
-        val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, 1000, "1", Seq(1))
+        val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
         val jsonFile = new File(s"$tmpDir/$sparkApplicationId/job-reports.json")
 
         jsonSink.sink(jr)
@@ -35,7 +35,7 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
           destination = s"$tmpDir",
           writeBatchSize = 5)
 
-        val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, 1000, "1", Seq(1))
+        val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
         val jsonFile = new File(s"$tmpDir/$sparkApplicationId/job-reports.json")
 
         jsonSink.sink(jr)
@@ -58,7 +58,7 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
           destination = s"$tmpDir",
           writeBatchSize = 5)
 
-        val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, 1000, "1", Seq(1))
+        val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
         val jsonFile = new File(s"$tmpDir/$sparkApplicationId/job-reports.json")
 
         jsonSink.sink(jr)
