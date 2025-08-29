@@ -1,24 +1,31 @@
 package com.amadeus.sparklear.utils
 
-import org.slf4j.{Logger, LoggerFactory}
-
 import java.util.concurrent.ConcurrentHashMap
+import scala.reflect.ClassTag
 
-class CappedConcurrentHashMap[K, V](name: String, cap: Int) {
-  lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
+/** A thread-safe capped map, that drops the lowest keys when the cap is reached.
+  *
+  * @param cap       maximum number of items in the map
+  * @param evictRatio ratio of items to drop when the cap is reached (between 0.5 and 1.0)
+  * @tparam K key type (must be ordered)
+  * @tparam V value type
+  */
+class CappedConcurrentHashMap[K: ClassTag, V](cap: Int, evictRatio: Double = 0.5) {
+  require(cap > 2, "Capacity must be greater than 2")
+  require(evictRatio >= 0.5 && evictRatio <= 1.0, "Drop ratio (% of items to drop if cap reached) must be in [0.5, 1.0]")
+
   import scala.collection.JavaConverters._
+
   private val m = new ConcurrentHashMap[K, V](cap)
   def put(k: K, v: V)(implicit cmp: Ordering[K]): V = {
-    logger.trace("[PUT] Current size of map {}: {}", name, m.size())
     if (m.size() >= cap) {
-      logger.error("Max size reached for {}, removing the oldest element", name)
-      // TODO removing one by one could have bad performance, consider using a more efficient clean (e.g. configurable %)
-      m.remove(m.keys().asScala.min)
+      val keys = m.keys().asScala.toArray.sorted
+      val kPercentile = keys(Math.ceil(keys.length * evictRatio).toInt)
+      m.keySet().removeIf(k => cmp.lt(k, kPercentile))
     }
     m.put(k, v)
   }
   def remove(k: K): V = {
-    logger.trace("[REMOVE] Current size of map {}: {}", name, m.size())
     m.remove(k)
   }
   def get(k: K): V = m.get(k)

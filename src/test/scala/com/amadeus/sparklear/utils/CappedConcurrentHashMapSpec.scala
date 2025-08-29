@@ -3,9 +3,9 @@ package com.amadeus.sparklear.utils
 import com.amadeus.testfwk.SimpleSpec
 
 class CappedConcurrentHashMapSpec extends SimpleSpec {
-  describe("The concurrent and safe map") {
+  describe("The CappedConcurrentHashMap") {
     it("should put elements") {
-      val m = new CappedConcurrentHashMap[Int, Int]("b", 3)
+      val m = new CappedConcurrentHashMap[Int, Int](3)
       m.size shouldEqual(0)
       m.put(1, 10)
       m.keys.toSet shouldEqual Set(1)
@@ -15,7 +15,7 @@ class CappedConcurrentHashMapSpec extends SimpleSpec {
       m.keys.toSet shouldEqual Set(1, 2, 3)
     }
     it("should remove elements") {
-      val m = new CappedConcurrentHashMap[Int, Int]("b", 3)
+      val m = new CappedConcurrentHashMap[Int, Int](3)
       m.size shouldEqual(0)
       m.put(1, 10)
       m.keys.toSet shouldEqual Set(1)
@@ -25,20 +25,26 @@ class CappedConcurrentHashMapSpec extends SimpleSpec {
       m.keys.toSet shouldEqual Set(2)
     }
     it("should be limited and in eviction discard the minimum key element") {
-      val m = new CappedConcurrentHashMap[Int, Int]("b", 3)
+      val m = new CappedConcurrentHashMap[Int, Int](3)
       m.size shouldEqual(0)
+
       m.put(1, 10)
       m.put(2, 20)
       m.put(3, 30)
       m.size shouldEqual(3)
       m.keys.toSet shouldEqual Set(1, 2, 3)
-      m.put(4, 40)
-      m.size shouldEqual(3)
-      m.keys.toSet shouldEqual Set(2, 3, 4)
+
+      m.put(4, 40) // should trigger a drop of 50% of the elements (1 and 2 as oldest)
+      m.size shouldEqual(2)
+      m.keys.toSet shouldEqual Set(3, 4)
+
       m.put(5, 50)
-      m.put(6, 60)
       m.size shouldEqual(3)
-      m.keys.toSet shouldEqual Set(4, 5, 6)
+      m.keys.toSet shouldEqual Set(3, 4, 5)
+
+      m.put(6, 60) // should trigger a drop of 50% of the elements (3 and 4 as oldest)
+      m.size shouldEqual(2)
+      m.keys.toSet shouldEqual Set(5, 6)
     }
   }
 }

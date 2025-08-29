@@ -23,8 +23,8 @@ class SparklEar(c: Config) extends SparkListener {
   type JobKey = Int
 
   // Maps to keep sqls + jobs + stages raw events (initial information) until some completion
-  private val sqlStartEvents = new CappedConcurrentHashMap[SqlKey, SqlEvent]("sql", c.maxCacheSize)
-  private val jobStartEvents = new CappedConcurrentHashMap[JobKey, JobEvent]("job", c.maxCacheSize)
+  private val sqlStartEvents = new CappedConcurrentHashMap[SqlKey, SqlEvent](c.maxCacheSize)
+  private val jobStartEvents = new CappedConcurrentHashMap[JobKey, JobEvent](c.maxCacheSize)
 
   /** LISTENERS
     */
@@ -53,8 +53,8 @@ class SparklEar(c: Config) extends SparkListener {
 
   override def onJobStart(jobStart: SparkListenerJobStart): Unit = {
     if (c.jobsEnabled) {
-      logger.trace("onJobStart(...) id = {}", jobStart.jobId)
       jobStartEvents.put(jobStart.jobId, JobEvent.from(jobStart))
+      logger.trace("onJobStart(...) id = {} (size of map {})", jobStart.jobId, jobStartEvents.size)
     }
   }
 
@@ -95,8 +95,8 @@ class SparklEar(c: Config) extends SparkListener {
 
   private def onSqlStart(event: SparkListenerSQLExecutionStart): Unit = {
     if (c.sqlEnabled) {
-      logger.trace("onSqlStart(...), id = {}", event.executionId)
       sqlStartEvents.put(event.executionId, SqlEvent(event.executionId, event.description))
+      logger.trace("onSqlStart(...) id = {} (size of map {})", event.executionId, sqlStartEvents.size)
     }
   }
 
