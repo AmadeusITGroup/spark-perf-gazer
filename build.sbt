@@ -21,7 +21,6 @@ import sbt.Tests._
 // Currently there is one test group per *Spec.scala file
 // Given that each test group has a different JVM, the SparkSession is not shared
 def testGroups(tests: Seq[TestDefinition], baseDir: File): Seq[Group] = {
-  val onlyDisplayConfluencePages = System.getProperty("onlyDisplayConfluencePages")
   tests
     .groupBy(t => t.name)
     .map { case (group, tests) =>
@@ -31,7 +30,6 @@ def testGroups(tests: Seq[TestDefinition], baseDir: File): Seq[Group] = {
           Vector(
             s"-Dtest.group=${group}",
             s"-Dtest.basedir=${baseDir}",
-            s"-DonlyDisplayConfluencePages=${onlyDisplayConfluencePages}"
           ) ++ DefaultForkJavaOptions
         )
       new Group(group, tests, SubProcess(options))
