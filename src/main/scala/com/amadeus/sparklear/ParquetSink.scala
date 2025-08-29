@@ -60,7 +60,7 @@ class ParquetSink(
   val stageReportsDirPath: String = s"$destination/$sparkApplicationId/stage-reports.parquet"
   val taskReportsDirPath: String = s"$destination/$sparkApplicationId/task-reports.parquet"
 
-  override def sink(report: Report): Unit = {
+  override def write(report: Report): Unit = {
     reportsCount += 1
 
     // appends new reports in sink
@@ -73,12 +73,12 @@ class ParquetSink(
 
     if ( reportsCount >= writeBatchSize ) {
       logger.debug("ParquetSink Debug : reached writeBatchSize threshold, writing reports ...")
-      write()
+      flush()
       reportsCount = 0
     }
   }
 
-  def write(): Unit = {
+  def flush(): Unit = {
     val uuid: String = java.util.UUID.randomUUID().toString
     val currentSqlReportsPath: String = s"$sqlReportsDirPath/$uuid.parquet"
     val currentJobReportsPath: String = s"$jobReportsDirPath/$uuid.parquet"
@@ -151,8 +151,8 @@ class ParquetSink(
     }
   }
 
-  override def flush(): Unit = {
+  override def close(): Unit = {
     logger.debug("ParquetSink Debug : flush")
-    write()
+    flush()
   }
 }

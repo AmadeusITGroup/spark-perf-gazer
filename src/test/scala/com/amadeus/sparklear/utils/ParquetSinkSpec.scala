@@ -21,10 +21,10 @@ class ParquetSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
         val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
         val parquetLocation = new File(s"$tmpDir/$sparkApplicationId/job-reports.parquet")
 
-        parquetSink.sink(jr)
+        parquetSink.write(jr)
         parquetLocation.listFiles().count(file => file.isFile && file.getName.endsWith(".parquet")) should equal(1)
 
-        parquetSink.flush()
+        parquetSink.close()
         parquetLocation.listFiles().count(file => file.isFile && file.getName.endsWith(".parquet")) should equal(1)
       }
     }
@@ -39,15 +39,15 @@ class ParquetSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
         val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
         val parquetLocation = new File(s"$tmpDir/$sparkApplicationId/job-reports.parquet")
 
-        parquetSink.sink(jr)
+        parquetSink.write(jr)
         parquetLocation.exists() should equal(false)
-        parquetSink.sink(jr)
+        parquetSink.write(jr)
         parquetLocation.exists() should equal(false)
-        parquetSink.sink(jr)
+        parquetSink.write(jr)
         parquetLocation.exists() should equal(false)
-        parquetSink.sink(jr)
+        parquetSink.write(jr)
         parquetLocation.exists() should equal(false)
-        parquetSink.sink(jr)
+        parquetSink.write(jr)
         parquetLocation.listFiles().count(file => file.isFile && file.getName.endsWith(".parquet")) should equal(1)
       }
     }
@@ -62,17 +62,17 @@ class ParquetSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
         val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
         val parquetLocation = new File(s"$tmpDir/$sparkApplicationId/job-reports.parquet")
 
-        parquetSink.sink(jr)
+        parquetSink.write(jr)
         parquetLocation.exists() should equal(false)
-        parquetSink.sink(jr)
+        parquetSink.write(jr)
         parquetLocation.exists() should equal(false)
-        parquetSink.sink(jr)
+        parquetSink.write(jr)
         parquetLocation.exists() should equal(false)
-        parquetSink.sink(jr)
+        parquetSink.write(jr)
         parquetLocation.exists() should equal(false)
 
         // flush with 4 reports in sink
-        parquetSink.flush()
+        parquetSink.close()
         parquetLocation.listFiles().count(file => file.isFile && file.getName.endsWith(".parquet")) should equal(1)
       }
     }

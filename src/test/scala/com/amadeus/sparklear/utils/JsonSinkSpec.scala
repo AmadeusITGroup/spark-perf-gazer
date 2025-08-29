@@ -20,10 +20,10 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
         val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
         val jsonFile = new File(s"$tmpDir/$sparkApplicationId/job-reports.json")
 
-        jsonSink.sink(jr)
+        jsonSink.write(jr)
         jsonFile.length() should not equal 0
 
-        jsonSink.flush()
+        jsonSink.close()
         jsonFile.length() should not equal 0
       }
     }
@@ -38,15 +38,15 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
         val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
         val jsonFile = new File(s"$tmpDir/$sparkApplicationId/job-reports.json")
 
-        jsonSink.sink(jr)
+        jsonSink.write(jr)
         jsonFile.length() should equal(0)
-        jsonSink.sink(jr)
+        jsonSink.write(jr)
         jsonFile.length() should equal(0)
-        jsonSink.sink(jr)
+        jsonSink.write(jr)
         jsonFile.length() should equal(0)
-        jsonSink.sink(jr)
+        jsonSink.write(jr)
         jsonFile.length() should equal(0)
-        jsonSink.sink(jr)
+        jsonSink.write(jr)
         jsonFile.length() should not equal 0
       }
     }
@@ -61,17 +61,17 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
         val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
         val jsonFile = new File(s"$tmpDir/$sparkApplicationId/job-reports.json")
 
-        jsonSink.sink(jr)
+        jsonSink.write(jr)
         jsonFile.length() should equal(0)
-        jsonSink.sink(jr)
+        jsonSink.write(jr)
         jsonFile.length() should equal(0)
-        jsonSink.sink(jr)
+        jsonSink.write(jr)
         jsonFile.length() should equal(0)
-        jsonSink.sink(jr)
+        jsonSink.write(jr)
         jsonFile.length() should equal(0)
 
         // flush with 4 reports in sink
-        jsonSink.flush()
+        jsonSink.close()
         jsonFile.length() should not equal 0
       }
     }

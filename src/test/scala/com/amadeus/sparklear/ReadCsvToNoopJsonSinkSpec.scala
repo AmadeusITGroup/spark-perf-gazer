@@ -32,7 +32,7 @@ class ReadCsvToNoopJsonSinkSpec
           // Wait for listener asynchronous operations before removing it from sparkContext
           Thread.sleep(3000)
           spark.sparkContext.removeSparkListener(eventsListener)
-          jsonSink.flush()
+          jsonSink.close()
 
           val dfSqlReports = spark.read.json(jsonSink.sqlReportsPath)
           val dfSqlReportsCnt = dfSqlReports.count()

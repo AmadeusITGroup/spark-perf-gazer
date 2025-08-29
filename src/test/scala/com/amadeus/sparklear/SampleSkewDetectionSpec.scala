@@ -82,7 +82,7 @@ class SampleSkewDetectionSpec
 
         Thread.sleep(3000)
         spark.sparkContext.removeSparkListener(eventsListener)
-        parquetSink.flush()
+        parquetSink.close()
 
         val dfSqlReports = spark.read.parquet(parquetSink.sqlReportsDirPath)
         val dfSqlReportsCnt = dfSqlReports.count()

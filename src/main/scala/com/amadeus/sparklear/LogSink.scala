@@ -13,11 +13,11 @@ class LogSink extends Sink {
   case class Record(kind: String, report: Report)
 
   implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
-  override def sink(report: Report): Unit = {
+  override def write(report: Report): Unit = {
     logger.info(toJson(Record(report.getClass.getName, report))(DefaultFormats))
   }
 
-  override def write(): Unit = {}
-
   override def flush(): Unit = {}
+
+  override def close(): Unit = {}
 }

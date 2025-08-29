@@ -13,9 +13,8 @@ class LogSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
       val logSink = new LogSink()
 
       val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
-      logSink.sink(jr)
-      logSink.write()
-      logSink.flush()
+      logSink.write(jr)
+      logSink.close()
     }
   }
 }

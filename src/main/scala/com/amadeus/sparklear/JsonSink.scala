@@ -49,7 +49,7 @@ class JsonSink(
   private val stageReportsWriter = new PrintWriter(new FileWriter(stageReportsPath, true))
   private val taskReportsWriter = new PrintWriter(new FileWriter(taskReportsPath, true))
 
-  override def sink(report: Report): Unit = {
+  override def write(report: Report): Unit = {
     reportsCount += 1
 
     // appends new reports in sink
@@ -62,12 +62,12 @@ class JsonSink(
 
     if (reportsCount >= writeBatchSize) {
       logger.debug("JsonSink Debug : reached writeBatchSize threshold, writing reports ...")
-      write()
+      flush()
       reportsCount = 0
     }
   }
 
-  override def write(): Unit = {
+  override def flush(): Unit = {
     if (sqlReports.nonEmpty) {
       logger.debug("JsonSink Debug : writing to {} ({} reports).", sqlReportsPath, sqlReports.size)
       sqlReports.foreach { r =>
@@ -110,8 +110,8 @@ class JsonSink(
     }
   }
 
-  override def flush(): Unit = {
-    write()
+  override def close(): Unit = {
+    flush()
 
     // close writers
     sqlReportsWriter.close()

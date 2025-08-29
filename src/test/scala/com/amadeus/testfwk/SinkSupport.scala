@@ -10,14 +10,14 @@ object SinkSupport {
     val reports: ListBuffer[Report] = new ListBuffer[Report](),
     stdout: Boolean = false
   ) extends Sink {
-    override def sink(report: Report): Unit = {
+    override def write(report: Report): Unit = {
       if (stdout) { println(report) } // scalastyle:ignore regex
       reports += report
     }
 
-    override def write(): Unit = {}
-
     override def flush(): Unit = {}
+
+    override def close(): Unit = {}
   }
 }
 

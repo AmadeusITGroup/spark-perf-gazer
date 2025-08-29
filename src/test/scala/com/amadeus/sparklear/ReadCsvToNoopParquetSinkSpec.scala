@@ -31,7 +31,7 @@ class ReadCsvToNoopParquetSinkSpec
           // Wait for listener asynchronous operations before removing it from sparkContext
           Thread.sleep(3000)
           spark.sparkContext.removeSparkListener(eventsListener)
-          parquetSink.flush()
+          parquetSink.close()
 
           val dfSqlReports = spark.read.parquet(parquetSink.sqlReportsDirPath)
           val dfSqlReportsCnt = dfSqlReports.count()
