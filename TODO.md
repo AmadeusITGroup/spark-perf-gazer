@@ -1,5 +1,11 @@
 # TODOs
 
+- [ ] see if possible to get rid of the dependency on "parquet-avro"
+- [ ] don't use 0L as default for stage start/end
+- [ ] for Sink, use an API consistent with FileWriter (write, flush, close)
+- [ ] in sinks batching implementations, use different counter for different reports, and ideally use bytes instead of number of reports
+- [ ] use tmp folder for parquet sink tests
+
 
 
 - [x] remove filter completely

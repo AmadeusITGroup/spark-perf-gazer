@@ -16,7 +16,7 @@ object Dependencies {
   val coreDeps = Seq(
     "org.apache.spark"           %% "spark-core"      % sparkVersion  % compileIfLocalOtherwiseProvided,
     "org.apache.spark"           %% "spark-sql"       % sparkVersion  % compileIfLocalOtherwiseProvided,
-    "org.apache.parquet"          % "parquet-avro"    % "1.13.1"      % "compile",
+    "org.apache.parquet"          % "parquet-avro"    % "1.13.1"      % Compile,
     "org.apache.avro"             % "avro"            % "1.11.1"      % compileIfLocalOtherwiseProvided
   )
 
