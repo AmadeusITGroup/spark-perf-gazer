@@ -47,6 +47,9 @@ fabric.properties
 .metals/
 .vscode/
 
+# MacOS
+.DS_Store
+
 # Sonar
 .scannerwork/
 
