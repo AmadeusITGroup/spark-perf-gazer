@@ -13,7 +13,7 @@ class ReadCsvToNoopParquetSinkSpec
     with SinkSupport {
 
   describe("The listener when reading a .csv and writing to noop") {
-    withSpark() { spark =>
+    withSpark(appName = this.getClass.getName) { spark =>
       withTmpDir { tmpDir =>
         val writeBatchSize = 5
         withParquetSink(s"$tmpDir", writeBatchSize) { parquetSink =>

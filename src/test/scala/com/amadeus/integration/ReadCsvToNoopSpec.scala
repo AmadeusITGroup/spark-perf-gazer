@@ -14,7 +14,7 @@ class ReadCsvToNoopSpec
     with SinkSupport {
 
   describe("The listener when reading a .csv and writing to noop") {
-    withSpark() { spark =>
+    withSpark(appName = this.getClass.getName) { spark =>
       withTestableSink { sinks =>
         val df = readOptd(spark)
 
@@ -41,23 +41,28 @@ class ReadCsvToNoopSpec
         }
 
         it("should build SQL nodes with job name and node name") {
-          val sqlReport = sinks.reports.collect{ case r: SqlReport => r}.head
+          val sqlReports = sinks.reports.collect{ case r: SqlReport => r}
+          sqlReports.size should be(1)
+          val sqlReport = sqlReports.head
           val nodes = sqlReport.nodes
-          println(nodes)
           nodes.size should be(2)
           nodes.map(i => (i.sqlId, i.jobName, i.nodeName)).head should be(1, "testjob", "() OverwriteByExpression")
           nodes.map(i => (i.sqlId, i.jobName, i.nodeName)).last should be(1, "testjob", "() Scan csv ")
         }
 
         it("should build SQL reports with metrics") {
-          val sqlReport = sinks.reports.collect{case r: SqlReport => r}.head
+          val sqlReports = sinks.reports.collect{case r: SqlReport => r}
+          sqlReports.size should be(1)
+          val sqlReport = sqlReports.head
           val csvNodes = sqlReport.nodes.filter(_.nodeName contains "Scan csv")
           csvNodes.size should be(1)
           val csvNode = csvNodes.head
           csvNode.metrics.keys should contain("number of files read")
         }
         it("should build SQL reports with details") {
-          val sqlReport = sinks.reports.collect{case r: SqlReport => r}.head
+          val sqlReports = sinks.reports.collect{case r: SqlReport => r}
+          sqlReports.size should be(1)
+          val sqlReport = sqlReports.head
           val sqlDetails = sqlReport.details
           sqlDetails should include regex "== Parsed Logical Plan =="
           sqlDetails should include regex "== Optimized Logical Plan =="
@@ -65,7 +70,9 @@ class ReadCsvToNoopSpec
         }
 
         it("should build job reports") {
-          val jobReport = sinks.reports.collect{case r: JobReport => r}.head
+          val jobReports = sinks.reports.collect{case r: JobReport => r}
+          jobReports.size should be(1)
+          val jobReport = jobReports.head
           jobReport.jobId should be(1L)
           jobReport.groupId should be("testgroup")
           jobReport.jobName should be("testjob")
@@ -74,7 +81,9 @@ class ReadCsvToNoopSpec
         }
 
         it("should build stage preReports (StagePrettyTranslator)") {
-          val stageReport = sinks.reports.collect{case r: StageReport => r}.head
+          val stageReports = sinks.reports.collect{case r: StageReport => r}
+          stageReports.size should be(1)
+          val stageReport = stageReports.head
           stageReport.stageId should be(1)
           stageReport.shuffleReadBytes should be(0)
           stageReport.shuffleWriteBytes should be(0)

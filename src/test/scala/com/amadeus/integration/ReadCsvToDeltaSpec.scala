@@ -25,7 +25,7 @@ class ReadCsvToDeltaSpec
   private def subdir(base: Path, s: String) = base.resolve(s).toAbsolutePath.toFile.toString
 
   describe("The listener when reading a delta table filtering and writing to another delta") {
-    withSpark(DeltaSettings) { spark =>
+    withSpark(DeltaSettings, appName = this.getClass.getName) { spark =>
       withTmpDir { tmpDir =>
         val df = readOptd(spark)
         df.write.format("delta").mode("overwrite").save(subdir(tmpDir, "deltadir1"))
@@ -62,7 +62,7 @@ class ReadCsvToDeltaSpec
   }
 
   describe("The listener when joining two dataframes read from delta") {
-    withSpark(DeltaSettings) { spark =>
+    withSpark(DeltaSettings, appName = this.getClass.getName) { spark =>
       withTmpDir { tmpDir =>
         val df = readOptd(spark)
         df.write.format("delta").mode("overwrite").save(subdir(tmpDir, "deltadir1"))

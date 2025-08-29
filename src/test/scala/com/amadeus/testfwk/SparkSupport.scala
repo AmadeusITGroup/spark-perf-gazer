@@ -20,39 +20,52 @@ trait SparkSupport {
     )
   val DefaultUiWaitMs = 1000 * 60 * 60 // 1h
 
-  def getOrCreateSparkSession(conf: List[(String, String)] = DefaultConfigs): SparkSession = {
+  def getOrCreateSparkSession(conf: List[(String, String)] = DefaultConfigs, appName: String): SparkSession = {
     val builder = SparkSession.builder
-      .appName("SparkSession for tests")
+      .appName(appName)
       .master("local[1]")
     val customized = conf.foldLeft(builder) { case (b, (k, v)) =>
       b.config(k, v)
     }
+
+    SparkSession.getActiveSession.foreach { s =>
+      throw new IllegalStateException(
+        s"[${appName}] An active Spark session already exists in this JVM: ${s.sparkContext.appName}"
+      )
+    }
+
     customized.getOrCreate()
   }
 
   private def withSparkInternal[T](
-    conf: List[(String, String)]
+    conf: List[(String, String)],
+    name: String
   )(
     testCode: SparkSession => T
   )(
     finallyCode: SparkSession => Unit
   ): T = {
-    val spark = getOrCreateSparkSession(conf)
-    val r = try {
-      testCode(spark)
-    } finally {
-      finallyCode(spark)
-    }
+    val spark = getOrCreateSparkSession(conf, name)
+    val r =
+      try {
+        testCode(spark)
+      } finally {
+        finallyCode(spark)
+      }
     spark.stop()
     r
   }
 
-  def withSpark[T](conf: List[(String, String)] = DefaultConfigs)(testCode: SparkSession => T): T = {
-    withSparkInternal(conf)(testCode)(_.stop())
+  def withSpark[T](conf: List[(String, String)] = DefaultConfigs, appName: String = "no name")(
+    testCode: SparkSession => T
+  ): T = {
+    withSparkInternal(conf, appName)(testCode)(_.stop())
   }
 
-  def withSparkAndUi[T](conf: List[(String, String)] = DefaultConfigs)(testCode: SparkSession => T): T =
-    withSparkInternal(conf ++ UiConfigs)(testCode) { spark =>
+  def withSparkAndUi[T](conf: List[(String, String)] = DefaultConfigs, appName: String = "no name")(
+    testCode: SparkSession => T
+  ): T =
+    withSparkInternal(conf ++ UiConfigs, appName)(testCode) { spark =>
       println(s"Launched ${this.getClass.getName}.withSparkUI at ${spark.sparkContext.uiWebUrl}...")
       println("Go to the web Spark UI now. We will wait...")
       Thread.sleep(DefaultUiWaitMs)

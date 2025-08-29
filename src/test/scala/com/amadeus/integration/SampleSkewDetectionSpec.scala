@@ -19,7 +19,7 @@ class SampleSkewDetectionSpec
 
   describe("The listener for skew detection") {
     withTmpDir { tmpDir =>
-      withSpark() { spark =>
+      withSpark(appName = this.getClass.getName) { spark =>
         val WriteBatchSize = 5
         withParquetSink(s"$tmpDir", WriteBatchSize) { parquetSink =>
           import org.apache.spark.sql.functions._
