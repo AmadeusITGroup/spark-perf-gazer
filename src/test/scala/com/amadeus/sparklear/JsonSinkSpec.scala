@@ -1,6 +1,5 @@
-package com.amadeus.sparklear.utils
+package com.amadeus.sparklear
 
-import com.amadeus.sparklear.JsonSink
 import com.amadeus.sparklear.reports.JobReport
 import com.amadeus.testfwk.{SimpleSpec, SinkSupport, TempDirSupport}
 

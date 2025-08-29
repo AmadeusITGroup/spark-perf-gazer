@@ -1,11 +1,9 @@
-package com.amadeus.sparklear.utils
+package com.amadeus.sparklear
 
-import com.amadeus.sparklear.ParquetSink
 import com.amadeus.sparklear.reports.JobReport
 import com.amadeus.testfwk.{SimpleSpec, SinkSupport, TempDirSupport}
 
 import java.io.File
-import java.io.FilenameFilter
 import java.time.Instant
 
 class ParquetSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {

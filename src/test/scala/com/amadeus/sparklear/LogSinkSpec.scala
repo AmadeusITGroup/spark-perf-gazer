@@ -1,9 +1,7 @@
-package com.amadeus.sparklear.utils
+package com.amadeus.sparklear
 
-import com.amadeus.sparklear.LogSink
 import com.amadeus.sparklear.reports.JobReport
 import com.amadeus.testfwk.{SimpleSpec, SinkSupport, TempDirSupport}
-
 
 import java.time.Instant
 
