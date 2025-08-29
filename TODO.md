@@ -4,11 +4,10 @@
 - [ ] don't use 0L as default for stage start/end
 - [x] for Sink, use an API consistent with FileWriter (write, flush, close)
 - [ ] in sinks batching implementations, use different counter for different reports, and ideally use bytes instead of number of reports
-- [ ] use tmp folder for parquet sink tests
+- [x] use tmp folder for parquet sink tests
+- [ ] check files content in parquet sink tests and json sink tests
 - [ ] have a single integration test for ReadCsv and use TestableSink 
   - [ ] Parquet and Json sink integration tests should be removed as the specific sink implementation has dedicated tests
-
-
 
 - [x] remove filter completely
 - [ ] batch and dump API (make it Seq)
