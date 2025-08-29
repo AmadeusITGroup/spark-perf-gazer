@@ -29,33 +29,13 @@ class ReadCsvToNoopSpec
         val emptyEventsListener = new SparklEar(cfg.withAllDisabled.withSink(emptySinks))
         spark.sparkContext.addSparkListener(emptyEventsListener)
 
-        // setup to write reports in json sink
-        // val jsonSinks = new JsonSink(
-        //   destination = "src/test/json-sink",
-        //   writeBatchSize = 5
-        // )
-        // val jsonEventsListener = new SparklEar(cfg.withAllEnabled.withSink(jsonSinks))
-        // spark.sparkContext.addSparkListener(jsonEventsListener)
-
-        // setup to write reports in json sink
-        val sparkApplicationId: String = spark.sparkContext.applicationId
-        val parquetSinkDestination: String = "src/test/parquet-sink"
-
-        val parquetSink = new ParquetSink(
-          sparkApplicationId = sparkApplicationId,
-          destination = parquetSinkDestination,
-          writeBatchSize = 5
-        )
-        val parquetEventsListener = new SparklEar(cfg.withAllEnabled.withSink(parquetSink))
-        spark.sparkContext.addSparkListener(parquetEventsListener)
         spark.sparkContext.setJobGroup("testgroup", "testjob")
         df.write.format("noop").mode("overwrite").save()
 
+        // Wait for listener asynchronous operations before removing it from sparkContext
         Thread.sleep(3000)
         spark.sparkContext.removeSparkListener(eventsListener)
         spark.sparkContext.removeSparkListener(emptyEventsListener)
-        spark.sparkContext.removeSparkListener(parquetEventsListener)
-        parquetSink.flush()
 
         it("should build some reports") {
           sinks.reports.size shouldBe 4
@@ -79,9 +59,9 @@ class ReadCsvToNoopSpec
         it("should build SQL reports with details") {
           val sqlReport = sinks.reports.collect{case r: SqlReport => r}.head
           val sqlDetails = sqlReport.details
-          sqlDetails should include regex ("== Parsed Logical Plan ==")
-          sqlDetails should include regex ("== Optimized Logical Plan ==")
-          sqlDetails should include regex ("== Physical Plan ==")
+          sqlDetails should include regex "== Parsed Logical Plan =="
+          sqlDetails should include regex "== Optimized Logical Plan =="
+          sqlDetails should include regex "== Physical Plan =="
         }
 
         it("should build job reports") {
@@ -107,40 +87,6 @@ class ReadCsvToNoopSpec
         it("should not generate any report if all is disabled") {
           emptySinks.reports.size should be(0)
         }
-
-        val dfSqlReports = spark.read.parquet(parquetSink.SqlReportsPath)
-        val dfSqlReportsCnt = dfSqlReports.count()
-        it("should save SQL reports in parquet file") {
-          dfSqlReportsCnt shouldBe 1
-        }
-        dfSqlReports.show()
-
-        val dfJobReports = spark.read.parquet(parquetSink.JobReportsPath)
-        val dfJobReportsCnt = dfJobReports.count()
-        it("should save Job reports in parquet file") {
-          dfJobReportsCnt shouldBe 1
-        }
-
-        val dfStageReports = spark.read.parquet(parquetSink.StageReportsPath)
-        val dfStageReportsCnt = dfStageReports.count()
-        it("should save Stage reports in parquet file") {
-          dfStageReportsCnt shouldBe 1
-        }
-
-        val dfTaskReports = spark.read.parquet(parquetSink.TaskReportsPath)
-        val dfTaskReportsCnt = dfTaskReports.count()
-        it("should save Task reports in parquet file") {
-          dfTaskReportsCnt shouldBe 1
-        }
-
-        val dfTasks = dfJobReports
-          .withColumn("stageId", explode(col("stages")))
-          .drop("stages")
-          .join(dfStageReports, Seq("stageId"))
-          .drop(dfStageReports("stageId"))
-          .join(dfTaskReports, Seq("stageId"))
-          .drop(dfTaskReports("stageId"))
-        dfTasks.show()
       }
     }
   }

@@ -1,14 +1,14 @@
 package com.amadeus.sparklear.reports
 
 import com.amadeus.sparklear.entities.StageEntity
-import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization.{write => toJson}
 
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericRecord}
 
 case class StageReport(
   stageId: Int,
+  stageSubmissionTime: Long,
+  stageCompletionTime: Long,
   readBytes: Long,
   writeBytes: Long,
   shuffleReadBytes: Long,
@@ -18,9 +18,7 @@ case class StageReport(
   execJvmGcNs: Long,
   attempt: Int,
   spillBytes: Long
-) extends Report {
-  override def asJson: Json = toJson(this)(DefaultFormats) // TODO: use a more efficient serialization
-}
+) extends Report
 
 object StageReport extends Translator[StageEntity, StageReport] {
 
@@ -28,6 +26,8 @@ object StageReport extends Translator[StageEntity, StageReport] {
     val p = r.end
     StageReport(
       stageId = r.end.stageInfo.stageId,
+      stageSubmissionTime = r.end.stageInfo.submissionTime.getOrElse(0L),
+      stageCompletionTime = r.end.stageInfo.completionTime.getOrElse(0L),
       readBytes = p.inputReadBytes,
       writeBytes = p.outputWriteBytes,
       shuffleReadBytes = p.shuffleReadBytes,
@@ -49,6 +49,8 @@ object StageGenericRecord extends GenericTranslator[StageReport, GenericRecord] 
              | "name": "Root",
              | "fields": [
              |   {"name": "stageId", "type": "int"},
+             |   {"name": "stageSubmissionTime", "type": "long"},
+             |   {"name": "stageCompletionTime", "type": "long"},
              |   {"name": "readBytes", "type": "long"},
              |   {"name": "writeBytes", "type": "long"},
              |   {"name": "shuffleReadBytes", "type": "long"},
@@ -64,6 +66,8 @@ object StageGenericRecord extends GenericTranslator[StageReport, GenericRecord] 
   override def fromReportToGenericRecord(r: StageReport): GenericRecord = {
     val record = new GenericData.Record(reportSchema)
     record.put("stageId", r.stageId)
+    record.put("stageSubmissionTime", r.stageSubmissionTime)
+    record.put("stageCompletionTime", r.stageCompletionTime)
     record.put("readBytes", r.readBytes)
     record.put("writeBytes", r.writeBytes)
     record.put("shuffleReadBytes", r.shuffleReadBytes)

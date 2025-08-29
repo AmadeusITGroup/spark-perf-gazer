@@ -3,6 +3,18 @@ import sbt.Keys._
 import sbtrelease.ReleaseStateTransformations._
 import sbtrelease.{versionFormatError, Version}
 
+/* Solve
+[error] (assembly) deduplicate: different file contents found in the following:
+[error] C:\...\https\repository.rnd.amadeus.net\sbt-sonatype-remote\com\fasterxml\jackson\core\jackson-annotations\2.12.7\jackson-annotations-2.12.7.jar:module-info.class
+[error] C:\...\https\repository.rnd.amadeus.net\sbt-sonatype-remote\com\fasterxml\jackson\core\jackson-core\2.12.7\jackson-core-2.12.7.jar:module-info.class
+[error] C:\...\https\repository.rnd.amadeus.net\sbt-sonatype-remote\com\fasterxml\jackson\core\jackson-databind\2.12.7\jackson-databind-2.12.7.jar:module-info.class
+ */
+assembly / assemblyMergeStrategy := {
+    case PathList("module-info.class") => MergeStrategy.discard
+    case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
+    case x => MergeStrategy.first
+}
+
 val commonSettings = Seq(
   organization := "com.amadeus",
   scalaVersion := "2.12.13",
@@ -37,10 +49,11 @@ val testSettings = Seq(
 val publishSettings = Seq(
   publishTo := {
     val artifactory = "https://repository.rnd.amadeus.net/"
-    if (isSnapshot.value)
+    if (isSnapshot.value) {
       Some("snapshots" at artifactory + "sbt-built/")
-    else
+    } else {
       Some("releases" at artifactory + "mvn-production/")
+    }
   },
   Test / publishArtifact := true
 )
@@ -83,7 +96,7 @@ lazy val root = (project in file("."))
     releaseSettings,
     testSettings,
     publishSettings,
-    coverageFailOnMinimum := false, // deal between mauricio and bruno
-    coverageMinimumStmtTotal := 99.0,
-    coverageMinimumBranchTotal := 99.0
+    coverageFailOnMinimum := true,
+    coverageMinimumStmtTotal := 95.0,
+    coverageMinimumBranchTotal := 95.0
   )
