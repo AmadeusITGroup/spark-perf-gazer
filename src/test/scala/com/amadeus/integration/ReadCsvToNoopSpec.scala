@@ -1,10 +1,9 @@
-package com.amadeus.sparklear
+package com.amadeus.integration
 
+import com.amadeus.sparklear.SparklEar
 import com.amadeus.sparklear.reports._
 import com.amadeus.testfwk.SinkSupport.TestableSink
-import com.amadeus.testfwk.{ConfigSupport, JsonSupport, OptdSupport, SimpleSpec, SinkSupport, SparkSupport}
-
-import org.apache.spark.sql.functions.{col, explode}
+import com.amadeus.testfwk._
 
 class ReadCsvToNoopSpec
     extends SimpleSpec

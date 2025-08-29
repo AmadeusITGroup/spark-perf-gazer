@@ -1,6 +1,6 @@
-package com.amadeus.sparklear
+package com.amadeus.integration
 
-import com.amadeus.sparklear.reports._
+import com.amadeus.sparklear.SparklEar
 import com.amadeus.testfwk._
 
 // Define your case class
@@ -20,10 +20,10 @@ class SampleSkewDetectionSpec
     withSpark() { spark =>
       withParquetSink(
         spark.sparkContext.applicationId, "src/test/parquet-sink", 5) { parquetSink =>
-        import org.apache.spark.sql._
         import org.apache.spark.sql.functions._
-        import scala.util.Random
-        import spark.implicits._
+          import spark.implicits._
+
+          import scala.util.Random
 
         // regular setup
         val cfg = defaultTestConfig.withAllEnabled.withSink(parquetSink)

@@ -1,6 +1,7 @@
-package com.amadeus.sparklear
+package com.amadeus.integration
 
-import com.amadeus.sparklear.reports.{SqlNode, SqlReport}
+import com.amadeus.sparklear.SparklEar
+import com.amadeus.sparklear.reports.SqlReport
 import com.amadeus.testfwk._
 import com.amadeus.testfwk.filters.SqlNodeFilter
 import io.delta.tables.DeltaTable
