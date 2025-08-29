@@ -16,7 +16,7 @@ class ReadCsvToNoopParquetSinkSpec
     withSpark() { spark =>
       withTmpDir { tmpDir =>
         val writeBatchSize = 5
-        withParquetSink(spark.sparkContext.applicationId, s"$tmpDir", writeBatchSize) { parquetSink =>
+        withParquetSink(s"$tmpDir", writeBatchSize) { parquetSink =>
           import org.apache.spark.sql.functions._
 
           val df = readOptd(spark)

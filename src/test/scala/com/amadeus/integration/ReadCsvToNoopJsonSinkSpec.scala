@@ -17,7 +17,7 @@ class ReadCsvToNoopJsonSinkSpec
       withTmpDir { tmpDir =>
 
         val writeBatchSize = 5
-        withJsonSink(spark.sparkContext.applicationId, s"$tmpDir", writeBatchSize) { jsonSink =>
+        withJsonSink(s"$tmpDir", writeBatchSize) { jsonSink =>
           import org.apache.spark.sql.functions._
 
           val df = readOptd(spark)

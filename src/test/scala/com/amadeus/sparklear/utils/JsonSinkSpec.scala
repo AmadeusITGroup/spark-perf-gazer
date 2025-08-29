@@ -11,14 +11,12 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
   describe("json sink") {
     it("should write job reports with writeBatchSize = 1") {
       withTmpDir { tmpDir =>
-        val sparkApplicationId: String = java.util.UUID.randomUUID().toString
         val jsonSink = new JsonSink(
-          sparkApplicationId = sparkApplicationId,
           destination = s"$tmpDir",
           writeBatchSize = 1)
 
         val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
-        val jsonFile = new File(s"$tmpDir/$sparkApplicationId/job-reports.json")
+        val jsonFile = new File(s"$tmpDir/job-reports.json")
 
         jsonSink.write(jr)
         jsonFile.length() should not equal 0
@@ -29,14 +27,12 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
     }
     it("should write job reports with writeBatchSize = 5") {
       withTmpDir { tmpDir =>
-        val sparkApplicationId: String = java.util.UUID.randomUUID().toString
         val jsonSink = new JsonSink(
-          sparkApplicationId = sparkApplicationId,
           destination = s"$tmpDir",
           writeBatchSize = 5)
 
         val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
-        val jsonFile = new File(s"$tmpDir/$sparkApplicationId/job-reports.json")
+        val jsonFile = new File(s"$tmpDir/job-reports.json")
 
         jsonSink.write(jr)
         jsonFile.length() should equal(0)
@@ -52,14 +48,12 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
     }
     it("should write job reports when writeBatchSize not reached and sink is flushed") {
       withTmpDir { tmpDir =>
-        val sparkApplicationId: String = java.util.UUID.randomUUID().toString
         val jsonSink = new JsonSink(
-          sparkApplicationId = sparkApplicationId,
           destination = s"$tmpDir",
           writeBatchSize = 5)
 
         val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
-        val jsonFile = new File(s"$tmpDir/$sparkApplicationId/job-reports.json")
+        val jsonFile = new File(s"$tmpDir/job-reports.json")
 
         jsonSink.write(jr)
         jsonFile.length() should equal(0)

@@ -22,15 +22,13 @@ import java.time.format.DateTimeFormatter
 /** Sink of a collection of reports to Parquet files.
   *
   * This sink uses Hadoop filesystem interface to write the Parquet files.
-  * The output folder structure is built as follows: <destination>/<sparkApplicationId>/<report-type>.parquet/<uuid>.parquet
-  * A typical report path will be "/dbfs/logs/app-id/sql-reports.parquet/uuid.parquet" if used from Databricks.
+  * The output folder structure is built as follows: <destination>/<report-type>.parquet/<uuid>.parquet
+  * A typical report path will be "/dbfs/logs/my-app-id/sql-reports.parquet/uuid.parquet" if used from Databricks.
   *
-  * @param sparkApplicationId Unique identifier for the Spark application, used to create dedicated folder structure
-  * @param destination Base directory path where Parquet files will be written, e.g., "/dbfs/logs"
+  * @param destination Base directory path where Parquet files will be written, e.g., "/dbfs/logs/my-app-id"
   * @param writeBatchSize Number of reports to accumulate before writing to disk
   */
 class ParquetSink(
-  sparkApplicationId: String,
   destination: String,
   writeBatchSize: Int
 ) extends Sink {
@@ -55,10 +53,10 @@ class ParquetSink(
   }
 
   // Create Parquet writers
-  val sqlReportsDirPath: String = s"$destination/$sparkApplicationId/sql-reports.parquet"
-  val jobReportsDirPath: String = s"$destination/$sparkApplicationId/job-reports.parquet"
-  val stageReportsDirPath: String = s"$destination/$sparkApplicationId/stage-reports.parquet"
-  val taskReportsDirPath: String = s"$destination/$sparkApplicationId/task-reports.parquet"
+  val sqlReportsDirPath: String = s"$destination/sql-reports.parquet"
+  val jobReportsDirPath: String = s"$destination/job-reports.parquet"
+  val stageReportsDirPath: String = s"$destination/stage-reports.parquet"
+  val taskReportsDirPath: String = s"$destination/task-reports.parquet"
 
   override def write(report: Report): Unit = {
     reportsCount += 1

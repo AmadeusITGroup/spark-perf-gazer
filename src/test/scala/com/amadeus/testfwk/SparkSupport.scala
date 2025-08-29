@@ -38,11 +38,13 @@ trait SparkSupport {
     finallyCode: SparkSession => Unit
   ): T = {
     val spark = getOrCreateSparkSession(conf)
-    try {
+    val r = try {
       testCode(spark)
     } finally {
       finallyCode(spark)
     }
+    spark.stop()
+    r
   }
 
   def withSpark[T](conf: List[(String, String)] = DefaultConfigs)(testCode: SparkSession => T): T = {

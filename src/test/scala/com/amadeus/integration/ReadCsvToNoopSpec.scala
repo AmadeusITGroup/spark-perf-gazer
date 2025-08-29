@@ -43,6 +43,7 @@ class ReadCsvToNoopSpec
         it("should build SQL nodes with job name and node name") {
           val sqlReport = sinks.reports.collect{ case r: SqlReport => r}.head
           val nodes = sqlReport.nodes
+          println(nodes)
           nodes.size should be(2)
           nodes.map(i => (i.sqlId, i.jobName, i.nodeName)).head should be(1, "testjob", "() OverwriteByExpression")
           nodes.map(i => (i.sqlId, i.jobName, i.nodeName)).last should be(1, "testjob", "() Scan csv ")

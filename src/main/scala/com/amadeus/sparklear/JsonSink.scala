@@ -12,22 +12,20 @@ import scala.collection.mutable.ListBuffer
 /** Sink of a collection of reports to JSON files.
   *
   * This sink uses POSIX interface on the driver to write the JSON files.
-  * The output folder path is built as follows: <destination>/<sparkApplicationId>/<report-type>.json
-  * A typical report path will be "/dbfs/logs/app-id/sql-reports.json" if used from Databricks.
+  * The output folder path is built as follows: <destination>/<report-type>.json
+  * A typical report path will be "/dbfs/logs/my-app-id/sql-reports.json" if used from Databricks.
   *
-  * @param sparkApplicationId Unique identifier for the Spark application, used to create dedicated folder structure
-  * @param destination Base directory path where JSON files will be written, e.g., "/dbfs/logs"
+  * @param destination Base directory path where JSON files will be written, e.g., "/dbfs/logs/my-app-id/"
   * @param writeBatchSize Number of reports to accumulate before writing to disk
   */
 class JsonSink(
-  sparkApplicationId: String,
   destination: String,
   writeBatchSize: Int
 ) extends Sink {
   implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
 
   import java.io.File
-  private val folder = new File(s"$destination/$sparkApplicationId")
+  private val folder = new File(s"$destination")
   if (!folder.exists()) { folder.mkdirs }
 
   private var reportsCount: Int = 0
@@ -39,10 +37,10 @@ class JsonSink(
   implicit val formats: AnyRef with Formats = Serialization.formats(NoTypeHints)
 
   // Create Json reports writers
-  val sqlReportsPath: String = s"$destination/$sparkApplicationId/sql-reports.json"
-  val jobReportsPath: String = s"$destination/$sparkApplicationId/job-reports.json"
-  val stageReportsPath: String = s"$destination/$sparkApplicationId/stage-reports.json"
-  val taskReportsPath: String = s"$destination/$sparkApplicationId/task-reports.json"
+  val sqlReportsPath: String = s"$destination/sql-reports.json"
+  val jobReportsPath: String = s"$destination/job-reports.json"
+  val stageReportsPath: String = s"$destination/stage-reports.json"
+  val taskReportsPath: String = s"$destination/task-reports.json"
 
   private val sqlReportsWriter = new PrintWriter(new FileWriter(sqlReportsPath, true))
   private val jobReportsWriter = new PrintWriter(new FileWriter(jobReportsPath, true))
