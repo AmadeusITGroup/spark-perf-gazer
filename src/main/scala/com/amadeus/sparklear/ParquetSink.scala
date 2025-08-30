@@ -1,23 +1,20 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.reports.{JobGenericRecord, JobReport, Report, SqlGenericRecord, SqlReport, StageGenericRecord, StageReport, TaskGenericRecord, TaskReport}
-import org.json4s.jackson.Serialization
-import org.json4s.{Formats, NoTypeHints}
-
-import scala.collection.mutable.ListBuffer
-import org.apache.parquet.io.OutputFile
+import com.amadeus.sparklear.reports._
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.hadoop.conf.Configuration
-import org.apache.parquet.avro.AvroParquetWriter
-import org.apache.parquet.hadoop.ParquetWriter
 import org.apache.hadoop.fs.Path
+import org.apache.parquet.avro.AvroParquetWriter
 import org.apache.parquet.hadoop.ParquetFileWriter.Mode
+import org.apache.parquet.hadoop.ParquetWriter
 import org.apache.parquet.hadoop.util.HadoopOutputFile
+import org.apache.parquet.io.OutputFile
+import org.json4s.jackson.Serialization
+import org.json4s.{Formats, NoTypeHints}
 import org.slf4j.{Logger, LoggerFactory}
 
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import scala.collection.mutable.ListBuffer
 
 /** Sink of a collection of reports to Parquet files.
   *
