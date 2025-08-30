@@ -76,7 +76,7 @@ val testSettings = Seq(
     "-Xms512M",
     "-Xmx1G"
   ),
-  Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oD", "-u", "target/test-reports"),
+  Test / testOptions += Tests.Argument(TestFrameworks.JUnit, "-v", "-a"),
   libraryDependencies ++= Dependencies.testDeps
 )
 
