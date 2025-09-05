@@ -3,6 +3,39 @@ import sbt.Keys._
 import sbtrelease.ReleaseStateTransformations._
 import sbtrelease.{versionFormatError, Version}
 
+val DefaultForkJavaOptions = Seq(
+  "-Dspark.driver.bindAddress=127.0.0.1",
+  "-Duser.country.format=US",
+  "-Duser.language.format=en",
+  "-Duser.timezone=UTC",
+  "-Xms2000M",
+  "-Xmx4000M",
+  "-XX:+CMSClassUnloadingEnabled",
+  "-XX:+UseCompressedOops",
+  "-XX:+UseG1GC"
+)
+
+
+import sbt.Tests._
+// Given tests, define test groups where each will have its own forked JVM for execution
+// Currently there is one test group per *Spec.scala file
+// Given that each test group has a different JVM, the SparkSession is not shared
+def testGroups(tests: Seq[TestDefinition], baseDir: File): Seq[Group] = {
+  tests
+    .groupBy(t => t.name)
+    .map { case (group, tests) =>
+      val options = ForkOptions()
+        .withWorkingDirectory(baseDir)
+        .withRunJVMOptions(
+          Vector(
+            s"-Dtest.group=${group}",
+            s"-Dtest.basedir=${baseDir}",
+          ) ++ DefaultForkJavaOptions
+        )
+      new Group(group, tests, SubProcess(options))
+    } toSeq
+}
+
 /* Solve
 [error] (assembly) deduplicate: different file contents found in the following:
 [error] C:\...\https\repository.rnd.amadeus.net\sbt-sonatype-remote\com\fasterxml\jackson\core\jackson-annotations\2.12.7\jackson-annotations-2.12.7.jar:module-info.class
@@ -34,6 +67,7 @@ val commonSettings = Seq(
 
 val testSettings = Seq(
   Test / scalacOptions ++= Seq("-Yrangepos"),
+  Test / testGrouping := testGroups((Test / definedTests).value, (Test / run / baseDirectory).value),
   Test / parallelExecution := false,
   Test / fork := true,
   Test / javaOptions ++= Seq(
@@ -42,7 +76,7 @@ val testSettings = Seq(
     "-Xms512M",
     "-Xmx1G"
   ),
-  Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oD", "-u", "target/test-reports"),
+  Test / testOptions += Tests.Argument(TestFrameworks.JUnit, "-v", "-a"),
   libraryDependencies ++= Dependencies.testDeps
 )
 

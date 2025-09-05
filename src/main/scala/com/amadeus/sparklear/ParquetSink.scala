@@ -1,31 +1,33 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.reports.{JobGenericRecord, JobReport, Report, SqlGenericRecord, SqlReport, StageGenericRecord, StageReport, TaskGenericRecord, TaskReport}
-import org.json4s.jackson.Serialization
-import org.json4s.{Formats, NoTypeHints}
-
-import scala.collection.mutable.ListBuffer
-import org.apache.parquet.io.OutputFile
+import com.amadeus.sparklear.reports._
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.hadoop.conf.Configuration
-import org.apache.parquet.avro.AvroParquetWriter
-import org.apache.parquet.hadoop.ParquetWriter
 import org.apache.hadoop.fs.Path
+import org.apache.parquet.avro.AvroParquetWriter
 import org.apache.parquet.hadoop.ParquetFileWriter.Mode
+import org.apache.parquet.hadoop.ParquetWriter
 import org.apache.parquet.hadoop.util.HadoopOutputFile
+import org.apache.parquet.io.OutputFile
+import org.json4s.jackson.Serialization
+import org.json4s.{Formats, NoTypeHints}
 import org.slf4j.{Logger, LoggerFactory}
 
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import scala.collection.mutable.ListBuffer
 
-/**
-  * Sink of a collection of reports
+/** Sink of a collection of reports to Parquet files.
+  *
+  * This sink uses Hadoop filesystem interface to write the Parquet files.
+  * The output folder structure is built as follows: <destination>/<report-type>.parquet/<uuid>.parquet
+  * A typical report path will be "/dbfs/logs/my-app-id/sql-reports.parquet/uuid.parquet" if used from Databricks.
+  *
+  * @param destination Base directory path where Parquet files will be written, e.g., "/dbfs/logs/my-app-id"
+  * @param writeBatchSize Number of reports to accumulate before writing to disk
   */
 class ParquetSink(
-  sparkApplicationId: String,
   destination: String,
-  writeBatchSize: Int = 5
+  writeBatchSize: Int
 ) extends Sink {
   implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
 
@@ -48,12 +50,12 @@ class ParquetSink(
   }
 
   // Create Parquet writers
-  val sqlReportsPath: String = s"$destination/$sparkApplicationId/sql-reports.parquet"
-  val jobReportsPath: String = s"$destination/$sparkApplicationId/job-reports.parquet"
-  val stageReportsPath: String = s"$destination/$sparkApplicationId/stage-reports.parquet"
-  val taskReportsPath: String = s"$destination/$sparkApplicationId/task-reports.parquet"
+  val sqlReportsDirPath: String = s"$destination/sql-reports.parquet"
+  val jobReportsDirPath: String = s"$destination/job-reports.parquet"
+  val stageReportsDirPath: String = s"$destination/stage-reports.parquet"
+  val taskReportsDirPath: String = s"$destination/task-reports.parquet"
 
-  override def sink(report: Report): Unit = {
+  override def write(report: Report): Unit = {
     reportsCount += 1
 
     // appends new reports in sink
@@ -66,17 +68,17 @@ class ParquetSink(
 
     if ( reportsCount >= writeBatchSize ) {
       logger.debug("ParquetSink Debug : reached writeBatchSize threshold, writing reports ...")
-      write()
+      flush()
       reportsCount = 0
     }
   }
 
-  def write(): Unit = {
+  def flush(): Unit = {
     val uuid: String = java.util.UUID.randomUUID().toString
-    val currentSqlReportsPath: String = s"$sqlReportsPath/$uuid.parquet"
-    val currentJobReportsPath: String = s"$jobReportsPath/$uuid.parquet"
-    val currentStageReportsPath: String = s"$stageReportsPath/$uuid.parquet"
-    val currentTaskReportsPath: String = s"$taskReportsPath/$uuid.parquet"
+    val currentSqlReportsPath: String = s"$sqlReportsDirPath/$uuid.parquet"
+    val currentJobReportsPath: String = s"$jobReportsDirPath/$uuid.parquet"
+    val currentStageReportsPath: String = s"$stageReportsDirPath/$uuid.parquet"
+    val currentTaskReportsPath: String = s"$taskReportsDirPath/$uuid.parquet"
 
     if (sqlReports.nonEmpty) {
       val sqlReportsWriter: ParquetWriter[GenericRecord] = getAvroParquetWriter(currentSqlReportsPath, SqlGenericRecord.reportSchema)
@@ -86,7 +88,7 @@ class ParquetSink(
       }
 
       // Write all records in a single loop
-      logger.debug("ParquetSink Debug : writing to {} ({} reports).", sqlReportsPath, sqlReportsRecords.size)
+      logger.debug("ParquetSink Debug : writing to {} ({} reports).", sqlReportsDirPath, sqlReportsRecords.size)
       sqlReportsRecords.foreach(sqlReportsWriter.write)
       sqlReportsWriter.close()
 
@@ -102,7 +104,7 @@ class ParquetSink(
       }
 
       // Write all records in a single loop
-      logger.debug("ParquetSink Debug : writing to {} ({} reports).", jobReportsPath, jobReportsRecords.size)
+      logger.debug("ParquetSink Debug : writing to {} ({} reports).", jobReportsDirPath, jobReportsRecords.size)
       jobReportsRecords.foreach(jobReportsWriter.write)
       jobReportsWriter.close()
 
@@ -118,7 +120,7 @@ class ParquetSink(
       }
 
       // Write all records in a single loop
-      logger.debug("ParquetSink Debug : writing to {} ({} reports).", stageReportsPath, stageReportsRecords.size)
+      logger.debug("ParquetSink Debug : writing to {} ({} reports).", stageReportsDirPath, stageReportsRecords.size)
       stageReportsRecords.foreach(stageReportsWriter.write)
       stageReportsWriter.close()
 
@@ -134,7 +136,7 @@ class ParquetSink(
       }
 
       // Write all records in a single loop
-      logger.debug("ParquetSink Debug : writing to {} ({} reports).", taskReportsPath, taskReportsRecords.size)
+      logger.debug("ParquetSink Debug : writing to {} ({} reports).", taskReportsDirPath, taskReportsRecords.size)
       taskReportsRecords.foreach(taskReportsWriter.write)
       taskReportsWriter.close()
 
@@ -144,8 +146,8 @@ class ParquetSink(
     }
   }
 
-  override def flush(): Unit = {
+  override def close(): Unit = {
     logger.debug("ParquetSink Debug : flush")
-    write()
+    flush()
   }
 }
