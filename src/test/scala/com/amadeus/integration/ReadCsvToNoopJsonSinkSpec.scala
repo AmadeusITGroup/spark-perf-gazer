@@ -35,28 +35,32 @@ class ReadCsvToNoopJsonSinkSpec
           spark.sparkContext.removeSparkListener(eventsListener)
           jsonSink.close()
 
-          val dfSqlReports = spark.read.json(jsonSink.sqlReportsPath)
+          val dfSqlReports = spark.read.json(jsonSink.sqlReportsFile)
           val dfSqlReportsCnt = dfSqlReports.count()
           it("should save SQL reports in json file") {
+            dfSqlReports.schema.names.toSet should contain("sqlId")
             dfSqlReportsCnt shouldBe 1
           }
           dfSqlReports.show()
 
-          val dfJobReports = spark.read.json(jsonSink.jobReportsPath)
+          val dfJobReports = spark.read.json(jsonSink.jobReportsFile)
           val dfJobReportsCnt = dfJobReports.count()
           it("should save Job reports in json file") {
+            dfJobReports.schema.names.toSet should contain("jobId")
             dfJobReportsCnt shouldBe 1
           }
 
-          val dfStageReports = spark.read.json(jsonSink.stageReportsPath)
+          val dfStageReports = spark.read.json(jsonSink.stageReportsFile)
           val dfStageReportsCnt = dfStageReports.count()
           it("should save Stage reports in json file") {
+            dfStageReports.schema.names.toSet should contain("stageId")
             dfStageReportsCnt shouldBe 1
           }
 
-          val dfTaskReports = spark.read.json(jsonSink.taskReportsPath)
+          val dfTaskReports = spark.read.json(jsonSink.taskReportsFile)
           val dfTaskReportsCnt = dfTaskReports.count()
           it("should save Task reports in json file") {
+            dfTaskReports.schema.names.toSet should contain("taskId")
             dfTaskReportsCnt shouldBe 1
           }
 
