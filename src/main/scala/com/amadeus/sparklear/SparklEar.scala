@@ -123,4 +123,13 @@ class SparklEar(c: Config) extends SparkListener {
     logger.trace("onApplicationEnd: duration={}", event.time)
     c.sink.close()
   }
+
+  /**
+    * Close the sink (if not already done).
+    */
+  def close(): Unit = {
+    c.sink.close()
+    logger.info("Listener closed, size of maps sql={} and job={})",
+      sqlStartEvents.size, jobStartEvents.size)
+  }
 }

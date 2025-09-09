@@ -12,6 +12,8 @@ import org.apache.avro.generic.{GenericData, GenericRecord}
 import scala.collection.JavaConverters._
 
 case class SqlReport(
+  sqlId: Long,
+  description: String,
   details: String,
   nodes: Seq[SqlNode]
 ) extends Report
@@ -27,6 +29,8 @@ object SqlReport extends Translator[SqlEntity, SqlReport] {
   override def fromEntityToReport(report: SqlEntity): SqlReport = {
     val details = describe(SparkInternal.queryExecution(report.end))
     SqlReport(
+      sqlId = report.start.id,
+      description = report.start.description,
       details = details,
       nodes = asNodes(report)
     )

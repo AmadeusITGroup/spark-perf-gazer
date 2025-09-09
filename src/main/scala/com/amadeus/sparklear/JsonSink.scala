@@ -24,10 +24,6 @@ class JsonSink(
 ) extends Sink {
   implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
 
-  import java.io.File
-  private val folder = new File(s"$destination")
-  if (!folder.exists()) { folder.mkdirs }
-
   private var reportsCount: Int = 0
   private val sqlReports: ListBuffer[SqlReport] = new ListBuffer[SqlReport]()
   private val jobReports: ListBuffer[JobReport] = new ListBuffer[JobReport]()
@@ -37,15 +33,27 @@ class JsonSink(
   implicit val formats: AnyRef with Formats = Serialization.formats(NoTypeHints)
 
   // Create Json reports writers
-  val sqlReportsPath: String = s"$destination/sql-reports.json"
-  val jobReportsPath: String = s"$destination/job-reports.json"
-  val stageReportsPath: String = s"$destination/stage-reports.json"
-  val taskReportsPath: String = s"$destination/task-reports.json"
+  val sqlReportsDir: String = s"$destination/level=sql/"
+  val jobReportsDir: String = s"$destination/level=job/"
+  val stageReportsDir: String = s"$destination/level=stage/"
+  val taskReportsDir: String = s"$destination/level=task/"
 
-  private val sqlReportsWriter = new PrintWriter(new FileWriter(sqlReportsPath, true))
-  private val jobReportsWriter = new PrintWriter(new FileWriter(jobReportsPath, true))
-  private val stageReportsWriter = new PrintWriter(new FileWriter(stageReportsPath, true))
-  private val taskReportsWriter = new PrintWriter(new FileWriter(taskReportsPath, true))
+  val reportFileName: String = "reports.json"
+  val sqlReportsFile: String = s"$sqlReportsDir/$reportFileName"
+  val jobReportsFile: String = s"$jobReportsDir/$reportFileName"
+  val stageReportsFile: String = s"$stageReportsDir/$reportFileName"
+  val taskReportsFile: String = s"$taskReportsDir/$reportFileName"
+
+  import java.io.File
+  Seq(sqlReportsDir, jobReportsDir, stageReportsDir, taskReportsDir).foreach{ dir =>
+    val folder = new File(s"$dir")
+    if (!folder.exists()) { folder.mkdirs }
+  }
+
+  private val sqlReportsWriter = new PrintWriter(new FileWriter(sqlReportsFile, true))
+  private val jobReportsWriter = new PrintWriter(new FileWriter(jobReportsFile, true))
+  private val stageReportsWriter = new PrintWriter(new FileWriter(stageReportsFile, true))
+  private val taskReportsWriter = new PrintWriter(new FileWriter(taskReportsFile, true))
 
   override def write(report: Report): Unit = {
     reportsCount += 1
@@ -67,7 +75,7 @@ class JsonSink(
 
   override def flush(): Unit = {
     if (sqlReports.nonEmpty) {
-      logger.debug("JsonSink Debug : writing to {} ({} reports).", sqlReportsPath, sqlReports.size)
+      logger.debug("JsonSink Debug : writing to {} ({} reports).", sqlReportsFile, sqlReports.size)
       sqlReports.foreach { r =>
         sqlReportsWriter.println(asJson(r)) // scalastyle:ignore regex
       }
@@ -77,7 +85,7 @@ class JsonSink(
       sqlReports.clear()
     }
     if (jobReports.nonEmpty) {
-      logger.debug("JsonSink Debug : writing to {} ({} reports).", jobReportsPath, jobReports.size)
+      logger.debug("JsonSink Debug : writing to {} ({} reports).", jobReportsFile, jobReports.size)
       jobReports.foreach { r =>
         jobReportsWriter.println(asJson(r)) // scalastyle:ignore regex
       }
@@ -87,7 +95,7 @@ class JsonSink(
       jobReports.clear()
     }
     if (stageReports.nonEmpty) {
-      logger.debug("JsonSink Debug : writing to {} ({} reports).", stageReportsPath, stageReports.size)
+      logger.debug("JsonSink Debug : writing to {} ({} reports).", stageReportsFile, stageReports.size)
       stageReports.foreach { r =>
         stageReportsWriter.println(asJson(r)) // scalastyle:ignore regex
       }
@@ -97,7 +105,7 @@ class JsonSink(
       stageReports.clear()
     }
     if (taskReports.nonEmpty) {
-      logger.debug("JsonSink Debug : writing to {} ({} reports).", taskReportsPath, taskReports.size)
+      logger.debug("JsonSink Debug : writing to {} ({} reports).", taskReportsFile, taskReports.size)
       taskReports.foreach { r =>
         taskReportsWriter.println(asJson(r)) // scalastyle:ignore regex
       }
