@@ -36,6 +36,10 @@ class ReadCsvToNoopSpec
         spark.sparkContext.removeSparkListener(eventsListener)
         spark.sparkContext.removeSparkListener(emptyEventsListener)
 
+        // Close the listeners
+        eventsListener.close()
+        emptyEventsListener.close()
+
         it("should build some reports") {
           sinks.reports.size shouldBe 4
         }

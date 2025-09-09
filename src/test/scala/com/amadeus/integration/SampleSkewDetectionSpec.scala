@@ -120,6 +120,9 @@ class SampleSkewDetectionSpec
             .join(dfTaskReports, Seq("stageId"))
             .drop(dfTaskReports("stageId"))
           dfTasks.show()
+
+          // Close the listener
+          eventsListener.close()
         }
       }
     }
