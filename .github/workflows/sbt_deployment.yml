@@ -48,19 +48,6 @@ jobs:
           echo "Running tests"
           sbt test
 
-  package-and-deploy:
-    runs-on: gmsshr-core-amadeus-cplatform
-    needs: build-and-test
-
-    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release'|| startsWith(github.ref, 'refs/heads/hotfix')
-    steps:
-      #Checkout
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-
-
-
 
       - name: Determine Version Pattern
         id: version
