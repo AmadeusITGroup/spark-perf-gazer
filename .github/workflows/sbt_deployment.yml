@@ -23,7 +23,7 @@ env:
 
 jobs:
   build-and-test:
-    runs-on: gmsshr-core-amadeus-cplatform
+    runs-on: gmsshr-maven-amadeus-cplatform
     strategy:
       fail-fast: true
 
