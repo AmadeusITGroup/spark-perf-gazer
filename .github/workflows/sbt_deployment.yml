@@ -6,8 +6,8 @@ on:
   push:
     branches: [ "master", "hotfix*", "feature*" ]
   pull_request:
-    branches: [ "master", "hotfix*", "release*", "hotfix*" ]
-  workflow_dispatch: # Allows manual triggering of the workflow
+    branches: [ "master", "hotfix*", "release*" ]
+  workflow_dispatch: 
     inputs:
       version:
         description: "Version to use for the release"
