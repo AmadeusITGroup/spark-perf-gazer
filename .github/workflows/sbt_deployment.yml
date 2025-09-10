@@ -21,7 +21,7 @@ env:
   AR_USER: ${{env.AR_USER }}
   AR_PASSWORD: ${{ secrets.AR_PASSWORD }}
 
-
+jobs:
   build-and-test:
     runs-on: gmsshr-core-amadeus-cplatform
     strategy:
