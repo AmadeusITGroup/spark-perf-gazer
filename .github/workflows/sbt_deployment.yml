@@ -18,7 +18,7 @@ permissions:
   contents: write # Required to create a release
 env:
   APP_NAME: ${{ github.repository }}
-  AR_USER: ${{env.AR_USER }}
+  AR_USER: ${{ vars.AR_USER }}
   AR_PASSWORD: ${{ secrets.AR_PASSWORD }}
 
 jobs:
