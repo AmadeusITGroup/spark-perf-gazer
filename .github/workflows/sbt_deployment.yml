@@ -4,9 +4,9 @@ name: Scala CI/CD Pipeline
 
 on:
   push:
-    branches: [ "master", "hotfix*", "feature*" ]
+    branches: [ "master", "hotfix/*", "feature/*" ]
   pull_request:
-    branches: [ "master", "hotfix*", "release*" ]
+    branches: [ "master", "hotfix/*", "release/*" ]
   workflow_dispatch: 
     inputs:
       version:
