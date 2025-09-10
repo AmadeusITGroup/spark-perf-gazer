@@ -63,8 +63,8 @@ jobs:
 
 
       - name: Determine Version Pattern
-          id: version
-          run: |
+        id: version
+        run: |
             if [ -n "${{ github.event.inputs.version }}" ]; then
             echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
             else
