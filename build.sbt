@@ -77,7 +77,10 @@ val testSettings = Seq(
     "-Xms512M",
     "-Xmx1G"
   ),
+  Test / javaOptions += "--add-exports=java.base/sun.nio.ch=ALL-UNNAMED", 
+  Test / javaOptions += "--add-exports=java.base/sun.util.calendar=ALL-UNNAMED", 
   Test / testOptions += Tests.Argument(TestFrameworks.JUnit, "-v", "-a"),
+  
   libraryDependencies ++= Dependencies.testDeps
 )
 
