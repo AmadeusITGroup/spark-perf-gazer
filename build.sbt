@@ -3,6 +3,7 @@ import sbt.Keys._
 import sbtrelease.ReleaseStateTransformations._
 import sbtrelease.{versionFormatError, Version}
 
+
 val DefaultForkJavaOptions = Seq(
   "-Dspark.driver.bindAddress=127.0.0.1",
   "-Duser.country.format=US",
@@ -10,8 +11,8 @@ val DefaultForkJavaOptions = Seq(
   "-Duser.timezone=UTC",
   "-Xms2000M",
   "-Xmx4000M",
-  "-XX:+CMSClassUnloadingEnabled",
   "-XX:+UseCompressedOops",
+// removed "-XX:+CMSClassUnloadingEnabled",  
   "-XX:+UseG1GC"
 )
 
