@@ -57,7 +57,7 @@ assembly / assemblyMergeStrategy := {
 
 val commonSettings = Seq(
   organization := "com.amadeus",
-  scalaVersion := "2.12.13",
+  scalaVersion := "2.12.17",
   update / checksums := Nil,
   Compile / javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
   scalacOptions ++= Seq(
@@ -83,11 +83,7 @@ val testSettings = Seq(
     "-Xms512M",
     "-Xmx1G"
   ),
-  Test / javaOptions += "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED", 
-  Test / javaOptions += "--add-opens java.base/java.lang=ALL-UNNAMED",
-  Test / javaOptions += "--add-opens java.base/java.lang.reflect=ALL-UNNAMED",
   Test / testOptions += Tests.Argument(TestFrameworks.JUnit, "-v", "-a"),
-  
   libraryDependencies ++= Dependencies.testDeps
 )
 
