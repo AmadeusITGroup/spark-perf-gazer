@@ -22,6 +22,10 @@ import sbt.Tests._
 // Currently there is one test group per *Spec.scala file
 // Given that each test group has a different JVM, the SparkSession is not shared
 def testGroups(tests: Seq[TestDefinition], baseDir: File): Seq[Group] = {
+  val exportOptions = Seq(
+    "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+    "--add-exports=java.base/sun.util.calendar=ALL-UNNAMED"
+  )
   tests
     .groupBy(t => t.name)
     .map { case (group, tests) =>
@@ -31,7 +35,7 @@ def testGroups(tests: Seq[TestDefinition], baseDir: File): Seq[Group] = {
           Vector(
             s"-Dtest.group=${group}",
             s"-Dtest.basedir=${baseDir}",
-          ) ++ DefaultForkJavaOptions
+          ) ++ DefaultForkJavaOptions ++ exportOptions
         )
       new Group(group, tests, SubProcess(options))
     } toSeq
