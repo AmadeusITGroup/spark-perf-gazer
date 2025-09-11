@@ -53,41 +53,41 @@ jobs:
       - name: Determine Version Pattern
         id: version
         run: |
-            if [ -n "${{ github.event.inputs.version }}" ]; then
+          if [ -n "${{ github.event.inputs.version }}" ]; then
             echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
-            else
+          else
             if [ "${{ github.event_name }}" == "pull_request" ]; then
-             COMMIT_SHA="${{ github.event.pull_request.head.sha }}"
+              COMMIT_SHA="${{ github.event.pull_request.head.sha }}"
             else
-             COMMIT_SHA="${GITHUB_SHA}"
+              COMMIT_SHA="${GITHUB_SHA}"
             fi
             SHORT_COMMIT=$(echo "${COMMIT_SHA}" | cut -c1-7)
             git fetch --tags
             LATEST_TAG=$(git tag -l "v*" | grep -v SNAPSHOT | sort -V | tail -n1)
             if [ -n "$LATEST_TAG" ]; then
-             LATEST_VERSION=${LATEST_TAG#v}
-             MAJOR=$(echo $LATEST_VERSION | cut -d. -f1)
-             MINOR=$(echo $LATEST_VERSION | cut -d. -f2)
-             PATCH=$(echo $LATEST_VERSION | cut -d. -f3)
-             NEXT_PATCH=$((PATCH + 1))
-             NEXT_VERSION="${MAJOR}.${MINOR}.${NEXT_PATCH}"
-             echo "VERSION=${NEXT_VERSION}-${SHORT_COMMIT}-SNAPSHOT" >> $GITHUB_ENV
+              LATEST_VERSION=${LATEST_TAG#v}
+              MAJOR=$(echo $LATEST_VERSION | cut -d. -f1)
+              MINOR=$(echo $LATEST_VERSION | cut -d. -f2)
+              PATCH=$(echo $LATEST_VERSION | cut -d. -f3)
+              NEXT_PATCH=$((PATCH + 1))
+              NEXT_VERSION="${MAJOR}.${MINOR}.${NEXT_PATCH}"
+              echo "VERSION=${NEXT_VERSION}-${SHORT_COMMIT}-SNAPSHOT" >> $GITHUB_ENV
             else
-             echo "Error: No git tags found. Unable to determine version." >&2
-             exit 1
+              echo "Error: No git tags found. Unable to determine version." >&2
+              exit 1
             fi
-            fi
+          fi
 
-            - name: Publish to Artifactory
-              env:
-                VERSION: ${{ env.VERSION }}
-              run: |
-                echo "Publishing to Artifactory with IZ_USER $AR_USER"
-                echo "VERSION: $VERSION"
-                sbt clean publish
+      - name: Publish to Artifactory
+        env:
+          VERSION: ${{ env.VERSION }}
+        run: |
+            echo "Publishing to Artifactory with IZ_USER $AR_USER"
+            echo "VERSION: $VERSION"
+            sbt clean publish
 
-            - name: Create Git Tag
-              if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master' && github.event.inputs.version != '' }}
-              run: |
-                git tag "v${{ env.VERSION }}"
-                git push origin "v${{ env.VERSION }}"
+      - name: Create Git Tag
+        if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master' && github.event.inputs.version != '' }}
+        run: |
+            git tag "v${{ env.VERSION }}"
+            git push origin "v${{ env.VERSION }}"
