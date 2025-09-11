@@ -81,6 +81,9 @@ val testSettings = Seq(
     "-Xms512M",
     "-Xmx1G"
   ),
+  Test / javaOptions += "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED", 
+  Test / javaOptions += "--add-opens java.base/java.lang=ALL-UNNAMED",
+  Test / javaOptions += "--add-opens java.base/java.lang.reflect=ALL-UNNAMED",
   Test / testOptions += Tests.Argument(TestFrameworks.JUnit, "-v", "-a"),
   
   libraryDependencies ++= Dependencies.testDeps
