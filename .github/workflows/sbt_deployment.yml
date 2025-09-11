@@ -46,8 +46,8 @@ jobs:
       - name: Run tests
         run: |
           echo "Running tests"
-          sbt test
-
+          sbt -J--add-exports=java.base/sun.nio.ch=ALL-UNNAMED "Test / test"
+ 
 
       - name: Determine Version Pattern
         id: version
