@@ -91,12 +91,18 @@ val publishSettings = Seq(
   publishTo := {
     val artifactory = "https://repository.rnd.amadeus.net/"
     if (isSnapshot.value) {
-      Some("snapshots" at artifactory + "ssce-sbt-dev-ssce/")
+      Some("snapshots" at artifactory + "ssce-sbt-dev-ssce-nce/")
     } else {
       Some("releases" at artifactory + "ssce-sbt-release-ssce-nce/")
     }
   },
   Test / publishArtifact := true
+)
+credentials += Credentials(
+  "Artifactory Realm",
+  "repository.rnd.amadeus.net",
+  sys.env("AR_USER"),
+  sys.env("AR_PASSWORD")
 )
 
 val releaseSettings = Seq(
