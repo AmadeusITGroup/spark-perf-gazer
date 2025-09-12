@@ -98,12 +98,7 @@ val publishSettings = Seq(
   },
   Test / publishArtifact := true
 )
-credentials += Credentials(
-  "Artifactory Realm",
-  "repository.rnd.amadeus.net",
-  sys.env("AR_USER"),
-  sys.env("AR_PASSWORD")
-)
+
 
 val releaseSettings = Seq(
   releaseCommitMessage := s"[sbt-release] Setting version to ${(ThisBuild / version).value}",

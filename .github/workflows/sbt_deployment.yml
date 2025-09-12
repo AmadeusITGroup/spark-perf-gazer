@@ -4,9 +4,9 @@ name: Scala CI/CD Pipeline
 
 on:
   push:
-    branches: [ "master", "hotfix/*", "feature/*" ]
+    branches: [ "main", "hotfix/*", "feature/*" ]
   pull_request:
-    branches: [ "master", "hotfix/*", "release/*" ]
+    branches: [ "main", "hotfix/*", "release/*" ]
   workflow_dispatch: 
     inputs:
       version:
@@ -18,8 +18,9 @@ permissions:
   contents: write # Required to create a release
 env:
   APP_NAME: ${{ github.repository }}
-  AR_USER: ${{ vars.AR_USER }}
-  AR_PASSWORD: ${{ secrets.AR_PASSWORD }}
+  USERNAME: ${{ vars.AR_USER }}
+  PASSWORD: ${{ secrets.AR_PASSWORD }}
+  sbtOptions: "-Dsbt.override.build.repos=true -Dsbt.repository.config=.repositories"
 
 jobs:
   build-and-test:
@@ -39,55 +40,118 @@ jobs:
           key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
           restore-keys: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
 
-      - name: Run Build
-        run: |
-          sbt clean compile
 
-      - name: Run tests
-        run: |
-          echo "Running tests"
-          java -version
-          sbt test
- 
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
 
-      - name: Determine Version Pattern
-        id: version
+      - name: Configure Git
         run: |
-          if [ -n "${{ github.event.inputs.version }}" ]; then
-            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+          git config --global user.name "${USERNAME}"
+          git config --global user.email "${USERNAME}@amadeus.com"
+
+      - name: Check if last commit is technical
+        id: technical_commit
+        run: |
+          LAST_LOG=$(git log -1 --pretty=%B | tail -n 1)
+          echo "lastLog=${LAST_LOG}"
+          if [[ "$LAST_LOG" == "[sbt-release]"* || "$LAST_LOG" == "[doc]"* ]]; then
+            echo "is_technical=true" >> $GITHUB_OUTPUT
           else
-            if [ "${{ github.event_name }}" == "pull_request" ]; then
-              COMMIT_SHA="${{ github.event.pull_request.head.sha }}"
-            else
-              COMMIT_SHA="${GITHUB_SHA}"
-            fi
-            SHORT_COMMIT=$(echo "${COMMIT_SHA}" | cut -c1-7)
-            git fetch --tags
-            LATEST_TAG=$(git tag -l "v*" | grep -v SNAPSHOT | sort -V | tail -n1)
-            if [ -n "$LATEST_TAG" ]; then
-              LATEST_VERSION=${LATEST_TAG#v}
-              MAJOR=$(echo $LATEST_VERSION | cut -d. -f1)
-              MINOR=$(echo $LATEST_VERSION | cut -d. -f2)
-              PATCH=$(echo $LATEST_VERSION | cut -d. -f3)
-              NEXT_PATCH=$((PATCH + 1))
-              NEXT_VERSION="${MAJOR}.${MINOR}.${NEXT_PATCH}"
-              echo "VERSION=${NEXT_VERSION}-${SHORT_COMMIT}-SNAPSHOT" >> $GITHUB_ENV
-            else
-              echo "Error: No git tags found. Unable to determine version." >&2
-              exit 1
-            fi
+            echo "is_technical=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Publish to Artifactory
-        env:
-          VERSION: ${{ env.VERSION }}
-        run: |
-            echo "Publishing to Artifactory with IZ_USER $AR_USER"
-            echo "VERSION: $VERSION"
-            sbt clean publish
 
-      - name: Create Git Tag
-        if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master' && github.event.inputs.version != '' }}
+      - name: Fetch master tags
+          if: steps.technical_commit.outputs.is_technical == 'false'
+          run: |
+            git fetch --tags origin +refs/heads/master:refs/remotes/origin/master
+            git tag -d $(git tag --no-merged origin/master) || true
+            git tag -l
+
+      - name: Pre-release checks
+        if: steps.technical_commit.outputs.is_technical == 'false'
         run: |
-            git tag "v${{ env.VERSION }}"
-            git push origin "v${{ env.VERSION }}"
+          sbt $SBT_OPTIONS -batch 'show latestTag unreleasedCommits suggestedBump'
+
+      - name: Build
+        if: steps.technical_commit.outputs.is_technical == 'false'
+        run: |
+          sbt $SBT_OPTIONS -batch clean compile
+
+      - name: Unit Tests
+        if: steps.technical_commit.outputs.is_technical == 'false'
+        run: |
+          sbt $SBT_OPTIONS -batch coverageOn test coverageReport coverageAggregate
+
+
+      - name: JUnit Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-results
+          path: '**/target/test-reports/*.xml'
+
+  release:
+    name: Release to Artifactory (master only)
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && needs.build.outputs.is_technical == 'false'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "${{USERNAME}}"
+          git config --global user.email "${{USERNAME}}@amadeus.com"
+
+      - name: Fetch master tags
+        run: |
+          git fetch --tags origin +refs/heads/master:refs/remotes/origin/master
+          git tag -d $(git tag --no-merged origin/master) || true
+          git tag -l
+
+      - name: Release with sbt
+        run: |
+          git checkout master
+          git branch -u origin/master
+          sbt $SBT_OPTIONS -batch 'release with-defaults skip-tests'
+
+    pr-snapshot:
+      name: Publish PR Snapshots
+      if: github.event_name == 'pull_request'
+      runs-on: ubuntu-latest
+
+      steps:
+        - uses: actions/checkout@v4
+
+        - name: Set up JDK
+          uses: actions/setup-java@v4
+          with:
+            distribution: 'temurin'
+            java-version: '11'
+
+        - name: Configure Git
+          run: |
+            git config --global user.name "${{ secrets.IZ_USER_USERNAME }}"
+            git config --global user.email "${{ secrets.IZ_USER_USERNAME }}@amadeus.com"
+
+        - name: Get Project Version
+          id: project_version
+          run: |
+            VERSION=$(sbt -no-colors -error "print version" | tail -1)
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+        - name: Publish PR Snapshot to Artifactory
+          run: |
+            GENERATED_VERSION="${{ steps.project_version.outputs.version }}.PR${{ github.event.pull_request.number }}.COMMIT$(git rev-parse --short HEAD)"
+            sbt "set every version := \"$GENERATED_VERSION\"" $SBT_OPTIONS publish
