@@ -27,10 +27,10 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
         jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should equal(0)
 
         jsonSink.write(jr)
-        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should not equal(0)
+        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should not equal 0
 
         jsonSink.close()
-        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should not equal(0)
+        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should not equal 0
 
         // check files content
         val spark = sparkBuilder.getOrCreate()
@@ -64,7 +64,7 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
         jsonSink.write(jr)
         jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should equal(0)
         jsonSink.write(jr)
-        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should not equal(0)
+        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should not equal 0
 
         // check files content
         val spark = sparkBuilder.getOrCreate()
@@ -99,7 +99,7 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
 
         // flush with 4 reports in sink
         jsonSink.close()
-        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should not equal(0)
+        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should not equal 0
 
         // check files content
         val spark = sparkBuilder.getOrCreate()
