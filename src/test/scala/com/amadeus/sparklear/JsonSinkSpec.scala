@@ -119,8 +119,6 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
           writeBatchSize = 100,
           fileSizeLimit = 10L*1024)
 
-        println(tmpDir)
-
         val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
         val jsonLocation = new File(jsonSink.jobReportsDir)
         jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should equal(0)
