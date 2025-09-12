@@ -7,10 +7,6 @@ import org.apache.spark.sql.execution.adaptive.{AdaptiveSparkPlanExec, ShuffleQu
 import org.apache.spark.sql.execution.metric.SQLMetric
 import org.apache.spark.sql.execution.ui.SparkInternal
 
-import org.apache.avro.Schema
-import org.apache.avro.generic.{GenericData, GenericRecord}
-import scala.collection.JavaConverters._
-
 case class SqlReport(
   sqlId: Long,
   description: String,
@@ -78,66 +74,5 @@ object SqlReport extends Translator[SqlEntity, SqlReport] {
     val plan = SparkInternal.executedPlan(sqlEntity.end)
     val nodes = buildNodes(sqlEntity.start.description, "0", sqlId, plan, "")
     nodes
-  }
-}
-
-object SqlGenericRecord extends GenericTranslator[SqlReport, GenericRecord] {
-  override val reportSchema: Schema = new Schema.Parser()
-    .parse("""
-             |{
-             | "type": "record",
-             | "name": "Root",
-             | "fields": [
-             |   {"name": "details", "type": "string"},
-             |   {"name": "nodes",
-             |    "type": [
-             |      "null",
-             |      { "type": "array",
-             |        "items": {
-             |          "type": "record",
-             |          "name": "Node",
-             |          "fields": [
-             |            { "name": "sqlId", "type": "long" },
-             |            { "name": "jobName", "type": "string" },
-             |            { "name": "nodeName", "type": "string" },
-             |            { "name": "coordinates", "type": "string" },
-             |            { "name": "metrics", "type": ["null", { "type": "map", "values": "string" } ] },
-             |            { "name": "isLeaf", "type": "boolean" },
-             |            { "name": "parentNodeName", "type": "string" }
-             |          ]
-             |        }
-             |      }
-             |    ]
-             |   }
-             |  ]
-             |}
-             |""".stripMargin)
-
-  // Extract the array schema from the union
-  private val SqlNodesFieldSchemaTmp = reportSchema.getField("nodes").schema()
-  private val SqlNodesFieldSchema = SqlNodesFieldSchemaTmp.getType match {
-    case Schema.Type.UNION => SqlNodesFieldSchemaTmp.getTypes.asScala.find(_.getType == Schema.Type.ARRAY).get
-    case Schema.Type.ARRAY => SqlNodesFieldSchemaTmp
-    case _ => throw new IllegalArgumentException("Expected array or union of array")
-  }
-  private val SqlNodeSchema = SqlNodesFieldSchema.getElementType
-
-  override def fromReportToGenericRecord(r: SqlReport): GenericRecord = {
-    val record = new GenericData.Record(reportSchema)
-    val nodes = new GenericData.Array(SqlNodesFieldSchema, r.nodes.map { n =>
-      val node = new GenericData.Record(SqlNodeSchema)
-      node.put("sqlId", n.sqlId)
-      node.put("jobName", n.jobName)
-      node.put("nodeName", n.nodeName)
-      node.put("coordinates", n.coordinates)
-      node.put("metrics", n.metrics.asJava)
-      node.put("isLeaf", n.isLeaf)
-      node.put("parentNodeName", n.parentNodeName)
-      node
-    }.toList.asJava )
-
-    record.put("details", r.details)
-    record.put("nodes", nodes)
-    record
   }
 }

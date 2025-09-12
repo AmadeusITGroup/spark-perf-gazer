@@ -1,6 +1,6 @@
 package com.amadeus.testfwk
 
-import com.amadeus.sparklear.{JsonSink, LogSink, ParquetSink, Sink}
+import com.amadeus.sparklear.{JsonSink, LogSink, Sink}
 import com.amadeus.sparklear.reports.Report
 import com.amadeus.testfwk.SinkSupport.TestableSink
 import scala.collection.mutable.ListBuffer
@@ -33,9 +33,5 @@ trait SinkSupport {
   def withJsonSink[T](parquetSinkDestination: String, writeBatchSize: Int)(testCode: JsonSink => T): T = {
     val jsonSink = new JsonSink(destination = parquetSinkDestination, writeBatchSize = writeBatchSize)
     testCode(jsonSink)
-  }
-  def withParquetSink[T](parquetSinkDestination: String, writeBatchSize: Int)(testCode: ParquetSink => T): T = {
-    val parquetSink = new ParquetSink(destination = parquetSinkDestination, writeBatchSize = writeBatchSize)
-    testCode(parquetSink)
   }
 }

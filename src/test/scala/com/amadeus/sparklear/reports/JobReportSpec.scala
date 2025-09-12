@@ -37,5 +37,4 @@ class JobReportSpec extends SimpleSpec with ConfigSupport {
       )
     }
   }
-
 }

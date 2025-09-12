@@ -3,7 +3,7 @@ package com.amadeus.integration
 import com.amadeus.sparklear.SparklEar
 import com.amadeus.testfwk._
 
-class ReadCsvToNoopJsonSinkSpec
+class JsonSinkIntegrationSpec
   extends SimpleSpec
     with SparkSupport
     with OptdSupport
@@ -69,9 +69,7 @@ class ReadCsvToNoopJsonSinkSpec
             .withColumn("stageId", explode(col("stages")))
             .drop("stages")
             .join(dfStageReports, Seq("stageId"))
-            .drop(dfStageReports("stageId"))
             .join(dfTaskReports, Seq("stageId"))
-            .drop(dfTaskReports("stageId"))
           dfTasks.show()
 
           // Close the listener
