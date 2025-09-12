@@ -3,7 +3,7 @@ package com.amadeus.integration
 import com.amadeus.sparklear.SparklEar
 import com.amadeus.testfwk._
 
-class ReadCsvToNoopJsonSinkSpec
+class JsonSinkIntegrationSpec
   extends SimpleSpec
     with SparkSupport
     with OptdSupport
@@ -15,9 +15,10 @@ class ReadCsvToNoopJsonSinkSpec
   describe("The listener when reading a .csv and writing to noop") {
     withSpark(appName = this.getClass.getName) { spark =>
       withTmpDir { tmpDir =>
-
-        val writeBatchSize = 5
-        withJsonSink(s"$tmpDir", writeBatchSize) { jsonSink =>
+        // Set thresholds for coverage - only flush at the end
+        val writeBatchSize = 200
+        val fileSizeLimit = 200L*1024*1024
+        withJsonSink(s"$tmpDir", writeBatchSize, fileSizeLimit) { jsonSink =>
           import org.apache.spark.sql.functions._
 
           val df = readOptd(spark)
@@ -35,7 +36,7 @@ class ReadCsvToNoopJsonSinkSpec
           spark.sparkContext.removeSparkListener(eventsListener)
           jsonSink.close()
 
-          val dfSqlReports = spark.read.json(jsonSink.sqlReportsFile)
+          val dfSqlReports = spark.read.json(jsonSink.sqlReportsDir)
           val dfSqlReportsCnt = dfSqlReports.count()
           it("should save SQL reports in json file") {
             dfSqlReports.schema.names.toSet should contain("sqlId")
@@ -43,21 +44,21 @@ class ReadCsvToNoopJsonSinkSpec
           }
           dfSqlReports.show()
 
-          val dfJobReports = spark.read.json(jsonSink.jobReportsFile)
+          val dfJobReports = spark.read.json(jsonSink.jobReportsDir)
           val dfJobReportsCnt = dfJobReports.count()
           it("should save Job reports in json file") {
             dfJobReports.schema.names.toSet should contain("jobId")
             dfJobReportsCnt shouldBe 1
           }
 
-          val dfStageReports = spark.read.json(jsonSink.stageReportsFile)
+          val dfStageReports = spark.read.json(jsonSink.stageReportsDir)
           val dfStageReportsCnt = dfStageReports.count()
           it("should save Stage reports in json file") {
             dfStageReports.schema.names.toSet should contain("stageId")
             dfStageReportsCnt shouldBe 1
           }
 
-          val dfTaskReports = spark.read.json(jsonSink.taskReportsFile)
+          val dfTaskReports = spark.read.json(jsonSink.taskReportsDir)
           val dfTaskReportsCnt = dfTaskReports.count()
           it("should save Task reports in json file") {
             dfTaskReports.schema.names.toSet should contain("taskId")
@@ -69,10 +70,13 @@ class ReadCsvToNoopJsonSinkSpec
             .withColumn("stageId", explode(col("stages")))
             .drop("stages")
             .join(dfStageReports, Seq("stageId"))
-            .drop(dfStageReports("stageId"))
             .join(dfTaskReports, Seq("stageId"))
-            .drop(dfTaskReports("stageId"))
           dfTasks.show()
+          val dfTasksCnt = dfTasks.count()
+
+          it("should reconcile reports") {
+            dfTasksCnt should equal(dfTaskReportsCnt)
+          }
 
           // Close the listener
           eventsListener.close()

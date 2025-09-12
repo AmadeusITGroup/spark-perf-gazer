@@ -20,15 +20,16 @@ class SampleSkewDetectionSpec
   describe("The listener for skew detection") {
     withTmpDir { tmpDir =>
       withSpark(appName = this.getClass.getName) { spark =>
-        val WriteBatchSize = 5
-        withParquetSink(s"$tmpDir", WriteBatchSize) { parquetSink =>
+        // Set thresholds for coverage - write and switch files for every report
+        val writeBatchSize = 1
+        val fileSizeLimit = 1L*100
+        withJsonSink(s"$tmpDir", writeBatchSize, fileSizeLimit) { jsonSink =>
           import org.apache.spark.sql.functions._
           import spark.implicits._
-
           import scala.util.Random
 
           // regular setup
-          val cfg = defaultTestConfig.withAllEnabled.withSink(parquetSink)
+          val cfg = defaultTestConfig.withAllEnabled.withSink(jsonSink)
           val eventsListener = new SparklEar(cfg)
           spark.sparkContext.addSparkListener(eventsListener)
 
@@ -85,30 +86,30 @@ class SampleSkewDetectionSpec
 
           Thread.sleep(3000)
           spark.sparkContext.removeSparkListener(eventsListener)
-          parquetSink.close()
+          jsonSink.close()
 
-          val dfSqlReports = spark.read.parquet(parquetSink.sqlReportsDirPath)
+          val dfSqlReports = spark.read.json(jsonSink.sqlReportsDir)
           val dfSqlReportsCnt = dfSqlReports.count()
-          it("should save SQL reports in parquet file") {
+          it("should save SQL reports in json file") {
             dfSqlReportsCnt shouldBe 1
           }
           dfSqlReports.show()
 
-          val dfJobReports = spark.read.parquet(parquetSink.jobReportsDirPath)
+          val dfJobReports = spark.read.json(jsonSink.jobReportsDir)
           val dfJobReportsCnt = dfJobReports.count()
-          it("should save Job reports in parquet file") {
+          it("should save Job reports in json file") {
             dfJobReportsCnt should be > 1L
           }
 
-          val dfStageReports = spark.read.parquet(parquetSink.stageReportsDirPath)
+          val dfStageReports = spark.read.json(jsonSink.stageReportsDir)
           val dfStageReportsCnt = dfStageReports.count()
-          it("should save Stage reports in parquet file") {
+          it("should save Stage reports in json file") {
             dfStageReportsCnt should be > 1L
           }
 
-          val dfTaskReports = spark.read.parquet(parquetSink.taskReportsDirPath)
+          val dfTaskReports = spark.read.json(jsonSink.taskReportsDir)
           val dfTaskReportsCnt = dfTaskReports.count()
-          it("should save Task reports in parquet file") {
+          it("should save Task reports in json file") {
             dfTaskReportsCnt should be > 1L
           }
 
@@ -116,10 +117,13 @@ class SampleSkewDetectionSpec
             .withColumn("stageId", explode(col("stages")))
             .drop("stages")
             .join(dfStageReports, Seq("stageId"))
-            .drop(dfStageReports("stageId"))
             .join(dfTaskReports, Seq("stageId"))
-            .drop(dfTaskReports("stageId"))
           dfTasks.show()
+          val dfTasksCnt = dfTasks.count()
+
+          it("should reconcile reports") {
+            dfTasksCnt should equal(dfTaskReportsCnt)
+          }
 
           // Close the listener
           eventsListener.close()
