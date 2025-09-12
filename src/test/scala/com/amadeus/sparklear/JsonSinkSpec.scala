@@ -112,5 +112,37 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
         spark.stop()
       }
     }
+    it("should do file rolling when fileSizeLimit is reached ") {
+      withTmpDir { tmpDir =>
+        val jsonSink = new JsonSink(
+          destination = s"$tmpDir",
+          writeBatchSize = 100,
+          fileSizeLimit = 10L*1024)
+
+        println(tmpDir)
+
+        val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
+        val jsonLocation = new File(jsonSink.jobReportsDir)
+        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should equal(0)
+
+        for (i <- 1 to 150) {
+          jsonSink.write(jr)
+        }
+
+        // flush with 50 reports in sink
+        jsonSink.close()
+        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should not equal 0
+
+        // check files content
+        val spark = sparkBuilder.getOrCreate()
+        import spark.implicits._
+        val dfJobReports = spark.read.json(jsonSink.jobReportsDir)
+        dfJobReports.count() shouldBe 150
+        dfJobReports
+          .select("jobId", "groupId", "jobName", "jobStartTime", "jobEndTime", "sqlId", "stages")
+          .collectAsList() should equal (List.fill(150)(jr).toDF().collectAsList())
+        spark.stop()
+      }
+    }
   }
 }
