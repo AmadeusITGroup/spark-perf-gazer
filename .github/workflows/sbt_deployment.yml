@@ -126,32 +126,32 @@ jobs:
           git branch -u origin/master
           sbt $SBT_OPTIONS -batch 'release with-defaults skip-tests'
 
-    pr-snapshot:
-      name: Publish PR Snapshots
-      if: github.event_name == 'pull_request'
-      runs-on: ubuntu-latest
+  pr-snapshot:
+    name: Publish PR Snapshots
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
 
-      steps:
-        - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-        - name: Set up JDK
-          uses: actions/setup-java@v4
-          with:
-            distribution: 'temurin'
-            java-version: '11'
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
 
-        - name: Configure Git
-          run: ||
-            git config --global user.name "${{USERNAME}}"
-            git config --global user.email "${{USERNAME}}@amadeus.com"
+      - name: Configure Git
+        run: |
+          git config --global user.name "${{USERNAME}}"
+          git config --global user.email "${{USERNAME}}@amadeus.com"
 
-        - name: Get Project Version
-          id: project_version
-          run: |
-            VERSION=$(sbt -no-colors -error "print version" | tail -1)
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
+      - name: Get Project Version
+        id: project_version
+        run: |
+          VERSION=$(sbt -no-colors -error "print version" | tail -1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-        - name: Publish PR Snapshot to Artifactory
-          run: |
-            GENERATED_VERSION="${{ steps.project_version.outputs.version }}.PR${{ github.event.pull_request.number }}.COMMIT$(git rev-parse --short HEAD)"
-            sbt "set every version := \"$GENERATED_VERSION\"" $SBT_OPTIONS publish
+      - name: Publish PR Snapshot to Artifactory
+        run: |
+          GENERATED_VERSION="${{ steps.project_version.outputs.version }}.PR${{ github.event.pull_request.number }}.COMMIT$(git rev-parse --short HEAD)"
+          sbt "set every version := \"$GENERATED_VERSION\"" $SBT_OPTIONS publish
