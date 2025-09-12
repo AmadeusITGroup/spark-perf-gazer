@@ -114,16 +114,16 @@ jobs:
           git config --global user.name "${USERNAME}"
           git config --global user.email "${USERNAME}@amadeus.com"
 
-      - name: Fetch master tags
+      - name: Fetch master(main) tags
         run: |
-          git fetch --tags origin +refs/heads/master:refs/remotes/origin/master
-          git tag -d $(git tag --no-merged origin/master) || true
+          git fetch --tags origin +refs/heads/main:refs/remotes/origin/main
+          git tag -d $(git tag --no-merged origin/main) || true
           git tag -l
 
       - name: Release with sbt
         run: |
-          git checkout master
-          git branch -u origin/master
+          git checkout main
+          git branch -u origin/main
           sbt $SBT_OPTIONS -batch 'release with-defaults skip-tests'
 
   pr-snapshot:
