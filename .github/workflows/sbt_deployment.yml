@@ -141,9 +141,9 @@ jobs:
             java-version: '11'
 
         - name: Configure Git
-          run: |
-            git config --global user.name "${{ secrets.IZ_USER_USERNAME }}"
-            git config --global user.email "${{ secrets.IZ_USER_USERNAME }}@amadeus.com"
+          run: ||
+            git config --global user.name "${{USERNAME}}"
+            git config --global user.email "${{USERNAME}}@amadeus.com"
 
         - name: Get Project Version
           id: project_version
