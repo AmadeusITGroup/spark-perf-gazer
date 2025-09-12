@@ -64,11 +64,11 @@ jobs:
           fi
 
 
-      - name: Fetch master tags
+      - name: Fetch master(main) tags
         if: steps.technical_commit.outputs.is_technical == 'false'
         run: |
-          git fetch --tags origin +refs/heads/master:refs/remotes/origin/master
-          git tag -d $(git tag --no-merged origin/master) || true
+          git fetch --tags origin +refs/heads/main:refs/remotes/origin/main
+          git tag -d $(git tag --no-merged origin/main) || true
           git tag -l
 
       - name: Pre-release checks
@@ -98,7 +98,7 @@ jobs:
     name: Release to Artifactory (master only)
     needs: build-and-test
     runs-on: gmsshr-maven-amadeus-cplatform
-    if: github.ref == 'refs/heads/master' && needs.build.outputs.is_technical == 'false'
+    if: github.ref == 'refs/heads/main' && needs.build.outputs.is_technical == 'false'
 
     steps:
       - uses: actions/checkout@v4
