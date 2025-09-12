@@ -20,7 +20,8 @@ import scala.collection.mutable.ListBuffer
   */
 class JsonSink(
   destination: String,
-  writeBatchSize: Int
+  writeBatchSize: Int,
+  fileSizeLimit: Long
 ) extends Sink {
   implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
 
@@ -38,11 +39,11 @@ class JsonSink(
   val stageReportsDir: String = s"$destination/level=stage/"
   val taskReportsDir: String = s"$destination/level=task/"
 
-  val reportFileName: String = "reports.json"
-  val sqlReportsFile: String = s"$sqlReportsDir/$reportFileName"
-  val jobReportsFile: String = s"$jobReportsDir/$reportFileName"
-  val stageReportsFile: String = s"$stageReportsDir/$reportFileName"
-  val taskReportsFile: String = s"$taskReportsDir/$reportFileName"
+  val uuid: String = java.util.UUID.randomUUID().toString
+  private var sqlReportsFile: String = s"$sqlReportsDir/reports-$uuid.json"
+  private var jobReportsFile: String = s"$jobReportsDir/reports-$uuid.json"
+  private var stageReportsFile: String = s"$stageReportsDir/reports-$uuid.json"
+  private var taskReportsFile: String = s"$taskReportsDir/reports-$uuid.json"
 
   import java.io.File
   Seq(sqlReportsDir, jobReportsDir, stageReportsDir, taskReportsDir).foreach{ dir =>

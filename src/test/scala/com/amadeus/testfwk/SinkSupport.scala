@@ -30,8 +30,8 @@ trait SinkSupport {
     val logSink = new LogSink()
     testCode(logSink)
   }
-  def withJsonSink[T](parquetSinkDestination: String, writeBatchSize: Int)(testCode: JsonSink => T): T = {
-    val jsonSink = new JsonSink(destination = parquetSinkDestination, writeBatchSize = writeBatchSize)
+  def withJsonSink[T](parquetSinkDestination: String, writeBatchSize: Int, fileSizeLimit: Long)(testCode: JsonSink => T): T = {
+    val jsonSink = new JsonSink(destination = parquetSinkDestination, writeBatchSize = writeBatchSize, fileSizeLimit = fileSizeLimit)
     testCode(jsonSink)
   }
 }

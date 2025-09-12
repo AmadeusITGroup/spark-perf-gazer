@@ -20,8 +20,9 @@ class SampleSkewDetectionSpec
   describe("The listener for skew detection") {
     withTmpDir { tmpDir =>
       withSpark(appName = this.getClass.getName) { spark =>
-        val WriteBatchSize = 5
-        withJsonSink(s"$tmpDir", WriteBatchSize) { jsonSink =>
+        val writeBatchSize = 5
+        val fileSizeLimit = 200L*1024*1024
+        withJsonSink(s"$tmpDir", writeBatchSize, fileSizeLimit) { jsonSink =>
           import org.apache.spark.sql.functions._
           import spark.implicits._
 
@@ -87,26 +88,26 @@ class SampleSkewDetectionSpec
           spark.sparkContext.removeSparkListener(eventsListener)
           jsonSink.close()
 
-          val dfSqlReports = spark.read.json(jsonSink.sqlReportsFile)
+          val dfSqlReports = spark.read.json(jsonSink.sqlReportsDir)
           val dfSqlReportsCnt = dfSqlReports.count()
           it("should save SQL reports in json file") {
             dfSqlReportsCnt shouldBe 1
           }
           dfSqlReports.show()
 
-          val dfJobReports = spark.read.json(jsonSink.jobReportsFile)
+          val dfJobReports = spark.read.json(jsonSink.jobReportsDir)
           val dfJobReportsCnt = dfJobReports.count()
           it("should save Job reports in json file") {
             dfJobReportsCnt should be > 1L
           }
 
-          val dfStageReports = spark.read.json(jsonSink.stageReportsFile)
+          val dfStageReports = spark.read.json(jsonSink.stageReportsDir)
           val dfStageReportsCnt = dfStageReports.count()
           it("should save Stage reports in json file") {
             dfStageReportsCnt should be > 1L
           }
 
-          val dfTaskReports = spark.read.json(jsonSink.taskReportsFile)
+          val dfTaskReports = spark.read.json(jsonSink.taskReportsDir)
           val dfTaskReportsCnt = dfTaskReports.count()
           it("should save Task reports in json file") {
             dfTaskReportsCnt should be > 1L
@@ -118,9 +119,10 @@ class SampleSkewDetectionSpec
             .join(dfStageReports, Seq("stageId"))
             .join(dfTaskReports, Seq("stageId"))
           dfTasks.show()
+          val dfTasksCnt = dfTasks.count()
 
           it("should reconcile reports") {
-            dfTasks should equal(dfTaskReportsCnt)
+            dfTasksCnt should equal(dfTaskReportsCnt)
           }
 
           // Close the listener

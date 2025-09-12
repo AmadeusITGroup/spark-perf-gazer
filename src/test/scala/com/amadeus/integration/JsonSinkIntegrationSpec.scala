@@ -17,7 +17,8 @@ class JsonSinkIntegrationSpec
       withTmpDir { tmpDir =>
 
         val writeBatchSize = 5
-        withJsonSink(s"$tmpDir", writeBatchSize) { jsonSink =>
+        val fileSizeLimit = 200L*1024*1024
+        withJsonSink(s"$tmpDir", writeBatchSize, fileSizeLimit) { jsonSink =>
           import org.apache.spark.sql.functions._
 
           val df = readOptd(spark)
@@ -35,7 +36,7 @@ class JsonSinkIntegrationSpec
           spark.sparkContext.removeSparkListener(eventsListener)
           jsonSink.close()
 
-          val dfSqlReports = spark.read.json(jsonSink.sqlReportsFile)
+          val dfSqlReports = spark.read.json(jsonSink.sqlReportsDir)
           val dfSqlReportsCnt = dfSqlReports.count()
           it("should save SQL reports in json file") {
             dfSqlReports.schema.names.toSet should contain("sqlId")
@@ -43,21 +44,21 @@ class JsonSinkIntegrationSpec
           }
           dfSqlReports.show()
 
-          val dfJobReports = spark.read.json(jsonSink.jobReportsFile)
+          val dfJobReports = spark.read.json(jsonSink.jobReportsDir)
           val dfJobReportsCnt = dfJobReports.count()
           it("should save Job reports in json file") {
             dfJobReports.schema.names.toSet should contain("jobId")
             dfJobReportsCnt shouldBe 1
           }
 
-          val dfStageReports = spark.read.json(jsonSink.stageReportsFile)
+          val dfStageReports = spark.read.json(jsonSink.stageReportsDir)
           val dfStageReportsCnt = dfStageReports.count()
           it("should save Stage reports in json file") {
             dfStageReports.schema.names.toSet should contain("stageId")
             dfStageReportsCnt shouldBe 1
           }
 
-          val dfTaskReports = spark.read.json(jsonSink.taskReportsFile)
+          val dfTaskReports = spark.read.json(jsonSink.taskReportsDir)
           val dfTaskReportsCnt = dfTaskReports.count()
           it("should save Task reports in json file") {
             dfTaskReports.schema.names.toSet should contain("taskId")
@@ -71,6 +72,11 @@ class JsonSinkIntegrationSpec
             .join(dfStageReports, Seq("stageId"))
             .join(dfTaskReports, Seq("stageId"))
           dfTasks.show()
+          val dfTasksCnt = dfTasks.count()
+
+          it("should reconcile reports") {
+            dfTasksCnt should equal(dfTaskReportsCnt)
+          }
 
           // Close the listener
           eventsListener.close()
