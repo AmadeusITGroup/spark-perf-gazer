@@ -65,11 +65,11 @@ jobs:
 
 
       - name: Fetch master tags
-          if: steps.technical_commit.outputs.is_technical == 'false'
-          run: |
-            git fetch --tags origin +refs/heads/master:refs/remotes/origin/master
-            git tag -d $(git tag --no-merged origin/master) || true
-            git tag -l
+        if: steps.technical_commit.outputs.is_technical == 'false'
+        run: |
+          git fetch --tags origin +refs/heads/master:refs/remotes/origin/master
+          git tag -d $(git tag --no-merged origin/master) || true
+          git tag -l
 
       - name: Pre-release checks
         if: steps.technical_commit.outputs.is_technical == 'false'
