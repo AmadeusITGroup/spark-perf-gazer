@@ -15,9 +15,9 @@ class JsonSinkIntegrationSpec
   describe("The listener when reading a .csv and writing to noop") {
     withSpark(appName = this.getClass.getName) { spark =>
       withTmpDir { tmpDir =>
-
-        val writeBatchSize = 5
-        val fileSizeLimit = 200L*1024*1024
+        // Lower thresholds for coverage
+        val writeBatchSize = 1
+        val fileSizeLimit = 1L*100
         withJsonSink(s"$tmpDir", writeBatchSize, fileSizeLimit) { jsonSink =>
           import org.apache.spark.sql.functions._
 
