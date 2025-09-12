@@ -111,8 +111,8 @@ jobs:
 
       - name: Configure Git
         run: |
-          git config --global user.name "${{USERNAME}}"
-          git config --global user.email "${{USERNAME}}@amadeus.com"
+          git config --global user.name "${USERNAME}"
+          git config --global user.email "${USERNAME}@amadeus.com"
 
       - name: Fetch master tags
         run: |
@@ -142,8 +142,8 @@ jobs:
 
       - name: Configure Git
         run: |
-          git config --global user.name "${{USERNAME}}"
-          git config --global user.email "${{USERNAME}}@amadeus.com"
+          git config --global user.name "${USERNAME}"
+          git config --global user.email "${USERNAME}@amadeus.com"
 
       - name: Get Project Version
         id: project_version
