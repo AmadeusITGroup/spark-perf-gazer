@@ -28,8 +28,7 @@ object Dependencies {
     "org.scalamock"              %% "scalamock"       % "5.1.0"       % Test,
     "com.jayway.jsonpath"         % "json-path"       % "2.8.0"       % Test,
     "io.delta"                   %% "delta-core"      % "2.4.0"       % Test,
-    "com.github.sbt"              % "junit-interface" % "0.13.3"      % Test,
-    "org.scoverage"              %% "scalac-scoverage-plugin" % "2.0.8" % Test
+    "com.github.sbt"              % "junit-interface" % "0.13.3"      % Test
   )
   // @formatter:on
 
