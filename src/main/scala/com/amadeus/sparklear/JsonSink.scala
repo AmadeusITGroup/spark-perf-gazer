@@ -6,8 +6,8 @@ import org.json4s.{Formats, NoTypeHints}
 import org.json4s.jackson.Serialization.{write => asJson}
 import org.slf4j.{Logger, LoggerFactory}
 
-import java.io.{FileWriter, PrintWriter, File}
-
+import java.io.{File, FileWriter, PrintWriter}
+import java.time.Instant
 import scala.collection.mutable.ListBuffer
 
 /** Sink of a collection of reports to JSON files.
@@ -45,10 +45,10 @@ class JsonSink(
   }
 
   // Init Json reports writers
-  private var sqlReportsPath: String = s"$sqlReportsDir/reports-${java.util.UUID.randomUUID().toString}.json"
-  private var jobReportsPath: String = s"$jobReportsDir/reports-${java.util.UUID.randomUUID().toString}.json"
-  private var stageReportsPath: String = s"$stageReportsDir/reports-${java.util.UUID.randomUUID().toString}.json"
-  private var taskReportsPath: String = s"$taskReportsDir/reports-${java.util.UUID.randomUUID().toString}.json"
+  private var sqlReportsPath: String = s"$sqlReportsDir/reports-${Instant.now.toEpochMilli.toString}.json"
+  private var jobReportsPath: String = s"$jobReportsDir/reports-${Instant.now.toEpochMilli.toString}.json"
+  private var stageReportsPath: String = s"$stageReportsDir/reports-${Instant.now.toEpochMilli.toString}.json"
+  private var taskReportsPath: String = s"$taskReportsDir/reports-${Instant.now.toEpochMilli.toString}.json"
 
   private var sqlReportsWriter = new PrintWriter(new FileWriter(sqlReportsPath, true))
   private var jobReportsWriter = new PrintWriter(new FileWriter(jobReportsPath, true))
@@ -80,7 +80,7 @@ class JsonSink(
           if (sqlReportsFile.length() >= fileSizeLimit) {
             logger.debug("JsonSink Debug : reached fileSizeLimit threshold, closing current file {} ({}).", sqlReportsPath, sqlReportsFile.length())
             sqlReportsWriter.close()
-            sqlReportsPath = s"$sqlReportsDir/reports-${java.util.UUID.randomUUID().toString}.json"
+            sqlReportsPath = s"$sqlReportsDir/reports-${Instant.now.toEpochMilli.toString}.json"
             logger.debug("JsonSink Debug : reached fileSizeLimit threshold, switching to new file {}.", sqlReportsPath)
             sqlReportsWriter = new PrintWriter(new FileWriter(sqlReportsPath, true))
             sqlReportsFile = new File(sqlReportsPath)
@@ -103,7 +103,7 @@ class JsonSink(
           if (jobReportsFile.length() >= fileSizeLimit) {
             logger.debug("JsonSink Debug : reached fileSizeLimit threshold, closing current file {} ({}).", jobReportsPath, jobReportsFile.length())
             jobReportsWriter.close()
-            jobReportsPath = s"$jobReportsDir/reports-${java.util.UUID.randomUUID().toString}.json"
+            jobReportsPath = s"$jobReportsDir/reports-${Instant.now.toEpochMilli.toString}.json"
             logger.debug("JsonSink Debug : reached fileSizeLimit threshold, switching to new file {}.", jobReportsPath)
             jobReportsWriter = new PrintWriter(new FileWriter(jobReportsPath, true))
             jobReportsFile = new File(jobReportsPath)
@@ -126,7 +126,7 @@ class JsonSink(
           if (stageReportsFile.length() >= fileSizeLimit) {
             logger.debug("JsonSink Debug : reached fileSizeLimit threshold, closing current file {} ({}).", stageReportsPath, stageReportsFile.length())
             stageReportsWriter.close()
-            stageReportsPath = s"$stageReportsDir/reports-${java.util.UUID.randomUUID().toString}.json"
+            stageReportsPath = s"$stageReportsDir/reports-${Instant.now.toEpochMilli.toString}.json"
             logger.debug("JsonSink Debug : reached fileSizeLimit threshold, switching to new file {}.", stageReportsPath)
             stageReportsWriter = new PrintWriter(new FileWriter(stageReportsPath, true))
             stageReportsFile = new File(stageReportsPath)
@@ -149,7 +149,7 @@ class JsonSink(
           if (taskReportsFile.length() >= fileSizeLimit) {
             logger.debug("JsonSink Debug : reached fileSizeLimit threshold, closing current file {} ({}).", taskReportsPath, taskReportsFile.length())
             taskReportsWriter.close()
-            taskReportsPath = s"$taskReportsDir/reports-${java.util.UUID.randomUUID().toString}.json"
+            taskReportsPath = s"$taskReportsDir/reports-${Instant.now.toEpochMilli.toString}.json"
             logger.debug("JsonSink Debug : reached fileSizeLimit threshold, switching to new file {}.", taskReportsPath)
             taskReportsWriter = new PrintWriter(new FileWriter(taskReportsPath, true))
             taskReportsFile = new File(taskReportsPath)
