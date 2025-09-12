@@ -26,7 +26,6 @@ class JsonSink(
 ) extends Sink {
   implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
 
-  private var reportsCount: Int = 0
   private val sqlReports: ListBuffer[SqlReport] = new ListBuffer[SqlReport]()
   private val jobReports: ListBuffer[JobReport] = new ListBuffer[JobReport]()
   private val stageReports: ListBuffer[StageReport] = new ListBuffer[StageReport]()

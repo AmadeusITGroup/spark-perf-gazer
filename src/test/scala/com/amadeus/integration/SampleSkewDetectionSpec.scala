@@ -20,8 +20,9 @@ class SampleSkewDetectionSpec
   describe("The listener for skew detection") {
     withTmpDir { tmpDir =>
       withSpark(appName = this.getClass.getName) { spark =>
-        val writeBatchSize = 5
-        val fileSizeLimit = 1L*1024
+        // Lower thresholds for coverage
+        val writeBatchSize = 1
+        val fileSizeLimit = 1L*512
         withJsonSink(s"$tmpDir", writeBatchSize, fileSizeLimit) { jsonSink =>
           import org.apache.spark.sql.functions._
           import spark.implicits._
