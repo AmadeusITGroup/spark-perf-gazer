@@ -67,7 +67,7 @@ class JsonSink(
         sqlReports ++= Seq(sql)
 
         if (sqlReports.size >= writeBatchSize) {
-          logger.debug("JsonSink Debug : reached writeBatchSize threshold, writing to {} ({} reports).", sqlReportsPath, sqlReports.size)
+          logger.debug("reached writeBatchSize threshold, writing to {} ({} reports).", sqlReportsPath, sqlReports.size)
           sqlReports.foreach { r =>
             sqlReportsWriter.println(asJson(r)) // scalastyle:ignore regex
           }
@@ -78,10 +78,10 @@ class JsonSink(
 
           // File rolling
           if (sqlReportsFile.length() >= fileSizeLimit) {
-            logger.debug("JsonSink Debug : reached fileSizeLimit threshold, closing current file {} ({}).", sqlReportsPath, sqlReportsFile.length())
+            logger.debug("reached fileSizeLimit threshold, closing current file {} ({}).", sqlReportsPath, sqlReportsFile.length())
             sqlReportsWriter.close()
             sqlReportsPath = s"$sqlReportsDir/reports-${Instant.now.toEpochMilli.toString}.json"
-            logger.debug("JsonSink Debug : reached fileSizeLimit threshold, switching to new file {}.", sqlReportsPath)
+            logger.debug("reached fileSizeLimit threshold, switching to new file {}.", sqlReportsPath)
             sqlReportsWriter = new PrintWriter(new FileWriter(sqlReportsPath, true))
             sqlReportsFile = new File(sqlReportsPath)
           }
@@ -90,7 +90,7 @@ class JsonSink(
         jobReports ++= Seq(job)
 
         if (jobReports.size >= writeBatchSize) {
-          logger.debug("JsonSink Debug : reached writeBatchSize threshold, writing to {} ({} reports).", jobReportsPath, jobReports.size)
+          logger.debug("reached writeBatchSize threshold, writing to {} ({} reports).", jobReportsPath, jobReports.size)
           jobReports.foreach { r =>
             jobReportsWriter.println(asJson(r)) // scalastyle:ignore regex
           }
@@ -101,10 +101,10 @@ class JsonSink(
 
           // File rolling
           if (jobReportsFile.length() >= fileSizeLimit) {
-            logger.debug("JsonSink Debug : reached fileSizeLimit threshold, closing current file {} ({}).", jobReportsPath, jobReportsFile.length())
+            logger.debug("reached fileSizeLimit threshold, closing current file {} ({}).", jobReportsPath, jobReportsFile.length())
             jobReportsWriter.close()
             jobReportsPath = s"$jobReportsDir/reports-${Instant.now.toEpochMilli.toString}.json"
-            logger.debug("JsonSink Debug : reached fileSizeLimit threshold, switching to new file {}.", jobReportsPath)
+            logger.debug("reached fileSizeLimit threshold, switching to new file {}.", jobReportsPath)
             jobReportsWriter = new PrintWriter(new FileWriter(jobReportsPath, true))
             jobReportsFile = new File(jobReportsPath)
           }
@@ -113,7 +113,7 @@ class JsonSink(
         stageReports ++= Seq(stage)
 
         if (stageReports.size >= writeBatchSize) {
-          logger.debug("JsonSink Debug : reached writeBatchSize threshold, writing to {} ({} reports).", stageReportsPath, stageReports.size)
+          logger.debug("reached writeBatchSize threshold, writing to {} ({} reports).", stageReportsPath, stageReports.size)
           stageReports.foreach { r =>
             stageReportsWriter.println(asJson(r)) // scalastyle:ignore regex
           }
@@ -124,10 +124,10 @@ class JsonSink(
 
           // File rolling
           if (stageReportsFile.length() >= fileSizeLimit) {
-            logger.debug("JsonSink Debug : reached fileSizeLimit threshold, closing current file {} ({}).", stageReportsPath, stageReportsFile.length())
+            logger.debug("reached fileSizeLimit threshold, closing current file {} ({}).", stageReportsPath, stageReportsFile.length())
             stageReportsWriter.close()
             stageReportsPath = s"$stageReportsDir/reports-${Instant.now.toEpochMilli.toString}.json"
-            logger.debug("JsonSink Debug : reached fileSizeLimit threshold, switching to new file {}.", stageReportsPath)
+            logger.debug("reached fileSizeLimit threshold, switching to new file {}.", stageReportsPath)
             stageReportsWriter = new PrintWriter(new FileWriter(stageReportsPath, true))
             stageReportsFile = new File(stageReportsPath)
           }
@@ -136,7 +136,7 @@ class JsonSink(
         taskReports ++= Seq(task)
 
         if (taskReports.size >= writeBatchSize) {
-          logger.debug("JsonSink Debug : reached writeBatchSize threshold, writing to {} ({} reports)", taskReportsPath, taskReports.size)
+          logger.debug("reached writeBatchSize threshold, writing to {} ({} reports)", taskReportsPath, taskReports.size)
           taskReports.foreach { r =>
             taskReportsWriter.println(asJson(r)) // scalastyle:ignore regex
           }
@@ -147,10 +147,10 @@ class JsonSink(
 
           // File rolling
           if (taskReportsFile.length() >= fileSizeLimit) {
-            logger.debug("JsonSink Debug : reached fileSizeLimit threshold, closing current file {} ({}).", taskReportsPath, taskReportsFile.length())
+            logger.debug("reached fileSizeLimit threshold, closing current file {} ({}).", taskReportsPath, taskReportsFile.length())
             taskReportsWriter.close()
             taskReportsPath = s"$taskReportsDir/reports-${Instant.now.toEpochMilli.toString}.json"
-            logger.debug("JsonSink Debug : reached fileSizeLimit threshold, switching to new file {}.", taskReportsPath)
+            logger.debug("reached fileSizeLimit threshold, switching to new file {}.", taskReportsPath)
             taskReportsWriter = new PrintWriter(new FileWriter(taskReportsPath, true))
             taskReportsFile = new File(taskReportsPath)
           }
@@ -160,7 +160,7 @@ class JsonSink(
 
   override def flush(): Unit = {
     if (sqlReports.nonEmpty) {
-      logger.debug("JsonSink Debug : flushing remaining sql reports to {} ({} reports).", sqlReportsFile, sqlReports.size)
+      logger.debug("flushing remaining sql reports to {} ({} reports).", sqlReportsFile, sqlReports.size)
       sqlReports.foreach { r =>
         sqlReportsWriter.println(asJson(r)) // scalastyle:ignore regex
       }
@@ -170,7 +170,7 @@ class JsonSink(
       sqlReports.clear()
     }
     if (jobReports.nonEmpty) {
-      logger.debug("JsonSink Debug : flushing remaining job reports to {} ({} reports).", jobReportsFile, jobReports.size)
+      logger.debug("flushing remaining job reports to {} ({} reports).", jobReportsFile, jobReports.size)
       jobReports.foreach { r =>
         jobReportsWriter.println(asJson(r)) // scalastyle:ignore regex
       }
@@ -180,7 +180,7 @@ class JsonSink(
       jobReports.clear()
     }
     if (stageReports.nonEmpty) {
-      logger.debug("JsonSink Debug : flushing remaining stage reports to {} ({} reports).", stageReportsFile, stageReports.size)
+      logger.debug("flushing remaining stage reports to {} ({} reports).", stageReportsFile, stageReports.size)
       stageReports.foreach { r =>
         stageReportsWriter.println(asJson(r)) // scalastyle:ignore regex
       }
@@ -190,7 +190,7 @@ class JsonSink(
       stageReports.clear()
     }
     if (taskReports.nonEmpty) {
-      logger.debug("JsonSink Debug : flushing remaining task reports to {} ({} reports).", taskReportsFile, taskReports.size)
+      logger.debug("flushing remaining task reports to {} ({} reports).", taskReportsFile, taskReports.size)
       taskReports.foreach { r =>
         taskReportsWriter.println(asJson(r)) // scalastyle:ignore regex
       }
@@ -210,6 +210,6 @@ class JsonSink(
     stageReportsWriter.close()
     taskReportsWriter.close()
 
-    logger.debug("JsonSink Debug : writers closed.")
+    logger.debug("writers closed.")
   }
 }

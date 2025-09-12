@@ -22,7 +22,7 @@ class SampleSkewDetectionSpec
       withSpark(appName = this.getClass.getName) { spark =>
         // Lower thresholds for coverage
         val writeBatchSize = 1
-        val fileSizeLimit = 1L*512
+        val fileSizeLimit = 1L*100
         withJsonSink(s"$tmpDir", writeBatchSize, fileSizeLimit) { jsonSink =>
           import org.apache.spark.sql.functions._
           import spark.implicits._
