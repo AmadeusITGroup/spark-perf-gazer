@@ -87,7 +87,7 @@ jobs:
           sbt $SBT_OPTIONS -batch coverageOn test coverageReport coverageAggregate
 
       - name: Failing test into GH annotation
-        if: always()
+        if:  failure()
         run: |
           cat **/target/test-reports/*.xml |  grep " <failure message=" -B 1 | tr -d '\n' | tr -d '\n'  | grep -o -E "classname=\"[^\"]*\"|name=\"[^\"]*\"|message=\"[^\"]*\"" |  cut -d "=" -f 2 | tr  '"' ' '  > failure_messages
           for f in $(find ./target/test-reports/ -type f -iname "*.*.xml"); 
