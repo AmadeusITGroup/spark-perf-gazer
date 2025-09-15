@@ -93,10 +93,7 @@ jobs:
           do
             grep " <failure message=" -B 1 "$f" | tr -d '\n' | grep -o -E 'name="[^"]*"|message="[^"]*"' | cut -d "=" -f 2 | tr '"' ' ' | tr -d '\n' > failure_messages
             if [ -s failure_messages ]; then
-              echo "::error file=${f}::Failed tests"
-              while read -r line; do
-                echo"::error file=$f,title={Test-Failed}::${line#* }"
-              done < failure_messages
+              echo "::error file=${f}::Failed tests $(cat failure_messages)"
               rm -f failure_messages
             fi
           done
