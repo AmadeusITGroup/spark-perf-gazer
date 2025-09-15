@@ -23,6 +23,7 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
 
         jsonSink.close()
         jsonFile.length() should not equal 0
+        1 should equal(0)
       }
     }
     it("should write job reports with writeBatchSize = 5") {
