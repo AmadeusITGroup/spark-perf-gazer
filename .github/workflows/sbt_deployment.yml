@@ -86,6 +86,20 @@ jobs:
         run: |
           sbt $SBT_OPTIONS -batch coverageOn test coverageReport coverageAggregate
 
+      - name: Failing test into GH annotation
+        if: always()
+        run: |
+          cat **/target/test-reports/*.xml |  grep " <failure message=" -B 1 | tr -d '\n' | tr -d '\n'  | grep -o -E "classname=\"[^\"]*\"|name=\"[^\"]*\"|message=\"[^\"]*\"" |  cut -d "=" -f 2 | tr  '"' ' '  > failure_messages
+          for f in $(find ./target/test-reports/ -type f -iname "*.*.xml"); 
+            do grep " <failure message=" -B 1 "$f" | tr -d '\n' | grep -o -E 'classname="[^"]*"|name="[^"]*"|message="[^"]*"' | cut -d "=" -f 2 | tr '"' ' ' > failure_messages
+            if [ -s failure_messages ]; then
+              echo "::notice file=${f}, title=Failed tests"
+              while read -r line; do
+                echo "::notice file=${f}::${line#* }"
+              done < failure_messages
+              rm -f failure_messages
+            fi
+          done
 
       - name: JUnit Results
         if: always()
@@ -94,6 +108,13 @@ jobs:
           name: junit-results
           path: '**/target/test-reports/*.xml'
 
+## if needed, publish scala coverage report
+#      - name: Scoverage Results
+#        if: always()
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: junit-results
+#          path: '**//scoverage-report/*.*'
   release:
     name: Release to Artifactory (master only)
     needs: build-and-test
