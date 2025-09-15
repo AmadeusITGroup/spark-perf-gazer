@@ -12,7 +12,6 @@ val DefaultForkJavaOptions = Seq(
   "-Xms2000M",
   "-Xmx4000M",
   "-XX:+UseCompressedOops",
-// removed "-XX:+CMSClassUnloadingEnabled",  
   "-XX:+UseG1GC"
 )
 
