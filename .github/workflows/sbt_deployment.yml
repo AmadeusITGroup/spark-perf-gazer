@@ -64,7 +64,7 @@ jobs:
           fi
 
 
-      - name: Fetch master(main) tags
+      - name: Fetch main tags
         if: steps.technical_commit.outputs.is_technical == 'false'
         run: |
           git fetch --tags origin +refs/heads/main:refs/remotes/origin/main
@@ -131,7 +131,7 @@ jobs:
           git config --global user.name "${USERNAME}"
           git config --global user.email "${USERNAME}@amadeus.com"
 
-      - name: Fetch master(main) tags
+      - name: Fetch main tags
         run: |
           git fetch --tags origin +refs/heads/main:refs/remotes/origin/main
           git tag -d $(git tag --no-merged origin/main) || true
