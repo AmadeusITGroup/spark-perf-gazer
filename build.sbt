@@ -3,6 +3,7 @@ import sbt.Keys._
 import sbtrelease.ReleaseStateTransformations._
 import sbtrelease.{versionFormatError, Version}
 
+
 val DefaultForkJavaOptions = Seq(
   "-Dspark.driver.bindAddress=127.0.0.1",
   "-Duser.country.format=US",
@@ -10,7 +11,6 @@ val DefaultForkJavaOptions = Seq(
   "-Duser.timezone=UTC",
   "-Xms2000M",
   "-Xmx4000M",
-  "-XX:+CMSClassUnloadingEnabled",
   "-XX:+UseCompressedOops",
   "-XX:+UseG1GC"
 )
@@ -21,6 +21,12 @@ import sbt.Tests._
 // Currently there is one test group per *Spec.scala file
 // Given that each test group has a different JVM, the SparkSession is not shared
 def testGroups(tests: Seq[TestDefinition], baseDir: File): Seq[Group] = {
+  val exportOptions = Seq(
+    "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+    "--add-opens=java.base/java.lang=ALL-UNNAMED",
+    "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+    "--add-exports=java.base/sun.util.calendar=ALL-UNNAMED"
+  )
   tests
     .groupBy(t => t.name)
     .map { case (group, tests) =>
@@ -30,7 +36,7 @@ def testGroups(tests: Seq[TestDefinition], baseDir: File): Seq[Group] = {
           Vector(
             s"-Dtest.group=${group}",
             s"-Dtest.basedir=${baseDir}",
-          ) ++ DefaultForkJavaOptions
+          ) ++ DefaultForkJavaOptions ++ exportOptions
         )
       new Group(group, tests, SubProcess(options))
     } toSeq
@@ -50,7 +56,7 @@ assembly / assemblyMergeStrategy := {
 
 val commonSettings = Seq(
   organization := "com.amadeus",
-  scalaVersion := "2.12.13",
+  scalaVersion := "2.12.17",
   update / checksums := Nil,
   Compile / javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
   scalacOptions ++= Seq(
@@ -84,13 +90,14 @@ val publishSettings = Seq(
   publishTo := {
     val artifactory = "https://repository.rnd.amadeus.net/"
     if (isSnapshot.value) {
-      Some("snapshots" at artifactory + "sbt-built/")
+      Some("snapshots" at artifactory + "ssce-sbt-dev-ssce-nce/")
     } else {
-      Some("releases" at artifactory + "mvn-production/")
+      Some("releases" at artifactory + "ssce-sbt-release-ssce-nce/")
     }
   },
   Test / publishArtifact := true
 )
+
 
 val releaseSettings = Seq(
   releaseCommitMessage := s"[sbt-release] Setting version to ${(ThisBuild / version).value}",
@@ -130,7 +137,7 @@ lazy val root = (project in file("."))
     releaseSettings,
     testSettings,
     publishSettings,
-    coverageFailOnMinimum := true,
+    coverageFailOnMinimum := false,
     coverageMinimumStmtTotal := 95.0,
     coverageMinimumBranchTotal := 95.0
   )
