@@ -23,19 +23,19 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
           fileSizeLimit = 200L*1024*1024)
 
         val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
-        val jsonLocation = new File(jsonSink.jobReportsDir)
-        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should equal(0)
+        val jsonLocation = new File(s"$tmpDir")
+        jsonLocation.listFiles().filter(file => file.isFile && file.getName.matches("job-reports-.*\\.json")).map(_.length()).sum should equal(0)
 
         jsonSink.write(jr)
-        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should not equal 0
+        jsonLocation.listFiles().filter(file => file.isFile && file.getName.matches("job-reports-.*\\.json")).map(_.length()).sum should not equal 0
 
         jsonSink.close()
-        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should not equal 0
+        jsonLocation.listFiles().filter(file => file.isFile && file.getName.matches("job-reports-.*\\.json")).map(_.length()).sum should not equal 0
 
         // check files content
         val spark = sparkBuilder.getOrCreate()
         import spark.implicits._
-        val dfJobReports = spark.read.json(jsonSink.jobReportsDir)
+        val dfJobReports = spark.read.json(s"$tmpDir/job-reports-*.json")
         dfJobReports.count() shouldBe 1
         dfJobReports
           .select("jobId", "groupId", "jobName", "jobStartTime", "jobEndTime", "sqlId", "stages")
@@ -52,24 +52,24 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
           fileSizeLimit = 200L*1024*1024)
 
         val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
-        val jsonLocation = new File(jsonSink.jobReportsDir)
-        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should equal(0)
+        val jsonLocation = new File(s"$tmpDir")
+        jsonLocation.listFiles().filter(file => file.isFile && file.getName.matches("job-reports-.*\\.json")).map(_.length()).sum should equal(0)
 
         jsonSink.write(jr)
-        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should equal(0)
+        jsonLocation.listFiles().filter(file => file.isFile && file.getName.matches("job-reports-.*\\.json")).map(_.length()).sum should equal(0)
         jsonSink.write(jr)
-        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should equal(0)
+        jsonLocation.listFiles().filter(file => file.isFile && file.getName.matches("job-reports-.*\\.json")).map(_.length()).sum should equal(0)
         jsonSink.write(jr)
-        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should equal(0)
+        jsonLocation.listFiles().filter(file => file.isFile && file.getName.matches("job-reports-.*\\.json")).map(_.length()).sum should equal(0)
         jsonSink.write(jr)
-        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should equal(0)
+        jsonLocation.listFiles().filter(file => file.isFile && file.getName.matches("job-reports-.*\\.json")).map(_.length()).sum should equal(0)
         jsonSink.write(jr)
-        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should not equal 0
+        jsonLocation.listFiles().filter(file => file.isFile && file.getName.matches("job-reports-.*\\.json")).map(_.length()).sum should not equal 0
 
         // check files content
         val spark = sparkBuilder.getOrCreate()
         import spark.implicits._
-        val dfJobReports = spark.read.json(jsonSink.jobReportsDir)
+        val dfJobReports = spark.read.json(s"$tmpDir/job-reports-*.json")
         dfJobReports.count() shouldBe 5
         dfJobReports
           .select("jobId", "groupId", "jobName", "jobStartTime", "jobEndTime", "sqlId", "stages")
@@ -85,26 +85,26 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
           fileSizeLimit = 200L*1024*1024)
 
         val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
-        val jsonLocation = new File(jsonSink.jobReportsDir)
-        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should equal(0)
+        val jsonLocation = new File(s"$tmpDir")
+        jsonLocation.listFiles().filter(file => file.isFile && file.getName.matches("job-reports-.*\\.json")).map(_.length()).sum should equal(0)
 
         jsonSink.write(jr)
-        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should equal(0)
+        jsonLocation.listFiles().filter(file => file.isFile && file.getName.matches("job-reports-.*\\.json")).map(_.length()).sum should equal(0)
         jsonSink.write(jr)
-        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should equal(0)
+        jsonLocation.listFiles().filter(file => file.isFile && file.getName.matches("job-reports-.*\\.json")).map(_.length()).sum should equal(0)
         jsonSink.write(jr)
-        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should equal(0)
+        jsonLocation.listFiles().filter(file => file.isFile && file.getName.matches("job-reports-.*\\.json")).map(_.length()).sum should equal(0)
         jsonSink.write(jr)
-        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should equal(0)
+        jsonLocation.listFiles().filter(file => file.isFile && file.getName.matches("job-reports-.*\\.json")).map(_.length()).sum should equal(0)
 
         // flush with 4 reports in sink
         jsonSink.close()
-        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should not equal 0
+        jsonLocation.listFiles().filter(file => file.isFile && file.getName.matches("job-reports-.*\\.json")).map(_.length()).sum should not equal 0
 
         // check files content
         val spark = sparkBuilder.getOrCreate()
         import spark.implicits._
-        val dfJobReports = spark.read.json(jsonSink.jobReportsDir)
+        val dfJobReports = spark.read.json(s"$tmpDir/job-reports-*.json")
         dfJobReports.count() shouldBe 4
         dfJobReports
           .select("jobId", "groupId", "jobName", "jobStartTime", "jobEndTime", "sqlId", "stages")
@@ -120,8 +120,8 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
           fileSizeLimit = 10L*1024)
 
         val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
-        val jsonLocation = new File(jsonSink.jobReportsDir)
-        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should equal(0)
+        val jsonLocation = new File(s"$tmpDir")
+        jsonLocation.listFiles().filter(file => file.isFile && file.getName.matches("job-reports-.*\\.json")).map(_.length()).sum should equal(0)
 
         for (i <- 1 to 150) {
           jsonSink.write(jr)
@@ -129,12 +129,12 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
 
         // flush with 50 reports in sink
         jsonSink.close()
-        jsonLocation.listFiles().filter(file => file.isFile && file.getName.endsWith(".json")).map(_.length()).sum should not equal 0
+        jsonLocation.listFiles().filter(file => file.isFile && file.getName.matches("job-reports-.*\\.json")).map(_.length()).sum should not equal 0
 
         // check files content
         val spark = sparkBuilder.getOrCreate()
         import spark.implicits._
-        val dfJobReports = spark.read.json(jsonSink.jobReportsDir)
+        val dfJobReports = spark.read.json(s"$tmpDir/job-reports-*.json")
         dfJobReports.count() shouldBe 150
         dfJobReports
           .select("jobId", "groupId", "jobName", "jobStartTime", "jobEndTime", "sqlId", "stages")

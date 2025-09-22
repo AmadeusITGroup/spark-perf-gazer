@@ -14,10 +14,11 @@ import scala.collection.mutable.ListBuffer
   *
   * This sink uses POSIX interface on the driver to write the JSON files.
   * The output folder path is built as follows: <destination>/<report-type>.json
-  * A typical report path will be "/dbfs/logs/my-app-id/sql-reports.json" if used from Databricks.
+  * A typical report path will be "/dbfs/logs/appid=my-app-id/sql-reports-*.json" if used from Databricks.
   *
-  * @param destination Base directory path where JSON files will be written, e.g., "/dbfs/logs/my-app-id/"
+  * @param destination Base directory path where JSON files will be written, e.g., "/dbfs/logs/appid=my-app-id/"
   * @param writeBatchSize Number of reports to accumulate before writing to disk
+  * @param fileSizeLimit file size to reach before switching to a new file
   */
 class JsonSink(
   destination: String,
@@ -25,190 +26,83 @@ class JsonSink(
   fileSizeLimit: Long
 ) extends Sink {
   implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
-
-  private val sqlReports: ListBuffer[SqlReport] = new ListBuffer[SqlReport]()
-  private val jobReports: ListBuffer[JobReport] = new ListBuffer[JobReport]()
-  private val stageReports: ListBuffer[StageReport] = new ListBuffer[StageReport]()
-  private val taskReports: ListBuffer[TaskReport] = new ListBuffer[TaskReport]()
-
   implicit val formats: AnyRef with Formats = Serialization.formats(NoTypeHints)
 
-  // Create Json reports folders
-  val sqlReportsDir: String = s"$destination/level=sql/"
-  val jobReportsDir: String = s"$destination/level=job/"
-  val stageReportsDir: String = s"$destination/level=stage/"
-  val taskReportsDir: String = s"$destination/level=task/"
+  private case class ReportBuffer[T <: Report](reportType: String, dir: String) {
+    private val folder = new File(dir)
+    if (!folder.exists()) folder.mkdirs()
 
-  Seq(sqlReportsDir, jobReportsDir, stageReportsDir, taskReportsDir).foreach{ dir =>
-    val folder = new File(s"$dir")
-    if (!folder.exists()) { folder.mkdirs }
+    private var path = s"$dir/$reportType-reports-${Instant.now.toEpochMilli}.json"
+    private var writer = new PrintWriter(new FileWriter(path, true))
+    private var file = new File(path)
+
+    private val reports : ListBuffer[T] = new ListBuffer[T]()
+
+    private def flushReportsToFile(): Unit = {
+      reports.foreach(r => writer.println(asJson(r)))  // scalastyle:ignore regex
+      // flush writer to write to disk
+      writer.flush()
+      // clear reports
+      reports.clear()
+    }
+
+    def write(report: T): Unit = {
+      reports += report
+
+      if (reports.size >= writeBatchSize) {
+        logger.debug("Reached writeBatchSize threshold, writing to {} ({} reports).", file.getPath, reports.size)
+        flushReportsToFile()
+
+        if (file.length() >= fileSizeLimit) {
+          logger.debug("Reached fileSizeLimit threshold, rolling file {} ({} bytes).", file.getPath, file.length())
+          writer.close()
+          path = s"$dir/$reportType-reports-${Instant.now.toEpochMilli}.json"
+          writer = new PrintWriter(new FileWriter(path, true))
+          file = new File(path)
+          logger.debug("Switched to new file {}.", path)
+        }
+      }
+    }
+
+    def flush(): Unit = {
+      if (reports.nonEmpty) {
+        logger.debug("flushing remaining reports to {} ({} reports).", file.getPath, reports.size)
+        flushReportsToFile()
+      }
+    }
+
+    def close(): Unit = {
+      writer.close()
+    }
   }
 
-  // Init Json reports writers
-  private var sqlReportsPath: String = s"$sqlReportsDir/reports-${Instant.now.toEpochMilli.toString}.json"
-  private var jobReportsPath: String = s"$jobReportsDir/reports-${Instant.now.toEpochMilli.toString}.json"
-  private var stageReportsPath: String = s"$stageReportsDir/reports-${Instant.now.toEpochMilli.toString}.json"
-  private var taskReportsPath: String = s"$taskReportsDir/reports-${Instant.now.toEpochMilli.toString}.json"
+  private val sqlReports: ReportBuffer[SqlReport] = new ReportBuffer[SqlReport]("sql", destination)
+  private val jobReports: ReportBuffer[JobReport] = new ReportBuffer[JobReport]("job", destination)
+  private val stageReports: ReportBuffer[StageReport] = new ReportBuffer[StageReport]("stage", destination)
+  private val taskReports: ReportBuffer[TaskReport] = new ReportBuffer[TaskReport]("task", destination)
 
-  private var sqlReportsWriter = new PrintWriter(new FileWriter(sqlReportsPath, true))
-  private var jobReportsWriter = new PrintWriter(new FileWriter(jobReportsPath, true))
-  private var stageReportsWriter = new PrintWriter(new FileWriter(stageReportsPath, true))
-  private var taskReportsWriter = new PrintWriter(new FileWriter(taskReportsPath, true))
-
-  private var sqlReportsFile = new File(sqlReportsPath)
-  private var jobReportsFile = new File(jobReportsPath)
-  private var stageReportsFile = new File(stageReportsPath)
-  private var taskReportsFile = new File(taskReportsPath)
-
-  override def write(report: Report): Unit = {
-    // appends new reports in sink
-    report match {
-      case sql: SqlReport =>
-        sqlReports ++= Seq(sql)
-
-        if (sqlReports.size >= writeBatchSize) {
-          logger.debug("reached writeBatchSize threshold, writing to {} ({} reports).", sqlReportsPath, sqlReports.size)
-          sqlReports.foreach { r =>
-            sqlReportsWriter.println(asJson(r)) // scalastyle:ignore regex
-          }
-          // flush writer to write to disk
-          sqlReportsWriter.flush()
-          // clear reports
-          sqlReports.clear()
-
-          // File rolling
-          if (sqlReportsFile.length() >= fileSizeLimit) {
-            logger.debug("reached fileSizeLimit threshold, closing current file {} ({}).", sqlReportsPath, sqlReportsFile.length())
-            sqlReportsWriter.close()
-            sqlReportsPath = s"$sqlReportsDir/reports-${Instant.now.toEpochMilli.toString}.json"
-            logger.debug("reached fileSizeLimit threshold, switching to new file {}.", sqlReportsPath)
-            sqlReportsWriter = new PrintWriter(new FileWriter(sqlReportsPath, true))
-            sqlReportsFile = new File(sqlReportsPath)
-          }
-        }
-      case job: JobReport =>
-        jobReports ++= Seq(job)
-
-        if (jobReports.size >= writeBatchSize) {
-          logger.debug("reached writeBatchSize threshold, writing to {} ({} reports).", jobReportsPath, jobReports.size)
-          jobReports.foreach { r =>
-            jobReportsWriter.println(asJson(r)) // scalastyle:ignore regex
-          }
-          // flush writer to write to disk
-          jobReportsWriter.flush()
-          // clear reports
-          jobReports.clear()
-
-          // File rolling
-          if (jobReportsFile.length() >= fileSizeLimit) {
-            logger.debug("reached fileSizeLimit threshold, closing current file {} ({}).", jobReportsPath, jobReportsFile.length())
-            jobReportsWriter.close()
-            jobReportsPath = s"$jobReportsDir/reports-${Instant.now.toEpochMilli.toString}.json"
-            logger.debug("reached fileSizeLimit threshold, switching to new file {}.", jobReportsPath)
-            jobReportsWriter = new PrintWriter(new FileWriter(jobReportsPath, true))
-            jobReportsFile = new File(jobReportsPath)
-          }
-        }
-      case stage: StageReport =>
-        stageReports ++= Seq(stage)
-
-        if (stageReports.size >= writeBatchSize) {
-          logger.debug("reached writeBatchSize threshold, writing to {} ({} reports).", stageReportsPath, stageReports.size)
-          stageReports.foreach { r =>
-            stageReportsWriter.println(asJson(r)) // scalastyle:ignore regex
-          }
-          // flush writer to write to disk
-          stageReportsWriter.flush()
-          // clear reports
-          stageReports.clear()
-
-          // File rolling
-          if (stageReportsFile.length() >= fileSizeLimit) {
-            logger.debug("reached fileSizeLimit threshold, closing current file {} ({}).", stageReportsPath, stageReportsFile.length())
-            stageReportsWriter.close()
-            stageReportsPath = s"$stageReportsDir/reports-${Instant.now.toEpochMilli.toString}.json"
-            logger.debug("reached fileSizeLimit threshold, switching to new file {}.", stageReportsPath)
-            stageReportsWriter = new PrintWriter(new FileWriter(stageReportsPath, true))
-            stageReportsFile = new File(stageReportsPath)
-          }
-        }
-      case task: TaskReport =>
-        taskReports ++= Seq(task)
-
-        if (taskReports.size >= writeBatchSize) {
-          logger.debug("reached writeBatchSize threshold, writing to {} ({} reports)", taskReportsPath, taskReports.size)
-          taskReports.foreach { r =>
-            taskReportsWriter.println(asJson(r)) // scalastyle:ignore regex
-          }
-          // flush writer to write to disk
-          taskReportsWriter.flush()
-          // clear reports
-          taskReports.clear()
-
-          // File rolling
-          if (taskReportsFile.length() >= fileSizeLimit) {
-            logger.debug("reached fileSizeLimit threshold, closing current file {} ({}).", taskReportsPath, taskReportsFile.length())
-            taskReportsWriter.close()
-            taskReportsPath = s"$taskReportsDir/reports-${Instant.now.toEpochMilli.toString}.json"
-            logger.debug("reached fileSizeLimit threshold, switching to new file {}.", taskReportsPath)
-            taskReportsWriter = new PrintWriter(new FileWriter(taskReportsPath, true))
-            taskReportsFile = new File(taskReportsPath)
-          }
-        }
-    }
+  override def write(report: Report): Unit = report match {
+    case r: SqlReport   => sqlReports.write(r)
+    case r: JobReport   => jobReports.write(r)
+    case r: StageReport => stageReports.write(r)
+    case r: TaskReport  => taskReports.write(r)
   }
 
   override def flush(): Unit = {
-    if (sqlReports.nonEmpty) {
-      logger.debug("flushing remaining sql reports to {} ({} reports).", sqlReportsFile, sqlReports.size)
-      sqlReports.foreach { r =>
-        sqlReportsWriter.println(asJson(r)) // scalastyle:ignore regex
-      }
-      // flush writer to write to disk
-      sqlReportsWriter.flush()
-      // clear reports
-      sqlReports.clear()
-    }
-    if (jobReports.nonEmpty) {
-      logger.debug("flushing remaining job reports to {} ({} reports).", jobReportsFile, jobReports.size)
-      jobReports.foreach { r =>
-        jobReportsWriter.println(asJson(r)) // scalastyle:ignore regex
-      }
-      // flush writer to write to disk
-      jobReportsWriter.flush()
-      // clear reports
-      jobReports.clear()
-    }
-    if (stageReports.nonEmpty) {
-      logger.debug("flushing remaining stage reports to {} ({} reports).", stageReportsFile, stageReports.size)
-      stageReports.foreach { r =>
-        stageReportsWriter.println(asJson(r)) // scalastyle:ignore regex
-      }
-      // flush writer to write to disk
-      stageReportsWriter.flush()
-      // clear reports
-      stageReports.clear()
-    }
-    if (taskReports.nonEmpty) {
-      logger.debug("flushing remaining task reports to {} ({} reports).", taskReportsFile, taskReports.size)
-      taskReports.foreach { r =>
-        taskReportsWriter.println(asJson(r)) // scalastyle:ignore regex
-      }
-      // flush writer to write to disk
-      taskReportsWriter.flush()
-      // clear reports
-      taskReports.clear()
-    }
+    sqlReports.flush()
+    jobReports.flush()
+    stageReports.flush()
+    taskReports.flush()
   }
 
   override def close(): Unit = {
     flush()
 
     // close writers
-    sqlReportsWriter.close()
-    jobReportsWriter.close()
-    stageReportsWriter.close()
-    taskReportsWriter.close()
+    sqlReports.close()
+    jobReports.close()
+    stageReports.close()
+    taskReports.close()
 
     logger.debug("writers closed.")
   }

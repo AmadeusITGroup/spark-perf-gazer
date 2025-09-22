@@ -88,26 +88,26 @@ class SampleSkewDetectionSpec
           spark.sparkContext.removeSparkListener(eventsListener)
           jsonSink.close()
 
-          val dfSqlReports = spark.read.json(jsonSink.sqlReportsDir)
+          val dfSqlReports = spark.read.json(s"$tmpDir/sql-reports-*.json")
           val dfSqlReportsCnt = dfSqlReports.count()
           it("should save SQL reports in json file") {
             dfSqlReportsCnt shouldBe 1
           }
           dfSqlReports.show()
 
-          val dfJobReports = spark.read.json(jsonSink.jobReportsDir)
+          val dfJobReports = spark.read.json(s"$tmpDir/job-reports-*.json")
           val dfJobReportsCnt = dfJobReports.count()
           it("should save Job reports in json file") {
             dfJobReportsCnt should be > 1L
           }
 
-          val dfStageReports = spark.read.json(jsonSink.stageReportsDir)
+          val dfStageReports = spark.read.json(s"$tmpDir/stage-reports-*.json")
           val dfStageReportsCnt = dfStageReports.count()
           it("should save Stage reports in json file") {
             dfStageReportsCnt should be > 1L
           }
 
-          val dfTaskReports = spark.read.json(jsonSink.taskReportsDir)
+          val dfTaskReports = spark.read.json(s"$tmpDir/task-reports-*.json")
           val dfTaskReportsCnt = dfTaskReports.count()
           it("should save Task reports in json file") {
             dfTaskReportsCnt should be > 1L
