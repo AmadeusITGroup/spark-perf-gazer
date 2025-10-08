@@ -5,27 +5,6 @@ import java.time.{LocalDate, LocalDateTime}
 import java.time.format.DateTimeFormatter
 
 object PathBuilder {
-  def buildPath(
-    sparkConf: Map[String, String],
-    baseDir: String,
-    partitions: Map[String, String]
-  ): String = {
-    val sparkConfPattern = "spark\\..*".r
-    var outputPath = if (baseDir.endsWith("/")) baseDir else baseDir + "/"
-
-    partitions.foreach {
-      case (key, value) =>
-        value match {
-          case sparkConfPattern(_*) =>
-            outputPath = outputPath.withSparkConf(key, value, sparkConf)
-          case _ =>
-            outputPath = outputPath.withPartition(key, value)
-        }
-    }
-
-    outputPath
-  }
-
   /**
    * Implicit class that adds path-building methods to String using ad-hoc polymorphism with implicits.
    * Allows fluent API for building filesystem paths with common patterns.

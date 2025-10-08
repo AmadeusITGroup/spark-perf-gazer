@@ -1,8 +1,6 @@
 package com.amadeus.sparklear
 
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import PathBuilder._
+import com.amadeus.sparklear.PathBuilder._
 
 sealed trait SinkConfig
 
@@ -12,23 +10,29 @@ final case class JsonSinkConfig(
   fileSizeLimit: Long
 ) extends SinkConfig
 
-case class JsonSinkConfigParams(
-  outputBaseDir: String = "/dbfs/tmp/listener/",
-  outputPartitions: Map[String, String] = Map(
-    "date" -> LocalDateTime.now().format(DateTimeFormatter.ISO_DATE),
-    "applicationId" -> "spark.app.id"),
-  writeBatchSize: Int = 100,
-  maxFileSize: Long = 1L*1024*1024
-)
-
 object JsonSinkConfig {
-  def build(sparkConf: Map[String, String], inputParams: JsonSinkConfigParams): JsonSinkConfig = {
-    val outputDir: String = buildPath(sparkConf, inputParams.outputBaseDir, inputParams.outputPartitions)
-
+  def withDestination(
+    destination: String = "/dbfs/tmp/listener/",
+    writeBatchSize: Int = 100,
+    fileSizeLimit: Long = 1L*1024*1024
+  ): JsonSinkConfig = {
     val conf = JsonSinkConfig(
-      destination = outputDir,
-      writeBatchSize = inputParams.writeBatchSize,
-      fileSizeLimit = inputParams.maxFileSize
+      destination = if (destination.endsWith("/")) destination else destination + "/",
+      writeBatchSize = writeBatchSize,
+      fileSizeLimit = fileSizeLimit
+    )
+    conf
+  }
+  def withBaseDir(
+    sparkConf: Map[String, String],
+    baseDir: String,
+    writeBatchSize: Int = 100,
+    fileSizeLimit: Long = 1L*1024*1024
+  ): JsonSinkConfig = {
+    val conf = JsonSinkConfig(
+      destination = baseDir.withDate.withApplicationId(sparkConf),
+      writeBatchSize = writeBatchSize,
+      fileSizeLimit = fileSizeLimit
     )
     conf
   }
