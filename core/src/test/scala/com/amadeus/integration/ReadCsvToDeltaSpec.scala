@@ -33,9 +33,9 @@ class ReadCsvToDeltaSpec
         withTestableSink { sinks =>
           // DF TABLE: iata_code, icao_code, ..., name, ..., country_name, country_code, ...
           val df = DeltaTable.forPath(subdir(tmpDir, "deltadir1")).toDF
-          val cfg = defaultTestConfig.withOnlySqlEnabled.withSink(sinks)
+          val cfg = defaultTestConfig.withOnlySqlEnabled
 
-          val eventsListener = new SparklEar(cfg)
+          val eventsListener = new SparklEar(cfg, sinks)
           spark.sparkContext.addSparkListener(eventsListener)
 
           // FILTER on adm1_name_ascii and fcode

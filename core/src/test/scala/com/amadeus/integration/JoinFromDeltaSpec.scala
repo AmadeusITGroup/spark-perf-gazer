@@ -33,9 +33,9 @@ class JoinFromDeltaSpec
         withTestableSink { sinks =>
           // DF TABLE: iata_code, icao_code, ..., name, ..., country_name, country_code, ...
           val df = DeltaTable.forPath(subdir(tmpDir, "deltadir1")).toDF
-          val cfg = defaultTestConfig.withOnlySqlEnabled.withSink(sinks)
+          val cfg = defaultTestConfig.withOnlySqlEnabled
 
-          val eventsListener = new SparklEar(cfg)
+          val eventsListener = new SparklEar(cfg, sinks)
           spark.sparkContext.addSparkListener(eventsListener)
 
           // Create a lookup table with country_code and country_name, containing 252 rows

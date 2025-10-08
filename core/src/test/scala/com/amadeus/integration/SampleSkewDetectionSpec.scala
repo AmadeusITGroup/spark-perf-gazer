@@ -1,6 +1,6 @@
 package com.amadeus.integration
 
-import com.amadeus.sparklear.SparklEar
+import com.amadeus.sparklear.{JsonSinkConfig, SparklEar}
 import com.amadeus.testfwk._
 
 // Define your case class
@@ -30,8 +30,8 @@ class SampleSkewDetectionSpec
             import scala.util.Random
 
           // regular setup
-          val cfg = defaultTestConfig.withAllEnabled.withSink(jsonSink)
-          val eventsListener = new SparklEar(cfg)
+          val cfg = defaultTestConfig.withAllEnabled
+          val eventsListener = new SparklEar(cfg, jsonSink)
           spark.sparkContext.addSparkListener(eventsListener)
 
           spark.sparkContext.setJobDescription("Prepare skewed data frames")

@@ -16,14 +16,13 @@ import scala.collection.mutable.ListBuffer
   * The output folder path is built as follows: <destination>/<report-type>.json
   * A typical report path will be "/dbfs/logs/appid=my-app-id/sql-reports-*.json" if used from Databricks.
   *
-  * @param destination Base directory path where JSON files will be written, e.g., "/dbfs/logs/appid=my-app-id/"
-  * @param writeBatchSize Number of reports to accumulate before writing to disk
-  * @param fileSizeLimit file size to reach before switching to a new file
+  * @param config : object encapsulating :
+  *  - destination Base directory path where JSON files will be written, e.g., "/dbfs/logs/appid=my-app-id/"
+  *  - writeBatchSize Number of reports to accumulate before writing to disk
+  *  - fileSizeLimit file size to reach before switching to a new file
   */
 class JsonSink(
-  val destination: String,
-  val writeBatchSize: Int,
-  val fileSizeLimit: Long
+  val config: JsonSinkConfig
 ) extends Sink {
   implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
   implicit val formats: AnyRef with Formats = Serialization.formats(NoTypeHints)
@@ -49,11 +48,11 @@ class JsonSink(
     def write(report: T): Unit = {
       reports += report
 
-      if (reports.size >= writeBatchSize) {
+      if (reports.size >= config.writeBatchSize) {
         logger.debug("Reached writeBatchSize threshold, writing to {} ({} reports).", file.getPath, reports.size)
         flushReportsToFile()
 
-        if (file.length() >= fileSizeLimit) {
+        if (file.length() >= config.fileSizeLimit) {
           logger.debug("Reached fileSizeLimit threshold, rolling file {} ({} bytes).", file.getPath, file.length())
           writer.close()
           path = s"$dir/$reportType-reports-${Instant.now.toEpochMilli}.json"
@@ -76,10 +75,10 @@ class JsonSink(
     }
   }
 
-  private val sqlReports: ReportBuffer[SqlReport] = new ReportBuffer[SqlReport]("sql", destination)
-  private val jobReports: ReportBuffer[JobReport] = new ReportBuffer[JobReport]("job", destination)
-  private val stageReports: ReportBuffer[StageReport] = new ReportBuffer[StageReport]("stage", destination)
-  private val taskReports: ReportBuffer[TaskReport] = new ReportBuffer[TaskReport]("task", destination)
+  private val sqlReports: ReportBuffer[SqlReport] = new ReportBuffer[SqlReport]("sql", config.destination)
+  private val jobReports: ReportBuffer[JobReport] = new ReportBuffer[JobReport]("job", config.destination)
+  private val stageReports: ReportBuffer[StageReport] = new ReportBuffer[StageReport]("stage", config.destination)
+  private val taskReports: ReportBuffer[TaskReport] = new ReportBuffer[TaskReport]("task", config.destination)
 
   override def write(report: Report): Unit = report match {
     case r: SqlReport   => sqlReports.write(r)

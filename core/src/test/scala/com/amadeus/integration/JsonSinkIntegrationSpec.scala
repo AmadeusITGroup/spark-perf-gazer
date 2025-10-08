@@ -1,6 +1,6 @@
 package com.amadeus.integration
 
-import com.amadeus.sparklear.SparklEar
+import com.amadeus.sparklear.{JsonSinkConfig, SparklEar}
 import com.amadeus.testfwk._
 
 class JsonSinkIntegrationSpec
@@ -24,8 +24,8 @@ class JsonSinkIntegrationSpec
           val df = readOptd(spark)
 
           // regular setup
-          val cfg = defaultTestConfig.withAllEnabled.withSink(jsonSink)
-          val eventsListener = new SparklEar(cfg)
+          val cfg = defaultTestConfig.withAllEnabled
+          val eventsListener = new SparklEar(cfg, jsonSink)
           spark.sparkContext.addSparkListener(eventsListener)
 
           spark.sparkContext.setJobGroup("testgroup", "testjob")

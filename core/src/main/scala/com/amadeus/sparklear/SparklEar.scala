@@ -15,7 +15,7 @@ import org.slf4j.{Logger, LoggerFactory}
   * - spilled tasks
   * - ...
   */
-class SparklEar(c: Config) extends SparkListener {
+class SparklEar(c: SparklearConfig, sink: Sink) extends SparkListener {
 
   implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
 
@@ -38,7 +38,7 @@ class SparklEar(c: Config) extends SparkListener {
       logger.trace("onTaskEnd(...) id = {}", taskEnd.taskInfo.taskId)
       val te = TaskEvent(taskEnd)
       val ti = TaskEntity(te)
-      c.sink.write(TaskReport.fromEntityToReport(ti): TaskReport)
+      sink.write(TaskReport.fromEntityToReport(ti): TaskReport)
     }
   }
 
@@ -47,7 +47,7 @@ class SparklEar(c: Config) extends SparkListener {
       logger.trace("onStageCompleted(...) id = {}", stageCompleted.stageInfo.stageId)
       val sw = StageEvent(stageCompleted.stageInfo)
       val si = StageEntity(sw)
-      c.sink.write(StageReport.fromEntityToReport(si): StageReport)
+      sink.write(StageReport.fromEntityToReport(si): StageReport)
     }
   }
 
@@ -69,7 +69,7 @@ class SparklEar(c: Config) extends SparkListener {
       jobStartOpt match {
         case Some(jobStart) =>
           val ji = JobEntity(start = jobStart, end = EndUpdate(jobEnd = jobEnd))
-          c.sink.write(JobReport.fromEntityToReport(ji))
+          sink.write(JobReport.fromEntityToReport(ji))
           jobStartEvents.remove(jobEnd.jobId)
         case None =>
           logger.warn("Job start event not found for jobId: {}", jobEnd.jobId)
@@ -111,7 +111,7 @@ class SparklEar(c: Config) extends SparkListener {
       sqlStartOpt match {
         case Some(sqlStart) =>
           val si = SqlEntity(start = sqlStart, end = event)
-          c.sink.write(SqlReport.fromEntityToReport(si))
+          sink.write(SqlReport.fromEntityToReport(si))
           sqlStartEvents.remove(event.executionId)
         case None =>
           logger.warn("SQL start event not found for executionId: {}", event.executionId)
@@ -121,14 +121,14 @@ class SparklEar(c: Config) extends SparkListener {
 
   override def onApplicationEnd(event: SparkListenerApplicationEnd): Unit = {
     logger.trace("onApplicationEnd: duration={}", event.time)
-    c.sink.close()
+    sink.close()
   }
 
   /**
     * Close the sink (if not already done).
     */
   def close(): Unit = {
-    c.sink.close()
+    sink.close()
     logger.info("Listener closed, size of maps sql={} and job={})",
       sqlStartEvents.size, jobStartEvents.size)
   }

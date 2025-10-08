@@ -8,7 +8,7 @@ class SparklEarSpec extends SimpleSpec with ConfigSupport {
   describe(s"The listener") {
     it("should not fail upon unhandled messages") {
       val c = defaultTestConfig
-      val l = new SparklEar(c)
+      val l = new SparklEar(c, new LogSink())
       val e = SparkListenerSQLAdaptiveExecutionUpdate(1, "", Fixtures.SqlWrapper1.planInfo1)
       l.onOtherEvent(e) // no failure
     }

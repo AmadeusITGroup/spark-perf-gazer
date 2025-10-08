@@ -1,6 +1,6 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.ConfigBuilder.PathOps
+import com.amadeus.sparklear.PathBuilder.PathOps
 import com.amadeus.testfwk.{SimpleSpec, SparkSupport, TempDirSupport}
 
 import java.time.LocalDateTime
@@ -10,105 +10,97 @@ class ConfigBuilderSpec extends SimpleSpec with SparkSupport with TempDirSupport
   describe("config builder for JSON Sink") {
     withSpark(appName = this.getClass.getName) { spark =>
       withTmpDir { tmpDir =>
-        it("should build default config with LogSink") {
-          val cDefault = ConfigBuilder.buildConf(spark.conf.getAll, InputParams())
-          cDefault.sink.getClass.getCanonicalName shouldBe s"com.amadeus.sparklear.LogSink"
-        }
-
-        it("should build config with LogSink when unknown listenerSinkType is provided") {
-          val cUnknown = ConfigBuilder.buildConf(spark.conf.getAll, InputParams(listenerSinkType = "Unknown"))
-          cUnknown.sink.getClass.getCanonicalName shouldBe s"com.amadeus.sparklear.LogSink"
-        }
-
         val currentDate = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE)
 
-        val p1 = InputParams(listenerSinkType = "Json", listenerOutputBaseDir = s"$tmpDir")
-        val c1 = ConfigBuilder.buildConf(spark.conf.getAll, p1)
-        val reportsDestination1 = c1.sink.asInstanceOf[JsonSink].destination
+        val c1 = JsonSinkConfig.build(spark.conf.getAll, JsonSinkConfigParams(outputBaseDir = s"$tmpDir"))
+        val s1 = new JsonSink(c1)
+
+        val reportsDestination1 = s1.config.destination
         println(reportsDestination1)
 
-        it("should build reports destination with default listenerOutputPartitions") {
+        it("should build reports destination with default outputPartitions") {
           reportsDestination1 shouldBe s"$tmpDir/date=$currentDate/applicationId=${spark.sparkContext.applicationId}/"
         }
 
-        val p2 = InputParams(
-          listenerSinkType = "Json",
-          listenerOutputBaseDir = s"$tmpDir",
-          listenerOutputPartitions = Map(
+        val p2 = JsonSinkConfigParams(
+          outputBaseDir = s"$tmpDir",
+          outputPartitions = Map(
             "customPartition" -> "myPartition",
             "applicationName" -> "spark.app.name",
             "clusterName"-> "spark.databricks.clusterUsageTags.clusterName"
           )
         )
-        val c2 = ConfigBuilder.buildConf(spark.conf.getAll, p2)
-        val reportsDestination2 = c2.sink.asInstanceOf[JsonSink].destination
+        val c2 = JsonSinkConfig.build(spark.conf.getAll, p2)
+        val s2 = new JsonSink(c2)
+
+        val reportsDestination2 = s2.config.destination
         println(reportsDestination2)
 
-        it("should build reports destination with custom listenerOutputPartitions") {
+        it("should build reports destination with custom outputPartitions") {
           reportsDestination2 shouldBe s"$tmpDir/customPartition=myPartition/applicationName=${spark.sparkContext.appName}/clusterName=unknown/"
         }
 
-        val p3 = InputParams(
-          listenerSinkType = "Json",
-          listenerOutputBaseDir = s"$tmpDir",
-          listenerOutputPartitions = Map.empty
+        val p3 = JsonSinkConfigParams(
+          outputBaseDir = s"$tmpDir",
+          outputPartitions = Map.empty
         )
-        val c3 = ConfigBuilder.buildConf(spark.conf.getAll, p3)
-        val reportsDestination3 = c3.sink.asInstanceOf[JsonSink].destination
+        val c3 = JsonSinkConfig.build(spark.conf.getAll, p3)
+        val s3 = new JsonSink(c3)
+        val reportsDestination3 = s3.config.destination
         println(reportsDestination3)
 
-        it("should build reports destination with empty listenerOutputPartitions") {
+        it("should build reports destination with empty outputPartitions") {
           reportsDestination3 shouldBe s"$tmpDir/"
         }
 
-        val p4 = InputParams(
-          listenerSinkType = "Json",
-          listenerOutputBaseDir = s"$tmpDir".withDate.withSparkConf("applicationId", "spark.app.id", spark.conf.getAll),
-          listenerOutputPartitions = Map.empty
+        val p4 = JsonSinkConfigParams(
+          outputBaseDir = s"$tmpDir".withDate.withSparkConf("applicationId", "spark.app.id", spark.conf.getAll),
+          outputPartitions = Map.empty
         )
-        val c4 = ConfigBuilder.buildConf(spark.conf.getAll, p4)
-        val reportsDestination4 = c4.sink.asInstanceOf[JsonSink].destination
+        val c4 = JsonSinkConfig.build(spark.conf.getAll, p4)
+        val s4 = new JsonSink(c4)
+        val reportsDestination4 = s4.config.destination
         println(reportsDestination4)
 
         it("should build reports destination with PathOps #1") {
           reportsDestination4 shouldBe s"$tmpDir/date=$currentDate/applicationId=${spark.sparkContext.applicationId}/"
         }
 
-        val p5 = InputParams(
-          listenerSinkType = "Json",
-          listenerOutputBaseDir = s"$tmpDir".withDate.withApplicationId(spark.conf.getAll),
-          listenerOutputPartitions = Map.empty
+        val p5 = JsonSinkConfigParams(
+          outputBaseDir = s"$tmpDir".withDate.withApplicationId(spark.conf.getAll),
+          outputPartitions = Map.empty
         )
-        val c5 = ConfigBuilder.buildConf(spark.conf.getAll, p5)
-        val reportsDestination5 = c5.sink.asInstanceOf[JsonSink].destination
+        val c5 = JsonSinkConfig.build(spark.conf.getAll, p5)
+        val s5 = new JsonSink(c5)
+        val reportsDestination5 = s5.config.destination
         println(reportsDestination5)
 
         it("should build reports destination with PathOps #2") {
           reportsDestination5 shouldBe s"$tmpDir/date=$currentDate/applicationId=${spark.sparkContext.applicationId}/"
         }
 
-        val p6 = InputParams(
-          listenerSinkType = "Json",
-          listenerOutputBaseDir = s"$tmpDir".withDate(DateTimeFormatter.ISO_DATE).withApplicationId(spark.conf.getAll),
-          listenerOutputPartitions = Map.empty
+        val p6 = JsonSinkConfigParams(
+          outputBaseDir = s"$tmpDir".withDate(DateTimeFormatter.ISO_DATE).withApplicationId(spark.conf.getAll),
+          outputPartitions = Map.empty
         )
-        val c6 = ConfigBuilder.buildConf(spark.conf.getAll, p6)
-        val reportsDestination6 = c6.sink.asInstanceOf[JsonSink].destination
+        val c6 = JsonSinkConfig.build(spark.conf.getAll, p6)
+        val s6 = new JsonSink(c6)
+        val reportsDestination6 = s6.config.destination
         println(reportsDestination6)
 
         it("should build reports destination with PathOps #3") {
           reportsDestination6 shouldBe s"$tmpDir/date=$currentDate/applicationId=${spark.sparkContext.applicationId}/"
         }
 
-        val p7 = InputParams(
-          listenerSinkType = "Json",
-          listenerOutputBaseDir = s"$tmpDir"
+        val p7 = JsonSinkConfigParams(
+          outputBaseDir = s"$tmpDir"
             .withPartition("customPartition", "myPartition")
             .withDatabricksTag("clusterName", "clusterName", spark.conf.getAll),
-          listenerOutputPartitions = Map.empty
+          outputPartitions = Map.empty
         )
-        val c7 = ConfigBuilder.buildConf(spark.conf.getAll, p7)
-        val reportsDestination7 = c7.sink.asInstanceOf[JsonSink].destination
+        val c7 = JsonSinkConfig.build(spark.conf.getAll, p7)
+        val s7 = new JsonSink(c7)
+        val reportsDestination7 = s7.config.destination
         println(reportsDestination7)
 
         it("should build reports destination with PathOps #4") {

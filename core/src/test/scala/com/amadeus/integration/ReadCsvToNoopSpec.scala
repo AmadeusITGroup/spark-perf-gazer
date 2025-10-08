@@ -19,13 +19,13 @@ class ReadCsvToNoopSpec
         val df = readOptd(spark)
 
         // regular setup
-        val cfg = defaultTestConfig.withAllEnabled.withSink(sinks)
-        val eventsListener = new SparklEar(cfg)
+        val cfg = defaultTestConfig.withAllEnabled
+        val eventsListener = new SparklEar(cfg, sinks)
         spark.sparkContext.addSparkListener(eventsListener)
 
         // setup to check if disabling all entities yields no reports in sinks
         val emptySinks = new TestableSink()
-        val emptyEventsListener = new SparklEar(cfg.withAllDisabled.withSink(emptySinks))
+        val emptyEventsListener = new SparklEar(cfg.withAllDisabled, emptySinks)
         spark.sparkContext.addSparkListener(emptyEventsListener)
 
         spark.sparkContext.setJobGroup("testgroup", "testjob")
