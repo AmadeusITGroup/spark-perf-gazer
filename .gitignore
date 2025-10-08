@@ -57,7 +57,7 @@ fabric.properties
 target
 project/target
 /bin/
-src/test/resources/checkpoint
-src/test/resources/checkpoints/
+core/src/test/resources/checkpoint
+core/src/test/resources/checkpoints/
 metastore_db/
 spark-warehouse-tests/

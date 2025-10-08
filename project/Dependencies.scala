@@ -10,24 +10,33 @@ object Dependencies {
     }
   }
 
-  val sparkVersion = "3.4.1"
-
-  // @formatter:off
-  val coreDeps = Seq(
-    "org.apache.spark"           %% "spark-core"      % sparkVersion  % compileIfLocalOtherwiseProvided,
-    "org.apache.spark"           %% "spark-sql"       % sparkVersion  % compileIfLocalOtherwiseProvided
+  val deltaDepsBySparkVersion: Map[String, ModuleID] = Map(
+    "3.4.1" -> "io.delta" %% "delta-core" % "2.4.0",
+    "3.5.0" -> "io.delta" %% "delta-spark" % "3.2.0",
+    "3.5.2" -> "io.delta" %% "delta-spark" % "3.2.0"
   )
 
-  val testDeps = Seq(
+  // managed in project matrix
+  // val sparkVersion = "3.5.2"
+
+  // @formatter:off
+  val coreDeps: Seq[ModuleID] = Seq(
+    // managed in project matrix
+    // "org.apache.spark"           %% "spark-core"      % sparkVersion  % compileIfLocalOtherwiseProvided,
+    // "org.apache.spark"           %% "spark-sql"       % sparkVersion  % compileIfLocalOtherwiseProvided
+  )
+
+  val testDeps: Seq[ModuleID] = Seq(
     "org.slf4j"                   % "slf4j-log4j12"   % "1.7.16"      % Test,
-    "org.apache.spark"           %% "spark-core"      % sparkVersion  % Test classifier "tests",
-    "org.apache.spark"           %% "spark-sql"       % sparkVersion  % Test classifier "tests",
-    "org.scalatest"              %% "scalatest"       % "3.2.10"      % Test,
+    // managed in project matrix
+    // "org.apache.spark"           %% "spark-core"      % sparkVersion  % Test classifier "tests",
+    // "org.apache.spark"           %% "spark-sql"       % sparkVersion  % Test classifier "tests",
+    "org.scalatest"              %% "scalatest"       % "3.2.16"      % Test,
     "org.scalamock"              %% "scalamock"       % "5.1.0"       % Test,
     "com.jayway.jsonpath"         % "json-path"       % "2.8.0"       % Test,
-    "io.delta"                   %% "delta-core"      % "2.4.0"       % Test,
+    // managed in project matrix
+    // "io.delta"                   %% "delta-spark"     % "3.2.0"       % Test,
     "com.github.sbt"              % "junit-interface" % "0.13.3"      % Test
   )
   // @formatter:on
-
 }

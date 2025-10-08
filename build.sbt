@@ -1,8 +1,15 @@
-import sbt._
-import sbt.Keys._
-import sbtrelease.ReleaseStateTransformations._
-import sbtrelease.{versionFormatError, Version}
+import Dependencies.deltaDepsBySparkVersion
+import sbt.{Compile, *}
+import sbt.Keys.*
+import sbt.Tests.*
+import sbtrelease.ReleaseStateTransformations.*
+import sbtrelease.{Version, versionFormatError}
+import sbtrelease.ReleasePlugin.autoImport.*
 
+//import DbrCross.DbrAxis.{Dbr13_3, Dbr16_4}
+//import DbrCross.ProjectMatrixOps
+import SparkCross.SparkAxis.{Spark341, Spark352}
+import SparkCross.ProjectMatrixOps
 
 val DefaultForkJavaOptions = Seq(
   "-Dspark.driver.bindAddress=127.0.0.1",
@@ -15,18 +22,34 @@ val DefaultForkJavaOptions = Seq(
   "-XX:+UseG1GC"
 )
 
+def testDependencies(sparkVersion: String): Seq[ModuleID] = {
+  Seq(
+    "org.apache.spark"   %% "spark-core"   % sparkVersion  % Test,
+    "org.apache.spark"   %% "spark-sql"    % sparkVersion  % Test,
+    // Needed for sparklear tests writing to delta
+    deltaDepsBySparkVersion.getOrElse(
+      sparkVersion,
+      throw new IllegalArgumentException(s"Missing delta dependency for spark version $sparkVersion")
+    ) % Test
+  )
+}
 
-import sbt.Tests._
 // Given tests, define test groups where each will have its own forked JVM for execution
 // Currently there is one test group per *Spec.scala file
 // Given that each test group has a different JVM, the SparkSession is not shared
 def testGroups(tests: Seq[TestDefinition], baseDir: File): Seq[Group] = {
-  val exportOptions = Seq(
-    "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
-    "--add-opens=java.base/java.lang=ALL-UNNAMED",
-    "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
-    "--add-exports=java.base/sun.util.calendar=ALL-UNNAMED"
-  )
+  val exportOptions = {
+    val javaVersion = sys.props("java.specification.version").toDouble
+    if (javaVersion >= 11)
+      Seq(
+        "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+        "--add-exports=java.base/sun.util.calendar=ALL-UNNAMED"
+      )
+    else
+      Seq.empty
+  }
   tests
     .groupBy(t => t.name)
     .map { case (group, tests) =>
@@ -34,29 +57,16 @@ def testGroups(tests: Seq[TestDefinition], baseDir: File): Seq[Group] = {
         .withWorkingDirectory(baseDir)
         .withRunJVMOptions(
           Vector(
-            s"-Dtest.group=${group}",
-            s"-Dtest.basedir=${baseDir}",
+            s"-Dtest.group=$group",
+            s"-Dtest.basedir=$baseDir",
           ) ++ DefaultForkJavaOptions ++ exportOptions
         )
       new Group(group, tests, SubProcess(options))
     } toSeq
 }
 
-/* Solve
-[error] (assembly) deduplicate: different file contents found in the following:
-[error] C:\...\https\repository.rnd.amadeus.net\sbt-sonatype-remote\com\fasterxml\jackson\core\jackson-annotations\2.12.7\jackson-annotations-2.12.7.jar:module-info.class
-[error] C:\...\https\repository.rnd.amadeus.net\sbt-sonatype-remote\com\fasterxml\jackson\core\jackson-core\2.12.7\jackson-core-2.12.7.jar:module-info.class
-[error] C:\...\https\repository.rnd.amadeus.net\sbt-sonatype-remote\com\fasterxml\jackson\core\jackson-databind\2.12.7\jackson-databind-2.12.7.jar:module-info.class
- */
-assembly / assemblyMergeStrategy := {
-    case PathList("module-info.class") => MergeStrategy.discard
-    case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
-    case x => MergeStrategy.first
-}
-
 val commonSettings = Seq(
   organization := "com.amadeus",
-  scalaVersion := "2.12.17",
   update / checksums := Nil,
   Compile / javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
   scalacOptions ++= Seq(
@@ -98,7 +108,6 @@ val publishSettings = Seq(
   Test / publishArtifact := true
 )
 
-
 val releaseSettings = Seq(
   releaseCommitMessage := s"[sbt-release] Setting version to ${(ThisBuild / version).value}",
   releaseNextCommitMessage := s"[sbt-release] Setting version to ${(ThisBuild / version).value}",
@@ -107,7 +116,7 @@ val releaseSettings = Seq(
     Version(ver)
       .map { v =>
         suggestedBump.value match {
-          case Version.Bump.Bugfix => v.withoutQualifier.string // Already bumped by previous release
+          case Version.Bump.Bugfix => v.withoutQualifier.string
           case _ => v.bump(suggestedBump.value).withoutQualifier.string
         }
       }
@@ -130,14 +139,42 @@ val releaseSettings = Seq(
   majorRegexes := List("""\[major\].*""", """\[breaking\].*""").map(_.r)
 )
 
-lazy val root = (project in file("."))
+lazy val core = (projectMatrix in file("core"))
   .settings(
     name := "sparklear",
     commonSettings,
-    releaseSettings,
     testSettings,
     publishSettings,
     coverageFailOnMinimum := false,
     coverageMinimumStmtTotal := 95.0,
     coverageMinimumBranchTotal := 95.0
+  )
+  /*
+  .addDatabricksRuntimeRow(Dbr13_3, customSetup = {
+    _.settings(
+      libraryDependencies ++= sparkDependencies(Dbr13_3.sparkVersion)
+    )
+  })
+  .addDatabricksRuntimeRow(Dbr16_4, customSetup = {
+    _.settings(
+      libraryDependencies ++= sparkDependencies(Dbr16_4.sparkVersion)
+    )
+  })
+  */
+  .addSparkVersionRow(spark = Spark341, scalaVersions = Seq("2.12.17"), customSetup = {
+    _.settings(
+      libraryDependencies ++= testDependencies(Spark341.sparkVersion)
+    )
+  })
+  .addSparkVersionRow(spark = Spark352, scalaVersions = Seq("2.12.17"), customSetup = {
+    _.settings(
+      libraryDependencies ++= testDependencies(Spark352.sparkVersion)
+    )
+  })
+
+lazy val root = (project in file("."))
+  // Aggregate all subprojects (like core) so their tasks are triggered from the root.
+  .aggregate(core.projectRefs: _*)
+  .settings(
+    releaseSettings: _*
   )
