@@ -1,10 +1,9 @@
 package com.amadeus.testfwk
 
-import com.amadeus.sparklear.SparklearConfig
+import com.amadeus.sparklear.{SparklearConfig, SparklearConfigParams}
 
 trait ConfigSupport {
-
-  val DefaultMaxCacheSize: Int = 200
+  val defaultMaxCacheSize: Int = 200
 
   implicit class ConfigHelper(c: SparklearConfig) {
     def withAllEnabled: SparklearConfig = c.copy(sqlEnabled = true, jobsEnabled = true, stagesEnabled = true, tasksEnabled = true)
@@ -13,6 +12,5 @@ trait ConfigSupport {
     def withOnlySqlEnabled: SparklearConfig = c.copy(sqlEnabled = true, jobsEnabled = false, stagesEnabled = false, tasksEnabled = false)
   }
 
-  def defaultTestConfig: SparklearConfig = SparklearConfig(maxCacheSize = DefaultMaxCacheSize)
-
+  def defaultTestConfig: SparklearConfig = SparklearConfig.build(SparklearConfigParams(defaultMaxCacheSize = defaultMaxCacheSize))
 }
