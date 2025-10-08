@@ -15,24 +15,3 @@ case class SparklearConfig(
   tasksEnabled: Boolean = false,
   maxCacheSize: Int
 )
-
-case class SparklearConfigParams(
-  displaySparkSqlLevelEvents: Boolean = true,
-  displaySparkJobLevelEvents: Boolean = true,
-  displaySparkStageLevelEvents: Boolean = true,
-  displaySparkTaskLevelEvents: Boolean = false, // too verbose
-  defaultMaxCacheSize: Int = 100
-)
-
-object SparklearConfig {
-  def build(inputParams: SparklearConfigParams): SparklearConfig = {
-    val conf = SparklearConfig(
-      sqlEnabled = inputParams.displaySparkSqlLevelEvents,
-      jobsEnabled = inputParams.displaySparkJobLevelEvents,
-      stagesEnabled = inputParams.displaySparkStageLevelEvents,
-      tasksEnabled = inputParams.displaySparkTaskLevelEvents,
-      maxCacheSize = inputParams.defaultMaxCacheSize
-    )
-    conf
-  }
-}
