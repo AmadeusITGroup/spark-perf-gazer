@@ -11,7 +11,7 @@ package com.amadeus.sparklear
 case class SparklearConfig(
   sqlEnabled: Boolean = true,
   jobsEnabled: Boolean = true,
-  stagesEnabled: Boolean = false,
-  tasksEnabled: Boolean = false,
-  maxCacheSize: Int
+  stagesEnabled: Boolean = true,
+  tasksEnabled: Boolean = false, // too verbose
+  maxCacheSize: Int = 100
 )
