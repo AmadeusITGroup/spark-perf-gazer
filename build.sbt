@@ -176,5 +176,6 @@ lazy val root = (project in file("."))
   // Aggregate all subprojects (like core) so their tasks are triggered from the root.
   .aggregate(core.projectRefs: _*)
   .settings(
-    releaseSettings: _*
+    publish / skip := true, // Do not publish artifacts from the root project (empty jars anyway)
+    releaseSettings
   )

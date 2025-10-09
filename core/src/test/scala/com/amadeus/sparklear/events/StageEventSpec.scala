@@ -12,7 +12,8 @@ class StageEventSpec extends SimpleSpec with MockFactory {
       rs.execRunNs shouldEqual (98L*1000*1000*1000)
       rs.execjvmGCNs shouldEqual (13L*1000*1000*1000)
       rs.attempt shouldEqual 8
-      rs.spillBytes shouldEqual 3*1024*1024
+      rs.memoryBytesSpilled shouldEqual 3*1024*1024
+      rs.diskBytesSpilled shouldEqual 4*1024*1024
       rs.inputReadBytes shouldEqual 5L*1024*1024
       rs.outputWriteBytes shouldEqual 74L*1024*1024
       rs.shuffleReadBytes shouldEqual 75L*1024*1024

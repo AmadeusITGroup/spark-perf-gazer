@@ -165,7 +165,7 @@ jobs:
       - name: Get Project Version
         id: project_version
         run: |
-          VERSION=$(sbt -no-colors -error "print version" | tail -1)
+          VERSION=$(sbt -no-colors -error "print version" | tail -1| sed -e 's/^[[:space:]]*//')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Publish PR Snapshot to Artifactory

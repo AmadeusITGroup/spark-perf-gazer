@@ -14,7 +14,8 @@ case class StageReport(
   execRunNs: Long,
   execJvmGcNs: Long,
   attempt: Int,
-  spillBytes: Long
+  memoryBytesSpilled: Long,
+  diskBytesSpilled: Long
 ) extends Report
 
 object StageReport extends Translator[StageEntity, StageReport] {
@@ -33,7 +34,8 @@ object StageReport extends Translator[StageEntity, StageReport] {
       execRunNs = p.execRunNs,
       execJvmGcNs = p.execjvmGCNs,
       attempt = p.attempt,
-      spillBytes = p.spillBytes
+      memoryBytesSpilled = r.end.memoryBytesSpilled,
+      diskBytesSpilled = r.end.diskBytesSpilled
     )
   }
 }

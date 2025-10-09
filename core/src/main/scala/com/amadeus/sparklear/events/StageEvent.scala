@@ -6,7 +6,8 @@ import org.apache.spark.scheduler.StageInfo
 /** Raw event proving information about a stage
   */
 case class StageEvent(stageInfo: StageInfo) extends Event[StageEntity] {
-  val spillBytes: Long = stageInfo.taskMetrics.memoryBytesSpilled
+  val memoryBytesSpilled: Long = stageInfo.taskMetrics.memoryBytesSpilled
+  val diskBytesSpilled: Long = stageInfo.taskMetrics.diskBytesSpilled
   val inputReadBytes: Long = stageInfo.taskMetrics.inputMetrics.bytesRead
   val outputWriteBytes: Long = stageInfo.taskMetrics.outputMetrics.bytesWritten
   val shuffleReadBytes: Long = stageInfo.taskMetrics.shuffleReadMetrics.totalBytesRead

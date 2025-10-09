@@ -23,7 +23,8 @@ class StageReportSpec extends SimpleSpec with ConfigSupport {
           execRunNs = 98L*1000*1000*1000,
           execJvmGcNs = 13L*1000*1000*1000,
           attempt = 8,
-          spillBytes = 3L*1024*1024
+          memoryBytesSpilled = 3L*1024*1024,
+          diskBytesSpilled = 4L*1024*1024
         )
     }
   }
