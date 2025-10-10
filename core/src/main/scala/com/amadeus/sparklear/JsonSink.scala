@@ -54,11 +54,12 @@ object JsonSink {
           rest.nonEmpty && rest.forall(isPartition)
         }
         .getOrElse(segments.length)
+      val leadingSlash = if (normalizedDir.startsWith("/")) "/" else ""
       val basePath =
         if (baseIdx == 0) {
-          "/"
+          leadingSlash
         } else {
-          s"/${segments.take(baseIdx).mkString("/")}/"
+          s"${leadingSlash}${segments.take(baseIdx).mkString("/")}/"
         }
       val partitionCount = segments.length - baseIdx
       val starPathPart = if (partitionCount == 0) "" else List.fill(partitionCount)("*").mkString("", "/", "/")

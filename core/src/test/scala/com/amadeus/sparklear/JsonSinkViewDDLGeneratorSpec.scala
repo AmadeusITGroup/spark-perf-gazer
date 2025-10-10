@@ -5,7 +5,14 @@ import com.amadeus.testfwk.SimpleSpec
 
 class JsonSinkViewDDLGeneratorSpec extends SimpleSpec with Matchers {
   describe("JsonSink.JsonViewDDLGenerator.generateViewDDL") {
-    it("should handle a simple path with no partitions") {
+    it("should handle a simple path with no ending /") {
+      val path = "/tmp"
+      val ddl = JsonSink.JsonViewDDLGenerator.generateViewDDL(path, "sql")
+      ddl should include ("path \"/tmp/sql-reports-*.json\"")
+      ddl should include ("basePath \"/tmp/\"")
+    }
+
+    it("should handle a simple path with intermediate / and no partitions") {
       val path = "/tmp/listener"
       val ddl = JsonSink.JsonViewDDLGenerator.generateViewDDL(path, "sql")
       ddl should include ("path \"/tmp/listener/sql-reports-*.json\"")
@@ -26,6 +33,13 @@ class JsonSinkViewDDLGeneratorSpec extends SimpleSpec with Matchers {
       ddl should include ("basePath \"/tmp/listener/\"")
     }
 
+    it("should handle a path with only partition segments after base") {
+      val path = "/base/a=10/b=20/c=30"
+      val ddl = JsonSink.JsonViewDDLGenerator.generateViewDDL(path, "sql")
+      ddl should include ("path \"/base/*/*/*/sql-reports-*.json\"")
+      ddl should include ("basePath \"/base/\"")
+    }
+
     it("should handle a path with non-partition segments between partitions") {
       val path = "/base/a=10/something/b=10/c=30"
       val ddl = JsonSink.JsonViewDDLGenerator.generateViewDDL(path, "sql")
@@ -40,18 +54,11 @@ class JsonSinkViewDDLGeneratorSpec extends SimpleSpec with Matchers {
       ddl should include ("basePath \"/tmp/listener/\"")
     }
 
-    it("should handle a path with only partition segments after base") {
-      val path = "/base/a=10/b=20/c=30"
-      val ddl = JsonSink.JsonViewDDLGenerator.generateViewDDL(path, "sql")
-      ddl should include ("path \"/base/*/*/*/sql-reports-*.json\"")
-      ddl should include ("basePath \"/base/\"")
-    }
-
     it("should handle a path with no leading slash") {
-      val path = "tmp/listener/date=2025-09-10"
+      val path = "dbfs:/tmp/listener/date=2025-09-10"
       val ddl = JsonSink.JsonViewDDLGenerator.generateViewDDL(path, "sql")
-      ddl should include ("path \"/tmp/listener/*/sql-reports-*.json\"")
-      ddl should include ("basePath \"/tmp/listener/\"")
+      ddl should include ("path \"dbfs:/tmp/listener/*/sql-reports-*.json\"")
+      ddl should include ("basePath \"dbfs:/tmp/listener/\"")
     }
 
     it("should handle a path with trailing slash in directory") {
