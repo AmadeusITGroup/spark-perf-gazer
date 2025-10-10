@@ -4,6 +4,24 @@ import com.amadeus.testfwk.SimpleSpec
 
 class CappedConcurrentHashMapSpec extends SimpleSpec {
   describe("The CappedConcurrentHashMap") {
+    it("should throw IllegalArgumentException if cap <= 2") {
+      an[IllegalArgumentException] should be thrownBy {
+        new CappedConcurrentHashMap[Int, Int](2)
+      }
+    }
+
+    it("should throw IllegalArgumentException if evictRatio is < 0.5") {
+      an[IllegalArgumentException] should be thrownBy {
+        new CappedConcurrentHashMap[Int, Int](3, 0.49)
+      }
+    }
+
+    it("should throw IllegalArgumentException if evictRatio is > 1.0") {
+      an[IllegalArgumentException] should be thrownBy {
+        new CappedConcurrentHashMap[Int, Int](3, 1.01)
+      }
+    }
+
     it("should put elements") {
       val m = new CappedConcurrentHashMap[Int, Int](3)
       m.size shouldEqual 0

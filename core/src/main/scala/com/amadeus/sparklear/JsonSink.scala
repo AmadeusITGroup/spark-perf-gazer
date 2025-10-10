@@ -16,10 +16,7 @@ import scala.collection.mutable.ListBuffer
   * The output folder path is built as follows: <destination>/<report-type>.json
   * A typical report path will be "/dbfs/logs/appid=my-app-id/sql-reports-*.json" if used from Databricks.
   *
-  * @param config : object encapsulating :
-  *  - destination Base directory path where JSON files will be written, e.g., "/dbfs/logs/appid=my-app-id/"
-  *  - writeBatchSize Number of reports to accumulate before writing to disk
-  *  - fileSizeLimit file size to reach before switching to a new file
+  * @param config : object encapsulating destination, writeBatchSize, fileSizeLimit
   */
 class JsonSink(
   val config: JsonSinkConfig

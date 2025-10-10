@@ -41,6 +41,10 @@ object PathBuilder {
       appendPartition(partitionName, sparkConf.getOrElse(s"spark.databricks.clusterUsageTags.$tagName", "unknown"))
     }
 
+    def withDefaultPartitions(sparkConf: Map[String, String]): String = {
+      path.withDate.withApplicationId(sparkConf)
+    }
+
     private def appendPartition(key: String, value: String): String = {
       val cleanPath = if (path.endsWith("/")) path else path + "/"
       val cleanKey = key.replace("=", "_").replace("/", "_")
