@@ -18,7 +18,7 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
     it("should write job reports with writeBatchSize = 1") {
       withTmpDir { tmpDir =>
         val jsonSink = new JsonSink(
-          JsonSinkConfig.build(
+          JsonSinkConfig(
             destination = s"$tmpDir",
             writeBatchSize = 1,
             fileSizeLimit = 200L*1024*1024
@@ -50,7 +50,7 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
     it("should write job reports with writeBatchSize = 5") {
       withTmpDir { tmpDir =>
         val jsonSink = new JsonSink(
-          JsonSinkConfig.build(
+          JsonSinkConfig(
             destination = s"$tmpDir",
             writeBatchSize = 5,
             fileSizeLimit = 200L*1024*1024
@@ -86,7 +86,7 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
     it("should write job reports when writeBatchSize not reached and sink is flushed") {
       withTmpDir { tmpDir =>
         val jsonSink = new JsonSink(
-          JsonSinkConfig.build(
+          JsonSinkConfig(
             destination = s"$tmpDir",
             writeBatchSize = 5,
             fileSizeLimit = 200L*1024*1024
@@ -124,7 +124,7 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
     it("should do file rolling when fileSizeLimit is reached ") {
       withTmpDir { tmpDir =>
         val jsonSink = new JsonSink(
-          JsonSinkConfig.build(
+          JsonSinkConfig(
             destination = s"$tmpDir",
             writeBatchSize = 100,
             fileSizeLimit = 10L*1024

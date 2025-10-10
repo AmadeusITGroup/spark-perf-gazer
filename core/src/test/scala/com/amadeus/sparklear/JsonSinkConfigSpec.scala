@@ -12,7 +12,7 @@ class JsonSinkConfigSpec extends SimpleSpec with SparkSupport with TempDirSuppor
       withTmpDir { tmpDir =>
         val currentDate = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE)
 
-        val c1 = JsonSinkConfig.build(destination = s"$tmpDir")
+        val c1 = JsonSinkConfig(destination = s"$tmpDir/")
         val s1 = new JsonSink(c1)
         val reportsDestination1 = s1.config.destination
 
@@ -20,7 +20,7 @@ class JsonSinkConfigSpec extends SimpleSpec with SparkSupport with TempDirSuppor
           reportsDestination1 shouldBe s"$tmpDir/"
         }
 
-        val c2 = JsonSinkConfig.build(destination = s"$tmpDir".withDefaultPartitions(spark.conf.getAll))
+        val c2 = JsonSinkConfig(destination = s"$tmpDir".withDefaultPartitions(spark.conf.getAll))
         val s2 = new JsonSink(c2)
         val reportsDestination2 = s2.config.destination
 
@@ -28,7 +28,7 @@ class JsonSinkConfigSpec extends SimpleSpec with SparkSupport with TempDirSuppor
           reportsDestination2 shouldBe s"$tmpDir/date=$currentDate/applicationId=${spark.sparkContext.applicationId}/"
         }
 
-        val c3 = JsonSinkConfig.build(destination = s"$tmpDir".withDate.withSparkConf("applicationId", "spark.app.id", spark.conf.getAll))
+        val c3 = JsonSinkConfig(destination = s"$tmpDir".withDate.withSparkConf("applicationId", "spark.app.id", spark.conf.getAll))
         val s3 = new JsonSink(c3)
         val reportsDestination3 = s3.config.destination
 
@@ -36,7 +36,7 @@ class JsonSinkConfigSpec extends SimpleSpec with SparkSupport with TempDirSuppor
           reportsDestination3 shouldBe s"$tmpDir/date=$currentDate/applicationId=${spark.sparkContext.applicationId}/"
         }
 
-        val c4 = JsonSinkConfig.build(destination = s"$tmpDir".withDate.withApplicationId(spark.conf.getAll))
+        val c4 = JsonSinkConfig(destination = s"$tmpDir".withDate.withApplicationId(spark.conf.getAll))
         val s4 = new JsonSink(c4)
         val reportsDestination4 = s4.config.destination
 
@@ -44,7 +44,7 @@ class JsonSinkConfigSpec extends SimpleSpec with SparkSupport with TempDirSuppor
           reportsDestination4 shouldBe s"$tmpDir/date=$currentDate/applicationId=${spark.sparkContext.applicationId}/"
         }
 
-        val c5 = JsonSinkConfig.build(destination = s"$tmpDir".withDate(DateTimeFormatter.ISO_DATE).withApplicationId(spark.conf.getAll))
+        val c5 = JsonSinkConfig(destination = s"$tmpDir".withDate(DateTimeFormatter.ISO_DATE).withApplicationId(spark.conf.getAll))
         val s5 = new JsonSink(c5)
         val reportsDestination5 = s5.config.destination
 
@@ -52,7 +52,7 @@ class JsonSinkConfigSpec extends SimpleSpec with SparkSupport with TempDirSuppor
           reportsDestination5 shouldBe s"$tmpDir/date=$currentDate/applicationId=${spark.sparkContext.applicationId}/"
         }
 
-        val c6 = JsonSinkConfig.build(
+        val c6 = JsonSinkConfig(
           destination = s"$tmpDir"
             .withPartition("customPartition", "myPartition")
             .withDatabricksTag("clusterName", "clusterName", spark.conf.getAll))
