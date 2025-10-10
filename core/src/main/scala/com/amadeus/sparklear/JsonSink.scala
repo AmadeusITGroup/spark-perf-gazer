@@ -32,10 +32,10 @@ class JsonSink(
     private var writer = new PrintWriter(new FileWriter(path, true))
     private var file = new File(path)
 
-    private val reports : ListBuffer[T] = new ListBuffer[T]()
+    private val reports: ListBuffer[T] = new ListBuffer[T]()
 
     private def flushReportsToFile(): Unit = {
-      reports.foreach(r => writer.println(asJson(r)))  // scalastyle:ignore regex
+      reports.foreach(r => writer.println(asJson(r))) // scalastyle:ignore regex
       // flush writer to write to disk
       writer.flush()
       // clear reports
@@ -78,10 +78,10 @@ class JsonSink(
   private val taskReports: ReportBuffer[TaskReport] = new ReportBuffer[TaskReport]("task", config.destination)
 
   override def write(report: Report): Unit = report match {
-    case r: SqlReport   => sqlReports.write(r)
-    case r: JobReport   => jobReports.write(r)
+    case r: SqlReport => sqlReports.write(r)
+    case r: JobReport => jobReports.write(r)
     case r: StageReport => stageReports.write(r)
-    case r: TaskReport  => taskReports.write(r)
+    case r: TaskReport => taskReports.write(r)
   }
 
   override def flush(): Unit = {
@@ -101,5 +101,55 @@ class JsonSink(
     taskReports.close()
 
     logger.debug("writers closed.")
+  }
+}
+
+object JsonSink {
+
+  object JsonViewDDLGenerator {
+
+    /** Generate the CREATE OR REPLACE TEMPORARY VIEW DDL for a partitioned JSON file path.
+      *
+      * Example of a partitioned path:
+      *
+      * /tmp/listener/date=2025-09-10/cluster=my-cluster/customer=my-customer/sql-reports-1234.json
+      *
+      * Rule: the view basePath must be up to (but not including) the first partition-style segment
+      * (e.g., date=2025-09-10) starting from which there are ONLY partition style segments.
+      * The path should have as many /\* as there are partition segments after the basePath.
+      *
+      * @param destination  The Sink destination path where JSON files are written.
+      * @param reportName  The report name, that is used as view name too (e.g. "job", "sql", ...).
+      */
+    def generateViewDDL(destination: String, reportName: String): String = {
+      val normalizedDir = destination.replace('\\', '/').stripSuffix("/")
+      val segments = normalizedDir.split('/').filter(_.nonEmpty).toList
+      def isPartition(s: String) = s.contains('=')
+      // Find the first index where all remaining segments are partition-style
+      val baseIdx = segments.indices
+        .find { idx =>
+          val rest = segments.drop(idx)
+          rest.nonEmpty && rest.forall(isPartition)
+        }
+        .getOrElse(segments.length)
+      val basePath =
+        if (baseIdx == 0) {
+          "/"
+        } else {
+          s"/${segments.take(baseIdx).mkString("/")}/"
+        }
+      val partitionCount = segments.length - baseIdx
+      val starPathPart = if (partitionCount == 0) "" else List.fill(partitionCount)("*").mkString("", "/", "/")
+      val fileNameWithWildcard = s"${reportName}-reports-*.json"
+      val globPath = s"$basePath$starPathPart$fileNameWithWildcard"
+      val ddl =
+        s"""|CREATE OR REPLACE TEMPORARY VIEW $reportName
+            |USING json
+            |OPTIONS (
+            |  path \"$globPath\",
+            |  basePath \"$basePath\"
+            |);""".stripMargin
+      ddl
+    }
   }
 }
