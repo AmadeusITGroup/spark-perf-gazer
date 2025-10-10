@@ -175,6 +175,13 @@ class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
     taskReports.close()
 
     logger.info("JsonSink writers closed.")
+
+    import JsonSink._
+    Seq("sql", "job", "stage", "task").foreach { reportType =>
+      val ddl = JsonViewDDLGenerator.generateViewDDL(config.destination, reportType)
+      logger.info(s"To create a temporary view for $reportType reports, run the following DDL:")
+      logger.info(ddl)
+    }
   }
 
   /** String representation of the sink
