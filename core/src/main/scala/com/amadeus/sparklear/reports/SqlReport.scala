@@ -67,7 +67,12 @@ object SqlReport extends Translator[SqlEntity, SqlReport] {
   }
 
   private def metricToKv(s: (String, SQLMetric)): (String, String) =
-    (s._2.name.getOrElse(s._1), s._2.value.toString)
+    ( s._2.name.getOrElse(
+        // $COVERAGE-OFF$ A SQLMetric should always have a name as long as it has been registered
+        s._1
+        // $COVERAGE-ON$
+      ), s._2.value.toString
+    )
 
   private def asNodes(sqlEntity: SqlEntity): Seq[SqlNode] = {
     val sqlId = sqlEntity.start.id
