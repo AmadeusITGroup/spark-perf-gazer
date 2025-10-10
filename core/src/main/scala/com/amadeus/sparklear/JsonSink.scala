@@ -1,5 +1,6 @@
 package com.amadeus.sparklear
 
+import com.amadeus.sparklear.JsonSink.JsonViewDDLGenerator
 import com.amadeus.sparklear.reports.{JobReport, Report, SqlReport, StageReport, TaskReport}
 import org.json4s.jackson.Serialization
 import org.json4s.{Formats, NoTypeHints}
@@ -101,6 +102,12 @@ class JsonSink(
     taskReports.close()
 
     logger.debug("writers closed.")
+    import JsonSink._
+    Seq("sql", "job", "stage", "task").foreach { reportType =>
+      val ddl = JsonViewDDLGenerator.generateViewDDL(config.destination, reportType)
+      logger.info(s"To create a temporary view for $reportType reports, run the following DDL:")
+      logger.info(ddl)
+    }
   }
 }
 
