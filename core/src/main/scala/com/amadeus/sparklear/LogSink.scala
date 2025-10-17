@@ -25,4 +25,6 @@ class LogSink() extends Sink {
   override def close(): Unit = {}
 
   override def asString: String = "LogSink"
+
+  override def generateViewSnippet(reportType: String): String = "Reports available in the logs."
 }

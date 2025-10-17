@@ -26,4 +26,10 @@ trait Sink {
   /** String representation of the sink
     */
   def asString: String
+
+  /** Generate SQL snippet to create a view to easily access a report of a given type
+    *
+    * TODO: use a type for report type, not string
+    */
+  def generateViewSnippet(reportType: String): String
 }

@@ -142,10 +142,19 @@ class SparklEar(c: SparklearConfig, sink: Sink) extends SparkListener {
     * Close the sink (if not already done).
     */
   def close(): Unit = {
+    logSnippets()
     sink.close()
     logger.info("Listener closed, size of maps sql={} and job={})",
       sqlStartEvents.size, jobStartEvents.size)
   }
+
+  private def logSnippets(): Unit = {
+    Seq("sql", "job", "stage", "task").foreach { reportType =>
+      val ddl = sink.generateViewSnippet(reportType)
+      logger.info(s"To create a temporary view for $reportType reports, run the following SQL:\n${ddl}")
+    }
+  }
+
 }
 
 object SparklEar {

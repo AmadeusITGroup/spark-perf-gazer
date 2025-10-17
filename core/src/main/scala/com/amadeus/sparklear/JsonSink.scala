@@ -1,11 +1,11 @@
 package com.amadeus.sparklear
 
 import com.amadeus.sparklear.JsonSink._
-import com.amadeus.sparklear.reports.{JobReport, Report, SqlReport, StageReport, TaskReport}
+import com.amadeus.sparklear.reports._
 import org.apache.spark.SparkConf
 import org.json4s.jackson.Serialization
-import org.json4s.{Formats, NoTypeHints}
 import org.json4s.jackson.Serialization.{write => asJson}
+import org.json4s.{Formats, NoTypeHints}
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.io.{File, FileWriter, PrintWriter}
