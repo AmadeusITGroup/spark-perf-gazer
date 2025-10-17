@@ -1,6 +1,6 @@
 package com.amadeus.integration
 
-import com.amadeus.sparklear.{JsonSinkConfig, SparklEar}
+import com.amadeus.sparklear.SparklEar
 import com.amadeus.testfwk._
 
 class JsonSinkIntegrationSpec

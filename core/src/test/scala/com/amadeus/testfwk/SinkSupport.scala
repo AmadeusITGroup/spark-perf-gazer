@@ -1,8 +1,9 @@
 package com.amadeus.testfwk
 
-import com.amadeus.sparklear.{JsonSink, LogSink, Sink, JsonSinkConfig}
+import com.amadeus.sparklear.{JsonSink, LogSink, Sink}
 import com.amadeus.sparklear.reports.Report
 import com.amadeus.testfwk.SinkSupport.TestableSink
+import org.apache.spark.SparkConf
 import scala.collection.mutable.ListBuffer
 
 object SinkSupport {
@@ -31,7 +32,13 @@ trait SinkSupport {
     testCode(logSink)
   }
   def withJsonSink[T](destination: String, writeBatchSize: Int, fileSizeLimit: Long)(testCode: JsonSink => T): T = {
-    val jsonSink = new JsonSink(JsonSinkConfig(destination = destination, writeBatchSize = writeBatchSize, fileSizeLimit = fileSizeLimit))
+    // build a SparkConf using the JsonSink keys
+    val sparkConf = new SparkConf(false)
+      .set(JsonSink.DestinationKey, destination)
+      .set(JsonSink.WriteBatchSizeKey, writeBatchSize.toString)
+      .set(JsonSink.FileSizeLimitKey, fileSizeLimit.toString)
+
+    val jsonSink = new JsonSink(sparkConf)
     testCode(jsonSink)
   }
 }
