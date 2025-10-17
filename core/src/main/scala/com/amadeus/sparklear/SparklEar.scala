@@ -120,7 +120,7 @@ class SparklEar(c: SparklearConfig, sink: Sink) extends SparkListener {
   }
 
   override def onApplicationEnd(event: SparkListenerApplicationEnd): Unit = {
-    logger.trace("onApplicationEnd: duration={}", event.time)
+    logger.trace("onApplicationEnd: end={}", event.time)
     sink.close()
   }
 
