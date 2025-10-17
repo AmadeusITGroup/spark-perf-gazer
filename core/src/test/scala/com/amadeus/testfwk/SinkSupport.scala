@@ -1,7 +1,7 @@
 package com.amadeus.testfwk
 
+import com.amadeus.sparklear.reports.{Report, ReportType}
 import com.amadeus.sparklear.{JsonSink, LogSink, Sink}
-import com.amadeus.sparklear.reports.Report
 import com.amadeus.testfwk.SinkSupport.TestableSink
 import org.apache.spark.SparkConf
 
@@ -23,7 +23,7 @@ object SinkSupport {
 
     override def asString: String = ""
 
-    override def generateViewSnippet(reportType: String): String = "No snippet for test reports."
+    override def generateViewSnippet(reportType: ReportType): String = "No snippet for test reports."
   }
 }
 

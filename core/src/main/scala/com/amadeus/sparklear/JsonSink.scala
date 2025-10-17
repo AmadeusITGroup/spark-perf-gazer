@@ -147,10 +147,14 @@ class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
     }
   }
 
-  private val sqlReports: ReportBuffer[SqlReport] = new ReportBuffer[SqlReport]("sql", destination)
-  private val jobReports: ReportBuffer[JobReport] = new ReportBuffer[JobReport]("job", destination)
-  private val stageReports: ReportBuffer[StageReport] = new ReportBuffer[StageReport]("stage", destination)
-  private val taskReports: ReportBuffer[TaskReport] = new ReportBuffer[TaskReport]("task", destination)
+  private val sqlReports: ReportBuffer[SqlReport] =
+    new ReportBuffer[SqlReport](SqlReportType.name, destination)
+  private val jobReports: ReportBuffer[JobReport] =
+    new ReportBuffer[JobReport](JobReportType.name, destination)
+  private val stageReports: ReportBuffer[StageReport] =
+    new ReportBuffer[StageReport](StageReportType.name, destination)
+  private val taskReports: ReportBuffer[TaskReport] =
+    new ReportBuffer[TaskReport](TaskReportType.name, destination)
 
   override def write(report: Report): Unit = report match {
     case r: SqlReport => sqlReports.write(r)
@@ -176,13 +180,10 @@ class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
     taskReports.close()
 
     logger.info("JsonSink writers closed.")
+  }
 
-    import JsonSink._
-    Seq("sql", "job", "stage", "task").foreach { reportType =>
-      val ddl = JsonViewDDLGenerator.generateViewDDL(config.destination, reportType)
-      logger.info(s"To create a temporary view for $reportType reports, run the following DDL:")
-      logger.info(ddl)
-    }
+  override def generateViewSnippet(reportType: ReportType): String = {
+    JsonViewDDLGenerator.generateViewDDL(config.destination, reportType.name)
   }
 
   /** String representation of the sink
