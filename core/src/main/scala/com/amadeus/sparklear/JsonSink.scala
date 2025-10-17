@@ -132,6 +132,7 @@ object JsonSink {
       */
     def generateViewDDL(destination: String, reportName: String): String = {
       val normalizedDir = destination.replace('\\', '/').stripSuffix("/")
+        .stripPrefix("/dbfs")
       val segments = normalizedDir.split('/').filter(_.nonEmpty).toList
       def isPartition(s: String) = s.contains('=')
       // Find the first index where all remaining segments are partition-style

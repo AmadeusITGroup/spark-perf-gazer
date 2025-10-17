@@ -74,6 +74,14 @@ class JsonSinkViewDDLGeneratorSpec extends SimpleSpec with Matchers {
       ddl should include ("path \"/tmp/listener/*/sql-reports-*.json\"")
       ddl should include ("basePath \"/tmp/listener/\"")
     }
+
+    it("should handle a path starting with /dbfs mountpoint, dropping it") {
+      val path = "/dbfs/tmp/listener/date=2025-09-10"
+      val ddl = JsonSink.JsonViewDDLGenerator.generateViewDDL(path, "sql")
+      ddl should include ("path \"/tmp/listener/*/sql-reports-*.json\"")
+      ddl should include ("basePath \"/tmp/listener/\"")
+    }
+
   }
 }
 
