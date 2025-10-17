@@ -73,10 +73,14 @@ class JsonSink(
     }
   }
 
-  private val sqlReports: ReportBuffer[SqlReport] = new ReportBuffer[SqlReport]("sql", config.destination)
-  private val jobReports: ReportBuffer[JobReport] = new ReportBuffer[JobReport]("job", config.destination)
-  private val stageReports: ReportBuffer[StageReport] = new ReportBuffer[StageReport]("stage", config.destination)
-  private val taskReports: ReportBuffer[TaskReport] = new ReportBuffer[TaskReport]("task", config.destination)
+  private val sqlReports: ReportBuffer[SqlReport] =
+    new ReportBuffer[SqlReport](SqlReportType.name, config.destination)
+  private val jobReports: ReportBuffer[JobReport] =
+    new ReportBuffer[JobReport](JobReportType.name, config.destination)
+  private val stageReports: ReportBuffer[StageReport] =
+    new ReportBuffer[StageReport](StageReportType.name, config.destination)
+  private val taskReports: ReportBuffer[TaskReport] =
+    new ReportBuffer[TaskReport](TaskReportType.name, config.destination)
 
   override def write(report: Report): Unit = report match {
     case r: SqlReport => sqlReports.write(r)
@@ -104,8 +108,8 @@ class JsonSink(
     logger.debug("writers closed.")
   }
 
-  override def generateViewSnippet(reportType: String): String = {
-    JsonViewDDLGenerator.generateViewDDL(config.destination, reportType)
+  override def generateViewSnippet(reportType: ReportType): String = {
+    JsonViewDDLGenerator.generateViewDDL(config.destination, reportType.name)
   }
 }
 

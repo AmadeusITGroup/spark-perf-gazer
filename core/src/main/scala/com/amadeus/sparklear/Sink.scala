@@ -1,6 +1,6 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.reports.Report
+import com.amadeus.sparklear.reports.{Report, ReportType}
 
 /** Sink of a collection of reports
   */
@@ -20,8 +20,6 @@ trait Sink {
   def close(): Unit
 
   /** Generate SQL snippet to create a view to easily access a report of a given type
-    *
-    * TODO: use a type for report type, not string
     */
-  def generateViewSnippet(reportType: String): String
+  def generateViewSnippet(reportType: ReportType): String
 }

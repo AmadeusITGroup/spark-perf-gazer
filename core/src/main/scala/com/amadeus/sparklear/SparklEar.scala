@@ -3,7 +3,7 @@ package com.amadeus.sparklear
 import com.amadeus.sparklear.entities.{JobEntity, SqlEntity, StageEntity, TaskEntity}
 import com.amadeus.sparklear.events.JobEvent.EndUpdate
 import com.amadeus.sparklear.events.{JobEvent, SqlEvent, StageEvent, TaskEvent}
-import com.amadeus.sparklear.reports.{JobReport, SqlReport, StageReport, TaskReport}
+import com.amadeus.sparklear.reports._
 import com.amadeus.sparklear.utils.CappedConcurrentHashMap
 import org.apache.spark.scheduler._
 import org.apache.spark.sql.execution.ui._
@@ -124,20 +124,18 @@ class SparklEar(c: SparklearConfig, sink: Sink) extends SparkListener {
     sink.close()
   }
 
-  /**
-    * Close the sink (if not already done).
+  /** Log SQL view snippets and close the sink (if not already done).
     */
   def close(): Unit = {
     logSnippets()
     sink.close()
-    logger.info("Listener closed, size of maps sql={} and job={})",
-      sqlStartEvents.size, jobStartEvents.size)
+    logger.info("Listener closed, size of maps sql={} and job={})", sqlStartEvents.size, jobStartEvents.size)
   }
 
   private def logSnippets(): Unit = {
-    Seq("sql", "job", "stage", "task").foreach { reportType =>
+    Seq(SqlReportType, JobReportType, StageReportType, TaskReportType).foreach { reportType =>
       val ddl = sink.generateViewSnippet(reportType)
-      logger.info(s"To create a temporary view for $reportType reports, run the following SQL:\n${ddl}")
+      logger.info(s"To create a temporary view for ${reportType.name} reports, run the following SQL:\n${ddl}")
     }
   }
 
