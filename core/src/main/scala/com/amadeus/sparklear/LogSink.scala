@@ -6,7 +6,6 @@ import org.slf4j.{Logger, LoggerFactory}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.{write => toJson}
 
-
 /** Sink that logs reports in json format (info level)
   */
 class LogSink extends Sink {
@@ -20,4 +19,6 @@ class LogSink extends Sink {
   override def flush(): Unit = {}
 
   override def close(): Unit = {}
+
+  override def generateViewSnippet(reportType: String): String = "Reports available in the logs."
 }

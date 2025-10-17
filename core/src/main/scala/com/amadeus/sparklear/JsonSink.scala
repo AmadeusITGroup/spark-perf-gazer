@@ -1,10 +1,10 @@
 package com.amadeus.sparklear
 
 import com.amadeus.sparklear.JsonSink.JsonViewDDLGenerator
-import com.amadeus.sparklear.reports.{JobReport, Report, SqlReport, StageReport, TaskReport}
+import com.amadeus.sparklear.reports._
 import org.json4s.jackson.Serialization
-import org.json4s.{Formats, NoTypeHints}
 import org.json4s.jackson.Serialization.{write => asJson}
+import org.json4s.{Formats, NoTypeHints}
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.io.{File, FileWriter, PrintWriter}
@@ -102,12 +102,10 @@ class JsonSink(
     taskReports.close()
 
     logger.debug("writers closed.")
-    import JsonSink._
-    Seq("sql", "job", "stage", "task").foreach { reportType =>
-      val ddl = JsonViewDDLGenerator.generateViewDDL(config.destination, reportType)
-      logger.info(s"To create a temporary view for $reportType reports, run the following DDL:")
-      logger.info(ddl)
-    }
+  }
+
+  override def generateViewSnippet(reportType: String): String = {
+    JsonViewDDLGenerator.generateViewDDL(config.destination, reportType)
   }
 }
 

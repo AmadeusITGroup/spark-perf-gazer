@@ -1,8 +1,9 @@
 package com.amadeus.testfwk
 
-import com.amadeus.sparklear.{JsonSink, LogSink, Sink, JsonSinkConfig}
 import com.amadeus.sparklear.reports.Report
+import com.amadeus.sparklear.{JsonSink, JsonSinkConfig, LogSink, Sink}
 import com.amadeus.testfwk.SinkSupport.TestableSink
+
 import scala.collection.mutable.ListBuffer
 
 object SinkSupport {
@@ -18,6 +19,8 @@ object SinkSupport {
     override def flush(): Unit = {}
 
     override def close(): Unit = {}
+
+    override def generateViewSnippet(reportType: String): String = "No snippet for test reports."
   }
 }
 
@@ -31,7 +34,9 @@ trait SinkSupport {
     testCode(logSink)
   }
   def withJsonSink[T](destination: String, writeBatchSize: Int, fileSizeLimit: Long)(testCode: JsonSink => T): T = {
-    val jsonSink = new JsonSink(JsonSinkConfig(destination = destination, writeBatchSize = writeBatchSize, fileSizeLimit = fileSizeLimit))
+    val jsonSink = new JsonSink(
+      JsonSinkConfig(destination = destination, writeBatchSize = writeBatchSize, fileSizeLimit = fileSizeLimit)
+    )
     testCode(jsonSink)
   }
 }
