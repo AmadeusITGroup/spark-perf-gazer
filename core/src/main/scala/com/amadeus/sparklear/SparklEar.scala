@@ -1,10 +1,12 @@
 package com.amadeus.sparklear
 
+import com.amadeus.sparklear.SparklEarListener.{config, sink}
 import com.amadeus.sparklear.entities.{JobEntity, SqlEntity, StageEntity, TaskEntity}
 import com.amadeus.sparklear.events.JobEvent.EndUpdate
 import com.amadeus.sparklear.events.{JobEvent, SqlEvent, StageEvent, TaskEvent}
 import com.amadeus.sparklear.reports.{JobReport, SqlReport, StageReport, TaskReport}
 import com.amadeus.sparklear.utils.CappedConcurrentHashMap
+import org.apache.spark.SparkConf
 import org.apache.spark.scheduler._
 import org.apache.spark.sql.execution.ui._
 import org.slf4j.{Logger, LoggerFactory}

@@ -1,5 +1,8 @@
 package com.amadeus.sparklear
 
+import com.amadeus.sparklear.SparklearConfig.{DefaultJobsEnabled, DefaultMaxCacheSize, DefaultSqlEnabled, DefaultStagesEnabled, DefaultTasksEnabled}
+import org.apache.spark.SparkConf
+
 /** @param sqlEnabled         whether to expose to end-user SQL queries level reports
   * @param jobsEnabled        whether to expose to end-user job level reports
   * @param stagesEnabled      whether to expose to end-user stage level reports
@@ -9,9 +12,28 @@ package com.amadeus.sparklear
   *                           generated, so try stay around 200 to 1000 unless you really know what you're doing.
   */
 case class SparklearConfig(
-  sqlEnabled: Boolean = true,
-  jobsEnabled: Boolean = true,
-  stagesEnabled: Boolean = true,
-  tasksEnabled: Boolean = false, // too verbose
-  maxCacheSize: Int = 100
+  sqlEnabled: Boolean = DefaultSqlEnabled,
+  jobsEnabled: Boolean = DefaultJobsEnabled,
+  stagesEnabled: Boolean = DefaultStagesEnabled,
+  tasksEnabled: Boolean = DefaultTasksEnabled,
+  maxCacheSize: Int = DefaultMaxCacheSize
 )
+
+object SparklearConfig {
+
+  val DefaultSqlEnabled: Boolean = true
+  val DefaultJobsEnabled: Boolean = true
+  val DefaultStagesEnabled: Boolean = true
+  val DefaultTasksEnabled: Boolean = false
+  val DefaultMaxCacheSize: Int = 100
+
+  def apply(sparkConf: SparkConf): SparklearConfig = {
+    SparklearConfig(
+      sqlEnabled = sparkConf.getBoolean("sparklear.sql.enabled", DefaultSqlEnabled),
+      jobsEnabled = sparkConf.getBoolean("sparklear.jobs.enabled", DefaultJobsEnabled),
+      stagesEnabled = sparkConf.getBoolean("sparklear.stages.enabled", DefaultStagesEnabled),
+      tasksEnabled = sparkConf.getBoolean("sparklear.tasks.enabled", DefaultTasksEnabled),
+      maxCacheSize = sparkConf.getInt("sparklear.max.cache.size", DefaultMaxCacheSize)
+    )
+  }
+}

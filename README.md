@@ -100,3 +100,15 @@ For code formatting setup:
 ```
 Settings -> Editor -> Code Style -> Scala -> Formatter: ScalaFMT
 ```
+
+#### Run
+
+```bash
+# (optional) clean previous local publishes and publish
+find ~/.ivy2 -type f -name *sparklear* | xargs rm
+sbt publishLocal
+# run spark shell with the listener (change the version accordingly)
+spark-shell \
+--packages com.amadeus:sparklear_spark352_2.12:0.0.29-SNAPSHOT \
+--conf spark.extraListeners=com.amadeus.sparklear.SparklEarListener
+```
