@@ -40,11 +40,15 @@ object JsonSink {
      * (e.g., date=2025-09-10) starting from which there are ONLY partition style segments.
      * The path should have as many /\* as there are partition segments after the basePath.
      *
+     * If the /dbfs mount point is detected (Databricks), it is stripped out.
+     *
      * @param destination  The Sink destination path where JSON files are written.
      * @param reportName  The report name, that is used as view name too (e.g. "job", "sql", ...).
      */
     def generateViewDDL(destination: String, reportName: String): String = {
-      val normalizedDir = destination.replace('\\', '/').stripSuffix("/")
+      val normalizedDir = destination
+        .replace('\\', '/')
+        .stripSuffix("/")
         .stripPrefix("/dbfs")
       val segments = normalizedDir.split('/').filter(_.nonEmpty).toList
       def isPartition(s: String) = s.contains('=')
