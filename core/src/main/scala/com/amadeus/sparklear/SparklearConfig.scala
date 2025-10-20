@@ -11,6 +11,7 @@ import org.apache.spark.SparkConf
   *                           too large and could cause OOM on the driver, and too small could cause incomplete reports
   *                           generated, so try stay around 200 to 1000 unless you really know what you're doing.
   */
+
 case class SparklearConfig(
   sqlEnabled: Boolean = DefaultSqlEnabled,
   jobsEnabled: Boolean = DefaultJobsEnabled,
@@ -20,7 +21,6 @@ case class SparklearConfig(
 )
 
 object SparklearConfig {
-
   val DefaultSqlEnabled: Boolean = true
   val DefaultJobsEnabled: Boolean = true
   val DefaultStagesEnabled: Boolean = true
@@ -29,11 +29,11 @@ object SparklearConfig {
 
   def apply(sparkConf: SparkConf): SparklearConfig = {
     SparklearConfig(
-      sqlEnabled = sparkConf.getBoolean("sparklear.sql.enabled", DefaultSqlEnabled),
-      jobsEnabled = sparkConf.getBoolean("sparklear.jobs.enabled", DefaultJobsEnabled),
-      stagesEnabled = sparkConf.getBoolean("sparklear.stages.enabled", DefaultStagesEnabled),
-      tasksEnabled = sparkConf.getBoolean("sparklear.tasks.enabled", DefaultTasksEnabled),
-      maxCacheSize = sparkConf.getInt("sparklear.max.cache.size", DefaultMaxCacheSize)
+      sqlEnabled = sparkConf.getBoolean(SparklearSparkConf.SqlEnabledKey, DefaultSqlEnabled),
+      jobsEnabled = sparkConf.getBoolean(SparklearSparkConf.JobsEnabledKey, DefaultJobsEnabled),
+      stagesEnabled = sparkConf.getBoolean(SparklearSparkConf.StagesEnabledKey, DefaultStagesEnabled),
+      tasksEnabled = sparkConf.getBoolean(SparklearSparkConf.TasksEnabledKey, DefaultTasksEnabled),
+      maxCacheSize = sparkConf.getInt(SparklearSparkConf.MaxCacheSizeKey, DefaultMaxCacheSize)
     )
   }
 }

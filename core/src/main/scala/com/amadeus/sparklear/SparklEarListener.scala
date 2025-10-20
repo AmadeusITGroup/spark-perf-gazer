@@ -4,12 +4,12 @@ import org.apache.spark.SparkConf
 
 object SparklEarListener {
   def config(sparkConf: SparkConf): SparklearConfig = {
-    SparklearConfig(sparkConf)
+    SparklearConfig.apply(sparkConf)
   }
 
   def sink(sparkConf: SparkConf): Sink = {
     sparkConf.getAll.foreach(println)
-    val sinkClassNameOption = sparkConf.getOption("spark.sparklear.sink.class")
+    val sinkClassNameOption = sparkConf.getOption(SparklearSparkConf.SinkClassKey)
     sinkClassNameOption match {
       case Some(sinkClassName) =>
         // call sink class constructor with sparkConf
@@ -19,7 +19,7 @@ object SparklEarListener {
         val sink = constructor.newInstance(sparkConf).asInstanceOf[Sink]
         sink
       case None =>
-        throw new IllegalArgumentException("sparklear.sink.class is not set")
+        throw new IllegalArgumentException(SparklearSparkConf.SinkClassKey + " is not set")
     }
   }
 }

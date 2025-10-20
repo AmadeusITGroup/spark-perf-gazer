@@ -11,12 +11,6 @@ import java.io.{File, FileWriter, PrintWriter}
 import java.time.Instant
 import scala.collection.mutable.ListBuffer
 
-object JsonSink {
-  val DestinationKey = "spark.sparklear.jsonSink.destination"
-  val WriteBatchSizeKey = "spark.sparklear.jsonSink.writeBatchSize"
-  val FileSizeLimitKey = "spark.sparklear.jsonSink.fileSizeLimit"
-}
-
 /** Sink of a collection of reports to JSON files.
   *
   * This sink uses POSIX interface on the driver to write the JSON files.
@@ -27,9 +21,9 @@ class JsonSink(sparkConf: SparkConf) extends Sink {
   implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
   implicit val formats: AnyRef with Formats = Serialization.formats(NoTypeHints)
 
-  private val destination: String = sparkConf.get(JsonSink.DestinationKey, "/dbfs/tmp/listener/")
-  private val writeBatchSize: Int = sparkConf.getInt(JsonSink.WriteBatchSizeKey, 100)
-  private val fileSizeLimit: Long = sparkConf.getLong(JsonSink.FileSizeLimitKey, 1L*1024*1024)
+  private val destination: String = sparkConf.get(SparklearSparkConf.JsonSinkDestinationKey, "/dbfs/tmp/listener/")
+  private val writeBatchSize: Int = sparkConf.getInt(SparklearSparkConf.JsonSinkWriteBatchSizeKey, 100)
+  private val fileSizeLimit: Long = sparkConf.getLong(SparklearSparkConf.JsonSinkFileSizeLimitKey, 1L*1024*1024)
 
   private case class ReportBuffer[T <: Report](reportType: String, dir: String) {
     private val folder = new File(dir)

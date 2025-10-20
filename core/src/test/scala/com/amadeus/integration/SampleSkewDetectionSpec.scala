@@ -1,6 +1,7 @@
 package com.amadeus.integration
 
 import com.amadeus.sparklear.SparklEar
+import com.amadeus.sparklear.PathBuilder.PathOps
 import com.amadeus.testfwk._
 
 // Define your case class
@@ -21,13 +22,13 @@ class SampleSkewDetectionSpec
     withTmpDir { tmpDir =>
       withSpark(appName = this.getClass.getName) { spark =>
         // Set thresholds for coverage - write and switch files for every report
+        val destination = s"$tmpDir".withDefaultPartitions(spark.conf.getAll)
         val writeBatchSize = 1
         val fileSizeLimit = 1L*100
-        withJsonSink(s"$tmpDir", writeBatchSize, fileSizeLimit) { jsonSink =>
+        withJsonSink(destination, writeBatchSize, fileSizeLimit) { jsonSink =>
           import org.apache.spark.sql.functions._
-            import spark.implicits._
-
-            import scala.util.Random
+          import spark.implicits._
+          import scala.util.Random
 
           // regular setup
           val cfg = defaultTestConfig.withAllEnabled
@@ -89,26 +90,26 @@ class SampleSkewDetectionSpec
           spark.sparkContext.removeSparkListener(eventsListener)
           jsonSink.close()
 
-          val dfSqlReports = spark.read.json(s"$tmpDir/sql-reports-*.json")
+          val dfSqlReports = spark.read.json(s"$destination/sql-reports-*.json")
           val dfSqlReportsCnt = dfSqlReports.count()
           it("should save SQL reports in json file") {
             dfSqlReportsCnt shouldBe 1
           }
           dfSqlReports.show()
 
-          val dfJobReports = spark.read.json(s"$tmpDir/job-reports-*.json")
+          val dfJobReports = spark.read.json(s"$destination/job-reports-*.json")
           val dfJobReportsCnt = dfJobReports.count()
           it("should save Job reports in json file") {
             dfJobReportsCnt should be > 1L
           }
 
-          val dfStageReports = spark.read.json(s"$tmpDir/stage-reports-*.json")
+          val dfStageReports = spark.read.json(s"$destination/stage-reports-*.json")
           val dfStageReportsCnt = dfStageReports.count()
           it("should save Stage reports in json file") {
             dfStageReportsCnt should be > 1L
           }
 
-          val dfTaskReports = spark.read.json(s"$tmpDir/task-reports-*.json")
+          val dfTaskReports = spark.read.json(s"$destination/task-reports-*.json")
           val dfTaskReportsCnt = dfTaskReports.count()
           it("should save Task reports in json file") {
             dfTaskReportsCnt should be > 1L

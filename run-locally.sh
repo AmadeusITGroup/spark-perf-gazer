@@ -13,4 +13,4 @@ spark-shell \
   --packages com.amadeus:sparklear_spark352_2.12:0.0.29-SNAPSHOT \
   --conf spark.extraListeners=com.amadeus.sparklear.SparklEarListener \
   --conf spark.sparklear.sink.class=com.amadeus.sparklear.JsonSink \
-  --conf spark.sparklear.jsonSink.destination="$DEST"
+  --conf spark.sparklear.sink.json.destination="$DEST"
