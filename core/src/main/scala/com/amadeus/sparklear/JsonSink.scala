@@ -71,6 +71,7 @@ class JsonSink(sparkConf: SparkConf) extends Sink {
     def close(): Unit = {
       writer.close()
     }
+
   }
 
   private val sqlReports: ReportBuffer[SqlReport] = new ReportBuffer[SqlReport]("sql", destination)
@@ -102,5 +103,15 @@ class JsonSink(sparkConf: SparkConf) extends Sink {
     taskReports.close()
 
     logger.debug("writers closed.")
+  }
+
+  /** String representation of the sink
+    */
+  override def asString: String = {
+    s"JsonSink(" +
+      s"destination=$destination, " +
+      s"writeBatchSize=$writeBatchSize, " +
+      s"fileSizeLimit=$fileSizeLimit" +
+      s")"
   }
 }

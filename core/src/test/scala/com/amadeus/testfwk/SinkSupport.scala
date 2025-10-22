@@ -20,6 +20,8 @@ object SinkSupport {
     override def flush(): Unit = {}
 
     override def close(): Unit = {}
+
+    override def asString: String = ""
   }
 }
 

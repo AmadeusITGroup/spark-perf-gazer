@@ -19,4 +19,6 @@ class LogSink(sparkConf: SparkConf = new SparkConf(false)) extends Sink {
   override def flush(): Unit = {}
 
   override def close(): Unit = {}
+
+  override def asString: String = "LogSink"
 }

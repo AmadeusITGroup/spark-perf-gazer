@@ -19,4 +19,8 @@ trait Sink {
   /** Close the sink, flushing any remaining reports first
     */
   def close(): Unit
+
+  /** String representation of the sink
+    */
+  def asString: String
 }
