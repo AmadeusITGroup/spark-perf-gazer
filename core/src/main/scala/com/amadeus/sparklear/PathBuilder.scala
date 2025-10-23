@@ -20,8 +20,8 @@ object PathBuilder {
       appendPartition("date", dateStr)
     }
 
-    def withDate(formatter: DateTimeFormatter): String = {
-      val dateStr = LocalDate.now().format(formatter)
+    def withDateCustom(pattern: String): String = {
+      val dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern(pattern))
       appendPartition("date", dateStr)
     }
 
@@ -50,6 +50,44 @@ object PathBuilder {
       val cleanKey = key.replace("=", "_").replace("/", "_")
       val cleanValue = value.replace("=", "_").replace("/", "_")
       cleanPath + s"$cleanKey=$cleanValue/"
+    }
+
+    private def parseMethods(methods: String): Seq[(String, Seq[Any])] = {
+      methods.split(";").toSeq.map { entry =>
+        val parts = entry.split(":", 2)
+        val method = parts(0).trim
+        val args = if (parts.length > 1) parts(1).split(",").map(_.trim).toSeq else Seq.empty
+        (method, args)
+      }
+    }
+
+    def invokePathOpsMethod(method: String, args: Seq[Any] = Seq.empty, sparkConf: Map[String, String] = Map.empty): String = {
+      val methodMap: Map[String, Any] = Map(
+        "withDate" -> (() => withDate),
+        "withDateCustom" -> ((pattern: String) => withDateCustom(pattern)),
+        "withPartition" -> ((key: String, value: String) => withPartition(key, value)),
+        "withSparkConf" -> ((key: String, tag: String) => withSparkConf(key, tag, sparkConf)),
+        "withApplicationId" -> (() => withApplicationId(sparkConf)),
+        "withDatabricksTag" -> ((key: String, tag: String) => withDatabricksTag(key, tag, sparkConf)),
+        "withDefaultPartitions" -> (() => withDefaultPartitions(sparkConf))
+      )
+
+      methodMap.get(method) match {
+        case Some(f: (() => String)) if args.isEmpty =>
+          f()
+        case Some(f: (String => String)) if args.length == 1 =>
+          f(args(0).toString)
+        case Some(f: ((String, String) => String)) if args.length == 2 =>
+          f(args(0).toString, args(1).toString)
+        case _ =>
+          throw new IllegalArgumentException(s"Invalid method name or arguments for '$method'")
+      }
+    }
+
+    def invokePathOpsMethods(methods: String, sparkConf: Map[String, String] = Map.empty): String = {
+      parseMethods(methods).foldLeft(path) {
+        case (currentPath, (method, args)) => currentPath.invokePathOpsMethod(method, args, sparkConf)
+      }
     }
   }
 }
