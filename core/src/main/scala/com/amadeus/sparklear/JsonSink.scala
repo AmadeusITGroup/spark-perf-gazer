@@ -1,6 +1,7 @@
 package com.amadeus.sparklear
 
 import com.amadeus.sparklear.reports.{JobReport, Report, SqlReport, StageReport, TaskReport}
+import com.amadeus.sparklear.PathBuilder.PathOps
 import org.apache.spark.SparkConf
 import org.json4s.jackson.Serialization
 import org.json4s.{Formats, NoTypeHints}
@@ -21,9 +22,12 @@ class JsonSink(sparkConf: SparkConf) extends Sink {
   implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
   implicit val formats: AnyRef with Formats = Serialization.formats(NoTypeHints)
 
-  private val destination: String = sparkConf.get(SparklearSparkConf.JsonSinkDestinationKey, "/dbfs/tmp/listener/")
+  private var destination: String = sparkConf.get(SparklearSparkConf.JsonSinkDestinationKey, "/dbfs/tmp/listener/")
+  private val partitions: String = sparkConf.get(SparklearSparkConf.JsonSinkPartitionsKey, "")
   private val writeBatchSize: Int = sparkConf.getInt(SparklearSparkConf.JsonSinkWriteBatchSizeKey, 100)
   private val fileSizeLimit: Long = sparkConf.getLong(SparklearSparkConf.JsonSinkFileSizeLimitKey, 1L*1024*1024)
+
+  destination = destination.invokePathOpsMethods(partitions, sparkConf.getAll.toMap)
 
   private case class ReportBuffer[T <: Report](reportType: String, dir: String) {
     private val folder = new File(dir)

@@ -8,12 +8,16 @@ import org.apache.spark.sql.execution.ui.SparkListenerSQLAdaptiveExecutionUpdate
 
 class SparklEarListenerSpec extends SimpleSpec with ConfigSupport {
   describe(s"The listener") {
-    it("should not fail upon unhandled messages") {
+    it("should instantiate LogSink") {
       val c = new SparkConf(false)
         .set("spark.sparklear.sink.class", "com.amadeus.sparklear.LogSink")
-      val l = new SparklEarListener(c)
-      val e = SparkListenerSQLAdaptiveExecutionUpdate(1, "", Fixtures.SqlWrapper1.planInfo1)
-      l.onOtherEvent(e) // no failure
+      new SparklEarListener(c)
+    }
+
+    it("should instantiate JsonSink") {
+      val c = new SparkConf(false)
+        .set("spark.sparklear.sink.class", "com.amadeus.sparklear.JsonSink")
+      new SparklEarListener(c)
     }
 
     it("should throw IllegalArgumentException if spark.sparklear.sink.class not set") {

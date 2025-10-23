@@ -2,6 +2,7 @@ package com.amadeus.sparklear
 
 import com.amadeus.sparklear.PathBuilder.PathOps
 import com.amadeus.testfwk.{SimpleSpec, SparkSupport, TempDirSupport}
+import org.apache.spark.SparkConf
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -12,9 +13,9 @@ class PathBuilderSpec extends SimpleSpec with SparkSupport with TempDirSupport {
       withTmpDir { tmpDir =>
         val currentDate = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE)
 
-        val destination = s"$tmpDir/"
+        val destination1 = s"$tmpDir"
         it("should build reports destination") {
-          destination shouldBe s"$tmpDir/"
+          destination1 shouldBe s"$tmpDir"
         }
 
         val destination2 = s"$tmpDir".withDefaultPartitions(spark.conf.getAll)
@@ -44,6 +45,11 @@ class PathBuilderSpec extends SimpleSpec with SparkSupport with TempDirSupport {
           destination6 shouldBe s"$tmpDir/customPartition=myPartition/clusterName=unknown/"
         }
 
+        val destination11 = s"$tmpDir".invokePathOpsMethods("", spark.conf.getAll)
+        it("should build reports destination invokePathOps(\"\")") {
+          destination11 shouldBe s"$tmpDir"
+        }
+
         val destination12 = s"$tmpDir".invokePathOpsMethods("withDefaultPartitions", spark.conf.getAll)
         it("should build reports destination invokePathOps(\"withDefaultPartitions\")") {
           destination12 shouldBe s"$tmpDir/date=$currentDate/applicationId=${spark.sparkContext.applicationId}/"
@@ -67,6 +73,12 @@ class PathBuilderSpec extends SimpleSpec with SparkSupport with TempDirSupport {
         val destination16 = s"$tmpDir".invokePathOpsMethods("withPartition:customPartition,myPartition;withDatabricksTag:clusterName,clusterName", spark.conf.getAll)
         it("should build reports destination invokePathOps(\"withPartition:customPartition,myPartition;withDatabricksTag:clusterName,clusterName\")") {
           destination16 shouldBe s"$tmpDir/customPartition=myPartition/clusterName=unknown/"
+        }
+
+        it("should throw IllegalArgumentException") {
+          an[IllegalArgumentException] should be thrownBy {
+            s"$tmpDir".invokePathOpsMethods("withPartitionXXX", spark.conf.getAll)
+          }
         }
       }
     }

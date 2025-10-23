@@ -73,11 +73,11 @@ object PathBuilder {
       )
 
       methodMap.get(method) match {
-        case Some(f: (() => String)) if args.isEmpty =>
+        case Some(f: (() => String) @unchecked) if args.isEmpty =>
           f()
-        case Some(f: (String => String)) if args.length == 1 =>
+        case Some(f: (String => String) @unchecked) if args.length == 1 =>
           f(args(0).toString)
-        case Some(f: ((String, String) => String)) if args.length == 2 =>
+        case Some(f: ((String, String) => String) @unchecked) if args.length == 2 =>
           f(args(0).toString, args(1).toString)
         case _ =>
           throw new IllegalArgumentException(s"Invalid method name or arguments for '$method'")
@@ -85,8 +85,13 @@ object PathBuilder {
     }
 
     def invokePathOpsMethods(methods: String, sparkConf: Map[String, String] = Map.empty): String = {
-      parseMethods(methods).foldLeft(path) {
-        case (currentPath, (method, args)) => currentPath.invokePathOpsMethod(method, args, sparkConf)
+      if (methods.trim.isEmpty) {
+        path
+      }
+      else {
+        parseMethods(methods).foldLeft(path) {
+          case (currentPath, (method, args)) => currentPath.invokePathOpsMethod(method, args, sparkConf)
+        }
       }
     }
   }
