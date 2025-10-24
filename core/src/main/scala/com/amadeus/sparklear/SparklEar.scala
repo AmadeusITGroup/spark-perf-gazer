@@ -133,8 +133,8 @@ class SparklEar(c: SparklearConfig, sink: Sink) extends SparkListener {
   }
 
   private def logSnippets(): Unit = {
-    val ddl = sink.generateAllViewSnippets()
-    logger.info(s"To create temporary views for all the reports, run the following SQL:\n\n${ddl}")
+    val ddl = sink.generateAllViewSnippets().mkString("\n")
+    logger.info(s"To create temporary views for all the reports, run the following SQL:\n${ddl}")
   }
 
 }
