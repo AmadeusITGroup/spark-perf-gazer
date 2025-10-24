@@ -51,7 +51,7 @@ class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
     ), sparkConf)
   }
 
-  val destination = config.destination.resolveProperties(sparkConf)
+  val destination = PathBuilder.PathOps(config.destination).resolveProperties(sparkConf)
 
   private case class ReportBuffer[T <: Report](reportType: String, dir: String) {
     private val folder = new File(dir)
