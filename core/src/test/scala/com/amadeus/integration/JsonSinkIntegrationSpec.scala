@@ -17,7 +17,7 @@ class JsonSinkIntegrationSpec
     withSpark(appName = this.getClass.getName) { spark =>
       withTmpDir { tmpDir =>
         // Set thresholds for coverage - only flush at the end
-        val destination = s"$tmpDir".withDefaultPartitions
+        val destination = s"$tmpDir".withDefaultPartitions.resolveProperties(spark.sparkContext.getConf)
         val writeBatchSize = 200
         val fileSizeLimit = 200L*1024*1024
         withJsonSink(destination, writeBatchSize, fileSizeLimit) { jsonSink =>

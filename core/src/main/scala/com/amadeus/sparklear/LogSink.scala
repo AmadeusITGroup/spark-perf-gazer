@@ -9,7 +9,7 @@ import org.json4s.jackson.Serialization.{write => toJson}
 /** Sink that logs reports in json format (info level)
   */
 class LogSink() extends Sink {
-  def this(sparkConf: SparkConf) = {
+  def this(sparkConf: SparkConf = new SparkConf(false)) = {
     this()
   }
 

@@ -132,6 +132,7 @@ class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
   override def asString: String = {
     s"JsonSink(" +
       s"destination=$config.destination, " +
+      s"resolved=$destination, " +
       s"writeBatchSize=$config.writeBatchSize, " +
       s"fileSizeLimit=$config.fileSizeLimit" +
       s")"
