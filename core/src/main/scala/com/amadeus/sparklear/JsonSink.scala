@@ -115,7 +115,22 @@ class JsonSink(
 
 object JsonSink {
 
-  object JsonViewDDLGenerator {
+  trait JsonViewDDLGenerator {
+
+    protected def runningOnDatabricks: Boolean = {
+      sys.env.contains("DATABRICKS_RUNTIME_VERSION")
+    }
+
+    private def normalizeDir(path: String): String = {
+      val normalized = path
+        .replace('\\', '/')
+        .stripSuffix("/")
+      if (runningOnDatabricks && normalized.startsWith("/dbfs")) {
+        normalized.replaceFirst("^/dbfs", "dbfs:")
+      } else {
+        normalized
+      }
+    }
 
     /** Generate the CREATE OR REPLACE TEMPORARY VIEW DDL for a partitioned JSON file path.
       *
@@ -129,14 +144,11 @@ object JsonSink {
       *
       * If the /dbfs mount point is detected (Databricks), it is stripped out.
       *
-      * @param destination  The Sink destination path where JSON files are written.
+      * @param destination  The Sink destination directory path where JSON files are written.
       * @param reportName  The report name, that is used as view name too (e.g. "job", "sql", ...).
       */
     def generateViewDDL(destination: String, reportName: String): String = {
-      val normalizedDir = destination
-        .replace('\\', '/')
-        .stripSuffix("/")
-        .stripPrefix("/dbfs")
+      val normalizedDir = normalizeDir(destination)
       val segments = normalizedDir.split('/').filter(_.nonEmpty).toList
       def isPartition(s: String) = s.contains('=')
       // Find the first index where all remaining segments are partition-style
@@ -167,4 +179,6 @@ object JsonSink {
       ddl
     }
   }
+
+  object JsonViewDDLGenerator extends JsonViewDDLGenerator
 }
