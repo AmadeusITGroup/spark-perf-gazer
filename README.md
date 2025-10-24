@@ -53,7 +53,10 @@ val basePath = "/dbfs/logs/sparklear/jsonsink/"
 val sparkConf = new SparkConf(false)
   .set("spark.sparklear.tasks.enabled", "true")
   .set("spark.sparklear.sink.class", "com.amadeus.sparklear.JsonSink")
-  .set("spark.sparklear.sink.json.destination", basePath.withDefaultPartitions(spark.conf.getAll))
+//.set("spark.sparklear.sink.json.destination", basePath.withDefaultPartitions)
+  .set("spark.sparklear.sink.json.destination", basePath + "/date=${sparklear.now.year}-${sparklear.now.month}-${sparklear.now.day}/applicationId=${spark.app.id}/" )
+
+
 val sparklear = new SparklEarListener(sparkConf)
 
 // Register listener

@@ -51,7 +51,6 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
           .set(SparklearSparkConf.JsonSinkDestinationKey, s"$tmpDir")
           .set(SparklearSparkConf.JsonSinkWriteBatchSizeKey, "5")
           .set(SparklearSparkConf.JsonSinkFileSizeLimitKey, (200L*1024*1024).toString)
-
         val jsonSink = new JsonSink(sparkConf)
 
         val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
@@ -86,7 +85,6 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
           .set(SparklearSparkConf.JsonSinkDestinationKey, s"$tmpDir")
           .set(SparklearSparkConf.JsonSinkWriteBatchSizeKey, "5")
           .set(SparklearSparkConf.JsonSinkFileSizeLimitKey, (200L*1024*1024).toString)
-
         val jsonSink = new JsonSink(sparkConf)
 
         val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
@@ -123,7 +121,6 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
           .set(SparklearSparkConf.JsonSinkDestinationKey, s"$tmpDir")
           .set(SparklearSparkConf.JsonSinkWriteBatchSizeKey, "100")
           .set(SparklearSparkConf.JsonSinkFileSizeLimitKey, (10L*1024).toString)
-
         val jsonSink = new JsonSink(sparkConf)
 
         val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
@@ -147,6 +144,26 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
           .select("jobId", "groupId", "jobName", "jobStartTime", "jobEndTime", "sqlId", "stages")
           .collectAsList() should equal (List.fill(150)(jr).toDF().collectAsList())
         spark.stop()
+      }
+    }
+    it("should initialize JsonSink from SinkConfig and SparkConf") {
+      withTmpDir { tmpDir =>
+        val sparkConf = new SparkConf()
+          .set(SparklearSparkConf.JsonSinkDestinationKey, s"$tmpDir")
+          .set(SparklearSparkConf.JsonSinkWriteBatchSizeKey, "100")
+          .set(SparklearSparkConf.JsonSinkFileSizeLimitKey, (10L*1024).toString)
+        val jsonSink1 = new JsonSink(sparkConf)
+
+        val jsonSink2 = new JsonSink(
+          JsonSink.Config(
+            destination = s"$tmpDir",
+            writeBatchSize = 100,
+            fileSizeLimit = 10L*1024
+          ),
+          new SparkConf()
+        )
+
+        jsonSink1.asString shouldBe jsonSink2.asString
       }
     }
   }

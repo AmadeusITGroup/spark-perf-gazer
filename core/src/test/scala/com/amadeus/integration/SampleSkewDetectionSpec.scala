@@ -22,7 +22,7 @@ class SampleSkewDetectionSpec
     withTmpDir { tmpDir =>
       withSpark(appName = this.getClass.getName) { spark =>
         // Set thresholds for coverage - write and switch files for every report
-        val destination = s"$tmpDir".withDefaultPartitions(spark.conf.getAll)
+        val destination = s"$tmpDir".withDefaultPartitions
         val writeBatchSize = 1
         val fileSizeLimit = 1L*100
         withJsonSink(destination, writeBatchSize, fileSizeLimit) { jsonSink =>
