@@ -30,4 +30,11 @@ trait Sink {
   /** Generate SQL snippet to create a view to easily access a report of a given type
     */
   def generateViewSnippet(reportType: ReportType): String
+
+  /** Generate SQL snippets to create views to easily access all report types
+    */
+  def generateAllViewSnippets(): Seq[String] = {
+    ReportType.values.map(r => generateViewSnippet(r))
+  }
+
 }
