@@ -37,9 +37,9 @@ trait SinkSupport {
   def withJsonSink[T](destination: String, writeBatchSize: Int, fileSizeLimit: Long)(testCode: JsonSink => T): T = {
     // build a SparkConf using the JsonSink keys
     val sparkConf = new SparkConf(false)
-      .set(SparklearSparkConf.JsonSinkDestinationKey, destination)
-      .set(SparklearSparkConf.JsonSinkWriteBatchSizeKey, writeBatchSize.toString)
-      .set(SparklearSparkConf.JsonSinkFileSizeLimitKey, fileSizeLimit.toString)
+      .set(JsonSink.JsonSinkDestinationKey, destination)
+      .set(JsonSink.JsonSinkWriteBatchSizeKey, writeBatchSize.toString)
+      .set(JsonSink.JsonSinkFileSizeLimitKey, fileSizeLimit.toString)
 
     val jsonSink = new JsonSink(sparkConf)
     testCode(jsonSink)

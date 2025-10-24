@@ -1,7 +1,7 @@
 package com.amadeus.sparklear
 
+import com.amadeus.sparklear.JsonSink._
 import com.amadeus.sparklear.reports.{JobReport, Report, SqlReport, StageReport, TaskReport}
-import com.amadeus.sparklear.PathBuilder.PathOps
 import org.apache.spark.SparkConf
 import org.json4s.jackson.Serialization
 import org.json4s.{Formats, NoTypeHints}
@@ -19,6 +19,11 @@ import scala.collection.mutable.ListBuffer
  * @param fileSizeLimit file size to reach before switching to a new file
  */
 object JsonSink {
+
+  val JsonSinkDestinationKey = "spark.sparklear.sink.json.destination"
+  val JsonSinkWriteBatchSizeKey = "spark.sparklear.sink.json.writeBatchSize"
+  val JsonSinkFileSizeLimitKey = "spark.sparklear.sink.json.fileSizeLimit"
+
   case class Config(
     destination: String = "/dbfs/tmp/listener/",
     writeBatchSize: Int = 100,
@@ -40,9 +45,9 @@ class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
 
   def this(sparkConf: SparkConf) = {
     this(JsonSink.Config(
-      destination = sparkConf.get(SparklearSparkConf.JsonSinkDestinationKey, "/dbfs/tmp/listener/"),
-      writeBatchSize = sparkConf.getInt(SparklearSparkConf.JsonSinkWriteBatchSizeKey, 100),
-      fileSizeLimit = sparkConf.getLong(SparklearSparkConf.JsonSinkFileSizeLimitKey, 200L*1024*1024)
+      destination = sparkConf.get(JsonSinkDestinationKey, "/dbfs/tmp/listener/"),
+      writeBatchSize = sparkConf.getInt(JsonSinkWriteBatchSizeKey, 100),
+      fileSizeLimit = sparkConf.getLong(JsonSinkFileSizeLimitKey, 200L*1024*1024)
     ), sparkConf)
   }
 
@@ -129,11 +134,5 @@ class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
 
   /** String representation of the sink
     */
-  override def asString: String = {
-    s"JsonSink(" +
-      s"destination=$config.destination, " +
-      s"writeBatchSize=$config.writeBatchSize, " +
-      s"fileSizeLimit=$config.fileSizeLimit" +
-      s")"
-  }
+  override def asString: String = s"JsonSink($config)"
 }
