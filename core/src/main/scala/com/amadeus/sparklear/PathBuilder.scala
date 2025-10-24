@@ -1,5 +1,12 @@
 package com.amadeus.sparklear
 
+import org.apache.spark.SparkConf
+
+import java.time.LocalDateTime
+import java.util.Properties
+import scala.util.matching.Regex
+
+
 object PathBuilder {
   /**
    * Implicit class that adds path-building methods to String using ad-hoc polymorphism with implicits.
@@ -33,6 +40,23 @@ object PathBuilder {
 
     def withDefaultPartitions: String = {
       path.withDate.withApplicationId
+    }
+
+    def resolveProperties(sparkConf: SparkConf): String = {
+      val now = LocalDateTime.now()
+      val dateProps = new Properties()
+      dateProps.setProperty("sparklear.now.year", now.getYear.toString)
+      dateProps.setProperty("sparklear.now.month", f"${now.getMonthValue}%02d")
+      dateProps.setProperty("sparklear.now.day", f"${now.getDayOfMonth}%02d")
+      dateProps.setProperty("sparklear.now.hour", f"${now.getHour}%02d")
+      dateProps.setProperty("sparklear.now.minute", f"${now.getMinute}%02d")
+
+      val placeholderPattern: Regex = """\$\{([^}]+)\}""".r
+      val resolved = placeholderPattern.replaceAllIn(path, m =>
+        Option(dateProps.getProperty(m.group(1))).orElse(sparkConf.getOption(m.group(1))).getOrElse("unknown")
+      )
+
+      resolved
     }
 
     private def appendPartition(key: String, value: String): String = {

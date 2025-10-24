@@ -46,7 +46,7 @@ class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
     ), sparkConf)
   }
 
-  // val destination = someFunction(config.destination, sparkConf)
+  val destination = config.destination.resolveProperties(sparkConf)
 
   private case class ReportBuffer[T <: Report](reportType: String, dir: String) {
     private val folder = new File(dir)
@@ -94,13 +94,12 @@ class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
     def close(): Unit = {
       writer.close()
     }
-
   }
 
-  private val sqlReports: ReportBuffer[SqlReport] = new ReportBuffer[SqlReport]("sql", config.destination)
-  private val jobReports: ReportBuffer[JobReport] = new ReportBuffer[JobReport]("job", config.destination)
-  private val stageReports: ReportBuffer[StageReport] = new ReportBuffer[StageReport]("stage", config.destination)
-  private val taskReports: ReportBuffer[TaskReport] = new ReportBuffer[TaskReport]("task", config.destination)
+  private val sqlReports: ReportBuffer[SqlReport] = new ReportBuffer[SqlReport]("sql", destination)
+  private val jobReports: ReportBuffer[JobReport] = new ReportBuffer[JobReport]("job", destination)
+  private val stageReports: ReportBuffer[StageReport] = new ReportBuffer[StageReport]("stage", destination)
+  private val taskReports: ReportBuffer[TaskReport] = new ReportBuffer[TaskReport]("task", destination)
 
   override def write(report: Report): Unit = report match {
     case r: SqlReport   => sqlReports.write(r)
