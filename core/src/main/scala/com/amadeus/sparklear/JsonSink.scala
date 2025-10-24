@@ -13,11 +13,11 @@ import java.time.Instant
 import scala.collection.mutable.ListBuffer
 
 /** Configuration object for JsonSink
- *
- * @param destination Base directory path where JSON files will be written, e.g., "/dbfs/logs/appid=my-app-id/"
- * @param writeBatchSize Number of reports to accumulate before writing to disk
- * @param fileSizeLimit file size to reach before switching to a new file
- */
+  *
+  * @param destination Base directory path where JSON files will be written, e.g., "/dbfs/logs/appid=my-app-id/"
+  * @param writeBatchSize Number of reports to accumulate before writing to disk
+  * @param fileSizeLimit file size to reach before switching to a new file
+  */
 object JsonSink {
 
   val DestinationKey = "spark.sparklear.sink.json.destination"
@@ -36,9 +36,9 @@ object JsonSink {
   * This sink uses POSIX interface on the driver to write the JSON files.
   * The output folder path is built as follows: <destination>/<report-type>.json
   * A typical report path will be "/dbfs/logs/appid=my-app-id/sql-reports-*.json" if used from Databricks.
- *
- * @param config : object encapsulating destination, writeBatchSize, fileSizeLimit
- */
+  *
+  * @param config : object encapsulating destination, writeBatchSize, fileSizeLimit
+  */
 class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
   implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
   implicit val formats: AnyRef with Formats = Serialization.formats(NoTypeHints)
