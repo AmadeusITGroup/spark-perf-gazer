@@ -1,15 +1,18 @@
 package com.amadeus.sparklear
 
 import com.amadeus.sparklear.reports.Report
+import org.apache.spark.SparkConf
 import org.slf4j.{Logger, LoggerFactory}
-
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.{write => toJson}
 
-
 /** Sink that logs reports in json format (info level)
   */
-class LogSink extends Sink {
+class LogSink() extends Sink {
+  def this(sparkConf: SparkConf = new SparkConf(false)) = {
+    this()
+  }
+
   case class Record(kind: String, report: Report)
 
   implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
@@ -20,4 +23,6 @@ class LogSink extends Sink {
   override def flush(): Unit = {}
 
   override def close(): Unit = {}
+
+  override def asString: String = "LogSink"
 }

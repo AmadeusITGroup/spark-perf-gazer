@@ -1,6 +1,7 @@
 package com.amadeus.integration
 
-import com.amadeus.sparklear.{JsonSinkConfig, SparklEar}
+import com.amadeus.sparklear.SparklEar
+import com.amadeus.sparklear.PathBuilder.PathOps
 import com.amadeus.testfwk._
 
 class JsonSinkIntegrationSpec
@@ -16,9 +17,10 @@ class JsonSinkIntegrationSpec
     withSpark(appName = this.getClass.getName) { spark =>
       withTmpDir { tmpDir =>
         // Set thresholds for coverage - only flush at the end
+        val destination = s"$tmpDir".withDefaultPartitions.resolveProperties(spark.sparkContext.getConf)
         val writeBatchSize = 200
         val fileSizeLimit = 200L*1024*1024
-        withJsonSink(s"$tmpDir", writeBatchSize, fileSizeLimit) { jsonSink =>
+        withJsonSink(destination, writeBatchSize, fileSizeLimit) { jsonSink =>
           import org.apache.spark.sql.functions._
 
           val df = readOptd(spark)
@@ -36,7 +38,7 @@ class JsonSinkIntegrationSpec
           spark.sparkContext.removeSparkListener(eventsListener)
           jsonSink.close()
 
-          val dfSqlReports = spark.read.json(s"$tmpDir/sql-reports-*.json")
+          val dfSqlReports = spark.read.json(s"$destination/sql-reports-*.json")
           val dfSqlReportsCnt = dfSqlReports.count()
           it("should save SQL reports in json file") {
             dfSqlReports.schema.names.toSet should contain("sqlId")
@@ -44,21 +46,21 @@ class JsonSinkIntegrationSpec
           }
           dfSqlReports.show()
 
-          val dfJobReports = spark.read.json(s"$tmpDir/job-reports-*.json")
+          val dfJobReports = spark.read.json(s"$destination/job-reports-*.json")
           val dfJobReportsCnt = dfJobReports.count()
           it("should save Job reports in json file") {
             dfJobReports.schema.names.toSet should contain("jobId")
             dfJobReportsCnt shouldBe 1
           }
 
-          val dfStageReports = spark.read.json(s"$tmpDir/stage-reports-*.json")
+          val dfStageReports = spark.read.json(s"$destination/stage-reports-*.json")
           val dfStageReportsCnt = dfStageReports.count()
           it("should save Stage reports in json file") {
             dfStageReports.schema.names.toSet should contain("stageId")
             dfStageReportsCnt shouldBe 1
           }
 
-          val dfTaskReports = spark.read.json(s"$tmpDir/task-reports-*.json")
+          val dfTaskReports = spark.read.json(s"$destination/task-reports-*.json")
           val dfTaskReportsCnt = dfTaskReports.count()
           it("should save Task reports in json file") {
             dfTaskReports.schema.names.toSet should contain("taskId")

@@ -1,8 +1,11 @@
 package com.amadeus.sparklear
 
+import org.apache.spark.SparkConf
 
-import java.time.{LocalDate, LocalDateTime}
-import java.time.format.DateTimeFormatter
+import java.time.LocalDateTime
+import java.util.Properties
+import scala.util.matching.Regex
+
 
 object PathBuilder {
   /**
@@ -16,33 +19,44 @@ object PathBuilder {
    */
   implicit class PathOps(val path: String) extends AnyVal {
     def withDate: String = {
-      val dateStr = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
-      appendPartition("date", dateStr)
-    }
-
-    def withDate(formatter: DateTimeFormatter): String = {
-      val dateStr = LocalDate.now().format(formatter)
-      appendPartition("date", dateStr)
+      appendPartition("date", "${sparklear.now.year}-${sparklear.now.month}-${sparklear.now.day}")
     }
 
     def withPartition(partitionName: String, value: String): String = {
       appendPartition(partitionName, value)
     }
 
-    def withSparkConf(partitionName: String, tagName: String, sparkConf: Map[String, String]): String = {
-      appendPartition(partitionName, sparkConf.getOrElse(tagName, "unknown"))
+    def withSparkConf(partitionName: String, tagName: String): String = {
+      appendPartition(partitionName, "${" + tagName + "}")
     }
 
-    def withApplicationId(sparkConf: Map[String, String]): String = {
-      appendPartition("applicationId", sparkConf.getOrElse("spark.app.id", "unknown"))
+    def withApplicationId: String = {
+      appendPartition("applicationId", "${spark.app.id}")
     }
 
-    def withDatabricksTag(partitionName: String, tagName: String, sparkConf: Map[String, String]): String = {
-      appendPartition(partitionName, sparkConf.getOrElse(s"spark.databricks.clusterUsageTags.$tagName", "unknown"))
+    def withDatabricksTag(partitionName: String, tagName: String): String = {
+      appendPartition(partitionName, "${spark.databricks.clusterUsageTags." + tagName + "}")
     }
 
-    def withDefaultPartitions(sparkConf: Map[String, String]): String = {
-      path.withDate.withApplicationId(sparkConf)
+    def withDefaultPartitions: String = {
+      path.withDate.withApplicationId
+    }
+
+    def resolveProperties(sparkConf: SparkConf): String = {
+      val now = LocalDateTime.now()
+      val dateProps = new Properties()
+      dateProps.setProperty("sparklear.now.year", now.getYear.toString)
+      dateProps.setProperty("sparklear.now.month", f"${now.getMonthValue}%02d")
+      dateProps.setProperty("sparklear.now.day", f"${now.getDayOfMonth}%02d")
+      dateProps.setProperty("sparklear.now.hour", f"${now.getHour}%02d")
+      dateProps.setProperty("sparklear.now.minute", f"${now.getMinute}%02d")
+
+      val placeholderPattern: Regex = """\$\{([^}]+)\}""".r
+      val resolved = placeholderPattern.replaceAllIn(path, m =>
+        Option(dateProps.getProperty(m.group(1))).orElse(sparkConf.getOption(m.group(1))).getOrElse("unknown")
+      )
+
+      resolved
     }
 
     private def appendPartition(key: String, value: String): String = {

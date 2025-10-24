@@ -1,6 +1,8 @@
 package com.amadeus.sparklear
 
+import com.amadeus.sparklear.JsonSink._
 import com.amadeus.sparklear.reports.{JobReport, Report, SqlReport, StageReport, TaskReport}
+import org.apache.spark.SparkConf
 import org.json4s.jackson.Serialization
 import org.json4s.{Formats, NoTypeHints}
 import org.json4s.jackson.Serialization.{write => asJson}
@@ -10,6 +12,25 @@ import java.io.{File, FileWriter, PrintWriter}
 import java.time.Instant
 import scala.collection.mutable.ListBuffer
 
+/** Configuration object for JsonSink
+  *
+  * @param destination Base directory path where JSON files will be written, e.g., "/dbfs/logs/appid=my-app-id/"
+  * @param writeBatchSize Number of reports to accumulate before writing to disk
+  * @param fileSizeLimit file size to reach before switching to a new file
+  */
+object JsonSink {
+
+  val DestinationKey = "spark.sparklear.sink.json.destination"
+  val WriteBatchSizeKey = "spark.sparklear.sink.json.writeBatchSize"
+  val FileSizeLimitKey = "spark.sparklear.sink.json.fileSizeLimit"
+
+  case class Config(
+    destination: String = "/dbfs/tmp/listener/",
+    writeBatchSize: Int = 100,
+    fileSizeLimit: Long = 1L * 1024 * 1024
+  )
+}
+
 /** Sink of a collection of reports to JSON files.
   *
   * This sink uses POSIX interface on the driver to write the JSON files.
@@ -18,11 +39,19 @@ import scala.collection.mutable.ListBuffer
   *
   * @param config : object encapsulating destination, writeBatchSize, fileSizeLimit
   */
-class JsonSink(
-  val config: JsonSinkConfig
-) extends Sink {
+class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
   implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
   implicit val formats: AnyRef with Formats = Serialization.formats(NoTypeHints)
+
+  def this(sparkConf: SparkConf) = {
+    this(JsonSink.Config(
+      destination = sparkConf.get(DestinationKey, "/dbfs/tmp/listener/"),
+      writeBatchSize = sparkConf.getInt(WriteBatchSizeKey, 100),
+      fileSizeLimit = sparkConf.getLong(FileSizeLimitKey, 200L*1024*1024)
+    ), sparkConf)
+  }
+
+  val destination = PathBuilder.PathOps(config.destination).resolveProperties(sparkConf)
 
   private case class ReportBuffer[T <: Report](reportType: String, dir: String) {
     private val folder = new File(dir)
@@ -46,23 +75,23 @@ class JsonSink(
       reports += report
 
       if (reports.size >= config.writeBatchSize) {
-        logger.debug("Reached writeBatchSize threshold, writing to {} ({} reports).", file.getPath, reports.size)
+        logger.trace("Reached writeBatchSize threshold, writing to {} ({} reports).", file.getPath, reports.size)
         flushReportsToFile()
 
         if (file.length() >= config.fileSizeLimit) {
-          logger.debug("Reached fileSizeLimit threshold, rolling file {} ({} bytes).", file.getPath, file.length())
+          logger.trace("Reached fileSizeLimit threshold, rolling file {} ({} bytes).", file.getPath, file.length())
           writer.close()
           path = s"$dir/$reportType-reports-${Instant.now.toEpochMilli}.json"
           writer = new PrintWriter(new FileWriter(path, true))
           file = new File(path)
-          logger.debug("Switched to new file {}.", path)
+          logger.trace("Switched to new file {}.", path)
         }
       }
     }
 
     def flush(): Unit = {
       if (reports.nonEmpty) {
-        logger.debug("flushing remaining reports to {} ({} reports).", file.getPath, reports.size)
+        logger.trace("Flushing remaining reports to {} ({} reports).", file.getPath, reports.size)
         flushReportsToFile()
       }
     }
@@ -72,10 +101,10 @@ class JsonSink(
     }
   }
 
-  private val sqlReports: ReportBuffer[SqlReport] = new ReportBuffer[SqlReport]("sql", config.destination)
-  private val jobReports: ReportBuffer[JobReport] = new ReportBuffer[JobReport]("job", config.destination)
-  private val stageReports: ReportBuffer[StageReport] = new ReportBuffer[StageReport]("stage", config.destination)
-  private val taskReports: ReportBuffer[TaskReport] = new ReportBuffer[TaskReport]("task", config.destination)
+  private val sqlReports: ReportBuffer[SqlReport] = new ReportBuffer[SqlReport]("sql", destination)
+  private val jobReports: ReportBuffer[JobReport] = new ReportBuffer[JobReport]("job", destination)
+  private val stageReports: ReportBuffer[StageReport] = new ReportBuffer[StageReport]("stage", destination)
+  private val taskReports: ReportBuffer[TaskReport] = new ReportBuffer[TaskReport]("task", destination)
 
   override def write(report: Report): Unit = report match {
     case r: SqlReport   => sqlReports.write(r)
@@ -100,6 +129,10 @@ class JsonSink(
     stageReports.close()
     taskReports.close()
 
-    logger.debug("writers closed.")
+    logger.info("JsonSink writers closed.")
   }
+
+  /** String representation of the sink
+    */
+  override def asString: String = s"JsonSink($config)"
 }

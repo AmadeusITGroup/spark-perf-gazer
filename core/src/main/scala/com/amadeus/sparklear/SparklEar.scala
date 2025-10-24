@@ -1,10 +1,12 @@
 package com.amadeus.sparklear
 
+import com.amadeus.sparklear.SparklEar.{configFrom, sinkFrom}
 import com.amadeus.sparklear.entities.{JobEntity, SqlEntity, StageEntity, TaskEntity}
 import com.amadeus.sparklear.events.JobEvent.EndUpdate
 import com.amadeus.sparklear.events.{JobEvent, SqlEvent, StageEvent, TaskEvent}
 import com.amadeus.sparklear.reports.{JobReport, SqlReport, StageReport, TaskReport}
 import com.amadeus.sparklear.utils.CappedConcurrentHashMap
+import org.apache.spark.SparkConf
 import org.apache.spark.scheduler._
 import org.apache.spark.sql.execution.ui._
 import org.slf4j.{Logger, LoggerFactory}
@@ -19,12 +21,24 @@ class SparklEar(c: SparklearConfig, sink: Sink) extends SparkListener {
 
   implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
 
+  def this(sparkConf: SparkConf) = {
+    this(c = configFrom(sparkConf), sinkFrom(sparkConf))
+  }
+
   type SqlKey = Long
   type JobKey = Int
 
   // Maps to keep sqls + jobs + stages raw events (initial information) until some completion
   private val sqlStartEvents = new CappedConcurrentHashMap[SqlKey, SqlEvent](c.maxCacheSize)
   private val jobStartEvents = new CappedConcurrentHashMap[JobKey, JobEvent](c.maxCacheSize)
+
+  // Register shutdown hook to ensure sink is closed on JVM termination
+  Runtime.getRuntime.addShutdownHook(new Thread() {
+    override def run(): Unit = {
+      logger.info("Shutdown hook triggered, closing sink")
+      sink.close()
+    }
+  })
 
   /** LISTENERS
     */
@@ -120,8 +134,8 @@ class SparklEar(c: SparklearConfig, sink: Sink) extends SparkListener {
   }
 
   override def onApplicationEnd(event: SparkListenerApplicationEnd): Unit = {
-    logger.trace("onApplicationEnd: duration={}", event.time)
-    sink.close()
+    logger.trace("onApplicationEnd: end={}", event.time)
+    this.close()
   }
 
   /**
@@ -131,5 +145,34 @@ class SparklEar(c: SparklearConfig, sink: Sink) extends SparkListener {
     sink.close()
     logger.info("Listener closed, size of maps sql={} and job={})",
       sqlStartEvents.size, jobStartEvents.size)
+  }
+}
+
+object SparklEar {
+  val SinkClassKey = "spark.sparklear.sink.class"
+
+  implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
+
+  def configFrom(sparkConf: SparkConf): SparklearConfig = {
+    val conf = SparklearConfig(sparkConf)
+    logger.info(s"Sparklear config: $conf")
+    conf
+  }
+
+  def sinkFrom(sparkConf: SparkConf): Sink = {
+    val sinkClassNameOption = sparkConf.getOption(SinkClassKey)
+    val sink = sinkClassNameOption match {
+      case Some(sinkClassName) =>
+        // call sink class constructor with sparkConf
+        val params = classOf[SparkConf]
+        val sinkClass = Class.forName(sinkClassName)
+        val constructor = sinkClass.getDeclaredConstructor(params)
+        val sink = constructor.newInstance(sparkConf).asInstanceOf[Sink]
+        sink
+      case None =>
+        throw new IllegalArgumentException(SinkClassKey + " is not set")
+    }
+    logger.info(s"Sink: ${sink.asString}")
+    sink
   }
 }

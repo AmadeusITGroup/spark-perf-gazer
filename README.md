@@ -25,6 +25,77 @@ There are some problems with the analysis of execution stats from the Spark UI:
 - it is often slow (takes time to load the UI)
 - has a limited sql queries / jobs retention (so stats data is often purged for large applications)
 
+---
+## User Guide
+
+### Setup Instructions
+
+#### 1. Add dependency
+
+#### 2. Add the JAR to your Databricks cluster
+
+| Runtime Version | Spark Version | Installation Method                |
+|-----------------|---------------|------------------------------------|
+| 13.3            | Spark 3.4.1   | Upload and install from DBFS       |
+| 16.4            | Spark 3.5.2   | Upload and install from Workspace  |
+
+### Usage Instructions
+
+#### 1. Register the listener
+
+```scala
+import org.apache.spark.SparkConf
+import com.amadeus.sparklear.{SparklEar, SparklEarListener}
+import com.amadeus.sparklear.PathBuilder.PathOps
+
+// Instantiate listener with JSON Sink
+val basePath = "/dbfs/logs/sparklear/jsonsink/"
+val sparkConf = new SparkConf(false)
+  .set("spark.sparklear.tasks.enabled", "true")
+  .set("spark.sparklear.sink.class", "com.amadeus.sparklear.JsonSink")
+  .set("spark.sparklear.sink.json.destination", basePath + "/date=${sparklear.now.year}-${sparklear.now.month}-${sparklear.now.day}/applicationId=${spark.app.id}/" )
+
+val sparklear = new SparklEar(sparkConf)
+
+// Register listener
+spark.sparkContext.addSparkListener(sparklear)
+```
+
+> The `JsonSink` uses the POSIX interface on the driver to write JSON files.  
+> In order to analyze output directly, it's necessary to configure the listener to write directly to the dbfs mount point.  
+> Example: `basePath = "/dbfs/logs/sparklear/jsonsink"` (Databricks)
+
+#### 2. Remove and close the listener
+
+```scala
+// Remove listener and flush remaining events to disk by closing it
+spark.sparkContext.removeSparkListener(sparklear)
+sparklear.close()
+```
+
+#### 3. Analyze listener data
+
+```scala
+import org.apache.spark.sql.functions._
+
+val sparkPath = basePath.replaceFirst("^/dbfs/", "dbfs:/")
+val df_jobs_reports = spark.read.option("basePath",sparkPath).json(sparkPath + "*/*/job-reports-*.json")
+val df_stages_reports = spark.read.option("basePath",sparkPath).json(sparkPath + "*/*/stage-reports-*.json")
+val df_tasks_reports = spark.read.option("basePath",sparkPath).json(sparkPath + "*/*/task-reports-*.json")
+
+// Reconcile reports from JSON files
+val df_tasks = df_jobs_reports
+  .withColumn("stageId", explode(col("stages")))
+  .drop("stages")
+  .join(df_stages_reports, Seq("date", "applicationId", "stageId"))
+  .join(df_tasks_reports, Seq("date", "applicationId", "stageId"))
+
+display(df_tasks)
+```
+> Spark reads files from dbfs directly.  
+> Example: `sparkPath = "dbfs:/logs/sparklear/jsonsink/"` (Databricks)
+---
+
 ## Developers
 
 ### Contributor guide
@@ -99,4 +170,16 @@ For code formatting setup:
 
 ```
 Settings -> Editor -> Code Style -> Scala -> Formatter: ScalaFMT
+```
+
+#### Run
+
+```bash
+# (optional) clean previous local publishes and publish
+find ~/.ivy2 -type f -name *sparklear* | xargs rm
+sbt publishLocal
+# run spark shell with the listener (change the version accordingly)
+spark-shell \
+--packages com.amadeus:sparklear_spark352_2.12:0.0.29-SNAPSHOT \
+--conf spark.extraListeners=com.amadeus.sparklear.SparklEarListener
 ```
