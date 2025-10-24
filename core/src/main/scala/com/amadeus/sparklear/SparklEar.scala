@@ -133,7 +133,7 @@ class SparklEar(c: SparklearConfig, sink: Sink) extends SparkListener {
   }
 
   private def logSnippets(): Unit = {
-    Seq(SqlReportType, JobReportType, StageReportType, TaskReportType).foreach { reportType =>
+    ReportType.values.foreach { reportType =>
       val ddl = sink.generateViewSnippet(reportType)
       logger.info(s"To create a temporary view for ${reportType.name} reports, run the following SQL:\n${ddl}")
     }

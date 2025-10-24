@@ -19,3 +19,7 @@ case object TaskReportType extends ReportType {
 case object SqlReportType extends ReportType {
   val name = "sql"
 }
+
+object ReportType {
+  val values: Seq[ReportType] = Seq(SqlReportType, JobReportType, StageReportType, TaskReportType)
+}
