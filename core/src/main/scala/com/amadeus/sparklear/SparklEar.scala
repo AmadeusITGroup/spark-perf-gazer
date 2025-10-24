@@ -32,6 +32,14 @@ class SparklEar(c: SparklearConfig, sink: Sink) extends SparkListener {
   private val sqlStartEvents = new CappedConcurrentHashMap[SqlKey, SqlEvent](c.maxCacheSize)
   private val jobStartEvents = new CappedConcurrentHashMap[JobKey, JobEvent](c.maxCacheSize)
 
+  // Register shutdown hook to ensure sink is closed on JVM termination
+  Runtime.getRuntime.addShutdownHook(new Thread() {
+    override def run(): Unit = {
+      logger.info("Shutdown hook triggered, closing sink")
+      sink.close()
+    }
+  })
+
   /** LISTENERS
     */
 
@@ -127,7 +135,7 @@ class SparklEar(c: SparklearConfig, sink: Sink) extends SparkListener {
 
   override def onApplicationEnd(event: SparkListenerApplicationEnd): Unit = {
     logger.trace("onApplicationEnd: end={}", event.time)
-    sink.close()
+    this.close()
   }
 
   /**
@@ -141,6 +149,7 @@ class SparklEar(c: SparklearConfig, sink: Sink) extends SparkListener {
 }
 
 object SparklEar {
+  val SinkClassKey = "spark.sparklear.sink.class"
 
   implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
 
@@ -151,7 +160,7 @@ object SparklEar {
   }
 
   def sinkFrom(sparkConf: SparkConf): Sink = {
-    val sinkClassNameOption = sparkConf.getOption(SparklearSparkConf.SinkClassKey)
+    val sinkClassNameOption = sparkConf.getOption(SinkClassKey)
     val sink = sinkClassNameOption match {
       case Some(sinkClassName) =>
         // call sink class constructor with sparkConf
@@ -161,7 +170,7 @@ object SparklEar {
         val sink = constructor.newInstance(sparkConf).asInstanceOf[Sink]
         sink
       case None =>
-        throw new IllegalArgumentException(SparklearSparkConf.SinkClassKey + " is not set")
+        throw new IllegalArgumentException(SinkClassKey + " is not set")
     }
     logger.info(s"Sink: ${sink.asString}")
     sink

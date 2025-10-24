@@ -20,9 +20,9 @@ import scala.collection.mutable.ListBuffer
  */
 object JsonSink {
 
-  val JsonSinkDestinationKey = "spark.sparklear.sink.json.destination"
-  val JsonSinkWriteBatchSizeKey = "spark.sparklear.sink.json.writeBatchSize"
-  val JsonSinkFileSizeLimitKey = "spark.sparklear.sink.json.fileSizeLimit"
+  val DestinationKey = "spark.sparklear.sink.json.destination"
+  val WriteBatchSizeKey = "spark.sparklear.sink.json.writeBatchSize"
+  val FileSizeLimitKey = "spark.sparklear.sink.json.fileSizeLimit"
 
   case class Config(
     destination: String = "/dbfs/tmp/listener/",
@@ -45,9 +45,9 @@ class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
 
   def this(sparkConf: SparkConf) = {
     this(JsonSink.Config(
-      destination = sparkConf.get(JsonSinkDestinationKey, "/dbfs/tmp/listener/"),
-      writeBatchSize = sparkConf.getInt(JsonSinkWriteBatchSizeKey, 100),
-      fileSizeLimit = sparkConf.getLong(JsonSinkFileSizeLimitKey, 200L*1024*1024)
+      destination = sparkConf.get(DestinationKey, "/dbfs/tmp/listener/"),
+      writeBatchSize = sparkConf.getInt(WriteBatchSizeKey, 100),
+      fileSizeLimit = sparkConf.getLong(FileSizeLimitKey, 200L*1024*1024)
     ), sparkConf)
   }
 
@@ -75,23 +75,23 @@ class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
       reports += report
 
       if (reports.size >= config.writeBatchSize) {
-        logger.debug("Reached writeBatchSize threshold, writing to {} ({} reports).", file.getPath, reports.size)
+        logger.trace("Reached writeBatchSize threshold, writing to {} ({} reports).", file.getPath, reports.size)
         flushReportsToFile()
 
         if (file.length() >= config.fileSizeLimit) {
-          logger.debug("Reached fileSizeLimit threshold, rolling file {} ({} bytes).", file.getPath, file.length())
+          logger.trace("Reached fileSizeLimit threshold, rolling file {} ({} bytes).", file.getPath, file.length())
           writer.close()
           path = s"$dir/$reportType-reports-${Instant.now.toEpochMilli}.json"
           writer = new PrintWriter(new FileWriter(path, true))
           file = new File(path)
-          logger.debug("Switched to new file {}.", path)
+          logger.trace("Switched to new file {}.", path)
         }
       }
     }
 
     def flush(): Unit = {
       if (reports.nonEmpty) {
-        logger.debug("flushing remaining reports to {} ({} reports).", file.getPath, reports.size)
+        logger.trace("Flushing remaining reports to {} ({} reports).", file.getPath, reports.size)
         flushReportsToFile()
       }
     }
@@ -129,7 +129,7 @@ class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
     stageReports.close()
     taskReports.close()
 
-    logger.debug("writers closed.")
+    logger.info("JsonSink writers closed.")
   }
 
   /** String representation of the sink

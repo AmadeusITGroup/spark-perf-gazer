@@ -21,6 +21,12 @@ case class SparklearConfig(
 )
 
 object SparklearConfig {
+  val SqlEnabledKey = "spark.sparklear.sql.enabled"
+  val JobsEnabledKey = "spark.sparklear.jobs.enabled"
+  val StagesEnabledKey = "spark.sparklear.stages.enabled"
+  val TasksEnabledKey = "spark.sparklear.tasks.enabled"
+  val MaxCacheSizeKey = "spark.sparklear.max.cache.size"
+
   val DefaultSqlEnabled: Boolean = true
   val DefaultJobsEnabled: Boolean = true
   val DefaultStagesEnabled: Boolean = true
@@ -29,11 +35,11 @@ object SparklearConfig {
 
   def apply(sparkConf: SparkConf): SparklearConfig = {
     SparklearConfig(
-      sqlEnabled = sparkConf.getBoolean(SparklearSparkConf.SqlEnabledKey, DefaultSqlEnabled),
-      jobsEnabled = sparkConf.getBoolean(SparklearSparkConf.JobsEnabledKey, DefaultJobsEnabled),
-      stagesEnabled = sparkConf.getBoolean(SparklearSparkConf.StagesEnabledKey, DefaultStagesEnabled),
-      tasksEnabled = sparkConf.getBoolean(SparklearSparkConf.TasksEnabledKey, DefaultTasksEnabled),
-      maxCacheSize = sparkConf.getInt(SparklearSparkConf.MaxCacheSizeKey, DefaultMaxCacheSize)
+      sqlEnabled = sparkConf.getBoolean(SqlEnabledKey, DefaultSqlEnabled),
+      jobsEnabled = sparkConf.getBoolean(JobsEnabledKey, DefaultJobsEnabled),
+      stagesEnabled = sparkConf.getBoolean(StagesEnabledKey, DefaultStagesEnabled),
+      tasksEnabled = sparkConf.getBoolean(TasksEnabledKey, DefaultTasksEnabled),
+      maxCacheSize = sparkConf.getInt(MaxCacheSizeKey, DefaultMaxCacheSize)
     )
   }
 }

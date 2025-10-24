@@ -18,9 +18,9 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
     it("should write job reports with writeBatchSize = 1") {
       withTmpDir { tmpDir =>
         val sparkConf = new SparkConf()
-          .set(JsonSinkDestinationKey, s"$tmpDir")
-          .set(JsonSinkWriteBatchSizeKey, "1")
-          .set(JsonSinkFileSizeLimitKey, (200L*1024*1024).toString)
+          .set(JsonSink.DestinationKey, s"$tmpDir")
+          .set(JsonSink.WriteBatchSizeKey, "1")
+          .set(JsonSink.FileSizeLimitKey, (200L*1024*1024).toString)
 
         val jsonSink = new JsonSink(sparkConf)
 
@@ -49,9 +49,9 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
     it("should write job reports with writeBatchSize = 5") {
       withTmpDir { tmpDir =>
         val sparkConf = new SparkConf()
-          .set(JsonSinkDestinationKey, s"$tmpDir")
-          .set(JsonSinkWriteBatchSizeKey, "5")
-          .set(JsonSinkFileSizeLimitKey, (200L*1024*1024).toString)
+          .set(JsonSink.DestinationKey, s"$tmpDir")
+          .set(JsonSink.WriteBatchSizeKey, "5")
+          .set(JsonSink.FileSizeLimitKey, (200L*1024*1024).toString)
         val jsonSink = new JsonSink(sparkConf)
 
         val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
@@ -83,9 +83,9 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
     it("should write job reports when writeBatchSize not reached and sink is flushed") {
       withTmpDir { tmpDir =>
         val sparkConf = new SparkConf()
-          .set(JsonSinkDestinationKey, s"$tmpDir")
-          .set(JsonSinkWriteBatchSizeKey, "5")
-          .set(JsonSinkFileSizeLimitKey, (200L*1024*1024).toString)
+          .set(JsonSink.DestinationKey, s"$tmpDir")
+          .set(JsonSink.WriteBatchSizeKey, "5")
+          .set(JsonSink.FileSizeLimitKey, (200L*1024*1024).toString)
         val jsonSink = new JsonSink(sparkConf)
 
         val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
@@ -119,9 +119,9 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
     it("should do file rolling when fileSizeLimit is reached ") {
       withTmpDir { tmpDir =>
         val sparkConf = new SparkConf()
-          .set(JsonSinkDestinationKey, s"$tmpDir")
-          .set(JsonSinkWriteBatchSizeKey, "100")
-          .set(JsonSinkFileSizeLimitKey, (10L*1024).toString)
+          .set(JsonSink.DestinationKey, s"$tmpDir")
+          .set(JsonSink.WriteBatchSizeKey, "100")
+          .set(JsonSink.FileSizeLimitKey, (10L*1024).toString)
         val jsonSink = new JsonSink(sparkConf)
 
         val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
@@ -150,9 +150,9 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
     it("should initialize JsonSink from SinkConfig and SparkConf") {
       withTmpDir { tmpDir =>
         val sparkConf = new SparkConf()
-          .set(JsonSinkDestinationKey, s"$tmpDir")
-          .set(JsonSinkWriteBatchSizeKey, "100")
-          .set(JsonSinkFileSizeLimitKey, (10L*1024).toString)
+          .set(JsonSink.DestinationKey, s"$tmpDir")
+          .set(JsonSink.WriteBatchSizeKey, "100")
+          .set(JsonSink.FileSizeLimitKey, (10L*1024).toString)
         val jsonSink1 = new JsonSink(sparkConf)
 
         val jsonSink2 = new JsonSink(
