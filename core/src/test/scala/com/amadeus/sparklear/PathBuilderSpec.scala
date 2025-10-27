@@ -38,6 +38,48 @@ class PathBuilderSpec extends SimpleSpec with SparkSupport with TempDirSupport {
         it("should build reports destination (withPartition / withDatabricksTag)") {
           destination5 shouldBe tmpDir + "/customPartition=myPartition/clusterName=unknown/"
         }
+
+        it("should handle a simple path with no ending /") {
+          val path = "/tmp"
+          path.withWildcards() shouldBe "/tmp"
+          path.extractBasePath() shouldBe "/tmp"
+          path.extractPartitions() shouldBe ""
+        }
+
+        it("should handle a simple path with intermediate / and no partitions") {
+          val path = "/tmp/listener"
+          path.withWildcards() shouldBe "/tmp/listener"
+          path.extractBasePath() shouldBe "/tmp/listener"
+          path.extractPartitions() shouldBe ""
+        }
+
+        it("should handle a path with one partition segment") {
+          val path = "/tmp/listener/date=2025-09-10"
+          path.withWildcards() shouldBe "/tmp/listener/date=*"
+          path.extractBasePath() shouldBe "/tmp/listener"
+          path.extractPartitions() shouldBe "/date=2025-09-10"
+        }
+
+        it("should handle a path with multiple partition segments") {
+          val path = "/tmp/listener/date=2025-09-10/cluster=111/id=ffff/level=ggg"
+          path.withWildcards() shouldBe "/tmp/listener/date=*/cluster=*/id=*/level=*"
+          path.extractBasePath() shouldBe "/tmp/listener"
+          path.extractPartitions() shouldBe "/date=2025-09-10/cluster=111/id=ffff/level=ggg"
+        }
+
+        it("should handle a path with only partition segments after base") {
+          val path = "/base/a=10/b=20/c=30/"
+          path.withWildcards() shouldBe "/base/a=*/b=*/c=*/"
+          path.extractBasePath() shouldBe "/base"
+          path.extractPartitions() shouldBe "/a=10/b=20/c=30/"
+        }
+
+        it("should handle a path with non-partition segments between partitions") {
+          val path = "/base/a=10/something/b=10/c=30"
+          path.withWildcards() shouldBe "/base/a=*/something/b=*/c=*"
+          path.extractBasePath() shouldBe "/base/a=10/something"
+          path.extractPartitions() shouldBe "/b=10/c=30"
+        }
       }
     }
   }

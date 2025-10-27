@@ -59,6 +59,34 @@ object PathBuilder {
       resolved
     }
 
+    def withWildcards(): String = {
+      val valuePattern: Regex = """=([^/\\]+)""".r
+      val resolved = valuePattern.replaceAllIn(path, m => "=*")
+      resolved
+    }
+
+    def extractBasePath(): String = {
+      val partitionsPattern: Regex = """([/\\]+[^=/\\]+=[^/\\]+)+[/\\]*$""".r
+      val resolved: String = partitionsPattern.findFirstMatchIn(path) match {
+        case Some(m) =>
+          path.substring(0, m.start)
+        case None =>
+          path
+      }
+      resolved
+    }
+
+    def extractPartitions(): String = {
+      val partitionsPattern: Regex = """([/\\]+[^=/\\]+=[^/\\]+)+[/\\]*$""".r
+      val resolved: String = partitionsPattern.findFirstMatchIn(path) match {
+        case Some(m) =>
+          path.substring(m.start)
+        case None =>
+          ""
+      }
+      resolved
+    }
+
     private def appendPartition(key: String, value: String): String = {
       val cleanPath = if (path.endsWith("/")) path else path + "/"
       val cleanKey = key.replace("=", "_").replace("/", "_")

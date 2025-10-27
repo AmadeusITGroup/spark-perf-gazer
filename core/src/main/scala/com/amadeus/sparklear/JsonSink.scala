@@ -2,6 +2,7 @@ package com.amadeus.sparklear
 
 import com.amadeus.sparklear.JsonSink._
 import com.amadeus.sparklear.reports._
+import com.amadeus.sparklear.PathBuilder._
 import org.apache.spark.SparkConf
 import org.json4s.jackson.Serialization
 import org.json4s.{Formats, NoTypeHints}
@@ -36,13 +37,10 @@ object JsonSink {
     }
 
     private def normalizeDir(path: String): String = {
-      val normalized = path
-        .replace('\\', '/')
-        .stripSuffix("/")
-      if (runningOnDatabricks && normalized.startsWith("/dbfs")) {
-        normalized.replaceFirst("^/dbfs", "dbfs:")
+      if (runningOnDatabricks && path.startsWith("/dbfs")) {
+        path.replaceFirst("^/dbfs", "dbfs:")
       } else {
-        normalized
+        path
       }
     }
 
@@ -62,33 +60,17 @@ object JsonSink {
       * @param reportName  The report name, that is used as view name too (e.g. "job", "sql", ...).
       */
     def generateViewDDL(destination: String, reportName: String): String = {
-      val normalizedDir = normalizeDir(destination)
-      val segments = normalizedDir.split('/').filter(_.nonEmpty).toList
-      def isPartition(s: String) = s.contains('=')
-      // Find the first index where all remaining segments are partition-style
-      val baseIdx = segments.indices
-        .find { idx =>
-          val rest = segments.drop(idx)
-          rest.nonEmpty && rest.forall(isPartition)
-        }
-        .getOrElse(segments.length)
-      val leadingSlash = if (normalizedDir.startsWith("/")) "/" else ""
-      val basePath =
-        if (baseIdx == 0) {
-          leadingSlash
-        } else {
-          s"${leadingSlash}${segments.take(baseIdx).mkString("/")}/"
-        }
-      val partitionCount = segments.length - baseIdx
-      val starPathPart = if (partitionCount == 0) "" else List.fill(partitionCount)("*").mkString("", "/", "/")
-      val fileNameWithWildcard = s"${reportName}-reports-*.json"
-      val globPath = s"$basePath$starPathPart$fileNameWithWildcard"
+      val dominantSeparator = if (destination.count(_ == '\\') > destination.count(_ == '/')) "\\" else "/"
+      val basePath = normalizeDir(destination.extractBasePath().stripSuffix(dominantSeparator))
+      val starPathPart = destination.extractPartitions().stripSuffix(dominantSeparator).withWildcards()
+      val fileNameWithWildcard = s"$reportName-reports-*.json"
+      val globPath = s"$basePath$starPathPart$dominantSeparator$fileNameWithWildcard"
       val ddl =
         s"""|CREATE OR REPLACE TEMPORARY VIEW $reportName
             |USING json
             |OPTIONS (
             |  path \"$globPath\",
-            |  basePath \"$basePath\"
+            |  basePath \"$basePath$dominantSeparator\"
             |);""".stripMargin
       ddl
     }
@@ -117,7 +99,7 @@ class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
     ), sparkConf)
   }
 
-  val destination: String = PathBuilder.PathOps(config.destination).resolveProperties(sparkConf)
+  val destination: String = config.destination.resolveProperties(sparkConf)
 
   private case class ReportBuffer[T <: Report](reportType: String, dir: String) {
     private val folder = new File(dir)
@@ -207,6 +189,6 @@ class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
   override def asString: String = s"JsonSink($config)"
 
   override def generateViewSnippet(reportType: ReportType): String = {
-    JsonViewDDLGenerator.generateViewDDL(config.destination, reportType.name)
+    JsonViewDDLGenerator.generateViewDDL(destination, reportType.name)
   }
 }
