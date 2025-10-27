@@ -138,12 +138,14 @@ class SparklEar(c: SparklearConfig, sink: Sink) extends SparkListener {
     this.close()
   }
 
-  /** Log SQL view snippets and close the sink (if not already done).
+  /**
+    * Log SQL view snippets and close the sink (if not already done).
     */
   def close(): Unit = {
     logSnippets()
     sink.close()
-    logger.info("Listener closed, size of maps sql={} and job={})", sqlStartEvents.size, jobStartEvents.size)
+    logger.info("Listener closed, size of maps sql={} and job={})",
+      sqlStartEvents.size, jobStartEvents.size)
   }
 
   private def logSnippets(): Unit = {

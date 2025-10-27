@@ -1,10 +1,10 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.reports._
+import com.amadeus.sparklear.reports.{Report, ReportType}
 import org.apache.spark.SparkConf
+import org.slf4j.{Logger, LoggerFactory}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.{write => toJson}
-import org.slf4j.{Logger, LoggerFactory}
 
 /** Sink that logs reports in json format (info level)
   */

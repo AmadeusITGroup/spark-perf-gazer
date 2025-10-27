@@ -4,8 +4,8 @@ import com.amadeus.sparklear.JsonSink._
 import com.amadeus.sparklear.reports._
 import org.apache.spark.SparkConf
 import org.json4s.jackson.Serialization
-import org.json4s.jackson.Serialization.{write => asJson}
 import org.json4s.{Formats, NoTypeHints}
+import org.json4s.jackson.Serialization.{write => asJson}
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.io.{File, FileWriter, PrintWriter}
@@ -17,13 +17,13 @@ object JsonSink {
   val WriteBatchSizeKey = "spark.sparklear.sink.json.writeBatchSize"
   val FileSizeLimitKey = "spark.sparklear.sink.json.fileSizeLimit"
 
-  case class Config(
-   /** Configuration object for JsonSink
+  /** Configuration object for JsonSink
     *
     * @param destination Base directory path where JSON files will be written, e.g., "/dbfs/logs/appid=my-app-id/"
     * @param writeBatchSize Number of reports to accumulate before writing to disk
     * @param fileSizeLimit file size to reach before switching to a new file
     */
+  case class Config(
     destination: String = "/dbfs/tmp/listener/",
     writeBatchSize: Int = 100,
     fileSizeLimit: Long = 1L * 1024 * 1024
@@ -47,20 +47,20 @@ object JsonSink {
     }
 
     /** Generate the CREATE OR REPLACE TEMPORARY VIEW DDL for a partitioned JSON file path.
-     *
-     * Example of a partitioned path:
-     *
-     * /tmp/listener/date=2025-09-10/cluster=my-cluster/customer=my-customer/sql-reports-1234.json
-     *
-     * Rule: the view basePath must be up to (but not including) the first partition-style segment
-     * (e.g., date=2025-09-10) starting from which there are ONLY partition style segments.
-     * The path should have as many /\* as there are partition segments after the basePath.
-     *
-     * If the /dbfs mount point is detected (Databricks), it is stripped out.
-     *
-     * @param destination  The Sink destination directory path where JSON files are written.
-     * @param reportName  The report name, that is used as view name too (e.g. "job", "sql", ...).
-     */
+      *
+      * Example of a partitioned path:
+      *
+      * /tmp/listener/date=2025-09-10/cluster=my-cluster/customer=my-customer/sql-reports-1234.json
+      *
+      * Rule: the view basePath must be up to (but not including) the first partition-style segment
+      * (e.g., date=2025-09-10) starting from which there are ONLY partition style segments.
+      * The path should have as many /\* as there are partition segments after the basePath.
+      *
+      * If the /dbfs mount point is detected (Databricks), it is stripped out.
+      *
+      * @param destination  The Sink destination directory path where JSON files are written.
+      * @param reportName  The report name, that is used as view name too (e.g. "job", "sql", ...).
+      */
     def generateViewDDL(destination: String, reportName: String): String = {
       val normalizedDir = normalizeDir(destination)
       val segments = normalizedDir.split('/').filter(_.nonEmpty).toList
@@ -202,11 +202,11 @@ class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
     logger.info("JsonSink writers closed.")
   }
 
-  override def generateViewSnippet(reportType: ReportType): String = {
-    JsonViewDDLGenerator.generateViewDDL(config.destination, reportType.name)
-  }
-
   /** String representation of the sink
     */
   override def asString: String = s"JsonSink($config)"
+
+  override def generateViewSnippet(reportType: ReportType): String = {
+    JsonViewDDLGenerator.generateViewDDL(config.destination, reportType.name)
+  }
 }
