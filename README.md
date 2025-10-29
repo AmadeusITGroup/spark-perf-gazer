@@ -44,18 +44,19 @@ There are some problems with the analysis of execution stats from the Spark UI:
 #### 1. Register the listener
 
 ```scala
-import org.apache.spark.SparkConf
-import com.amadeus.sparklear.{SparklEar, SparklEarListener}
+import com.amadeus.sparklear.SparklEar
 import com.amadeus.sparklear.PathBuilder.PathOps
 
 // Instantiate listener with JSON Sink
-val basePath = "/dbfs/logs/sparklear/jsonsink/"
-val sparkConf = new SparkConf(false)
+val basePath = "/dbfs/sparklear/jsonsink/"
+val sparklearConf = new SparkConf()
+  .setAll(spark.sparkContext.getConf.getAll)
   .set("spark.sparklear.tasks.enabled", "true")
   .set("spark.sparklear.sink.class", "com.amadeus.sparklear.JsonSink")
-  .set("spark.sparklear.sink.json.destination", basePath + "/date=${sparklear.now.year}-${sparklear.now.month}-${sparklear.now.day}/applicationId=${spark.app.id}/" )
+  .set("spark.sparklear.sink.json.destination", basePath + "clusterName=${spark.databricks.clusterUsageTags.clusterName}/date=${sparklear.now.year}-${sparklear.now.month}-${sparklear.now.day}/applicationId=${spark.app.id}")
+val sparklear = new SparklEar(sparklearConf)
 
-val sparklear = new SparklEar(sparkConf)
+println(sparklear.getSink)
 
 // Register listener
 spark.sparkContext.addSparkListener(sparklear)
@@ -71,17 +72,50 @@ spark.sparkContext.addSparkListener(sparklear)
 // Remove listener and flush remaining events to disk by closing it
 spark.sparkContext.removeSparkListener(sparklear)
 sparklear.close()
+print(sparklear.getSnippets)
 ```
 
 #### 3. Analyze listener data
+
+```sql
+CREATE OR REPLACE TEMPORARY VIEW sql
+USING json
+OPTIONS (
+  path "dbfs:/sparklear/jsonsink/clusterName=*/date=*/applicationId=*/sql-reports-*.json",
+  basePath "dbfs:/sparklear/jsonsink/"
+);
+CREATE OR REPLACE TEMPORARY VIEW job
+USING json
+OPTIONS (
+  path "dbfs:/sparklear/jsonsink/clusterName=*/date=*/applicationId=*/job-reports-*.json",
+  basePath "dbfs:/sparklear/jsonsink/"
+);
+CREATE OR REPLACE TEMPORARY VIEW stage
+USING json
+OPTIONS (
+  path "dbfs:/sparklear/jsonsink/clusterName=*/date=*/applicationId=*/stage-reports-*.json",
+  basePath "dbfs:/sparklear/jsonsink/"
+);
+CREATE OR REPLACE TEMPORARY VIEW task
+USING json
+OPTIONS (
+  path "dbfs:/sparklear/jsonsink/clusterName=*/date=*/applicationId=*/task-reports-*.json",
+  basePath "dbfs:/sparklear/jsonsink/"
+);
+
+SELECT *
+  FROM job j
+  JOIN stage s ON s.applicationId = j.applicationId AND ARRAY_CONTAINS(j.stages, s.stageId)
+  JOIN task t ON t.applicationId = s.applicationId AND t.stageId = s.stageId;
+```
 
 ```scala
 import org.apache.spark.sql.functions._
 
 val sparkPath = basePath.replaceFirst("^/dbfs/", "dbfs:/")
-val df_jobs_reports = spark.read.option("basePath",sparkPath).json(sparkPath + "*/*/job-reports-*.json")
-val df_stages_reports = spark.read.option("basePath",sparkPath).json(sparkPath + "*/*/stage-reports-*.json")
-val df_tasks_reports = spark.read.option("basePath",sparkPath).json(sparkPath + "*/*/task-reports-*.json")
+val df_jobs_reports = spark.read.option("basePath",sparkPath).json(sparkPath + "clusterName=*/date=*/applicationId=*/job-reports-*.json")
+val df_stages_reports = spark.read.option("basePath",sparkPath).json(sparkPath + "clusterName=*/date=*/applicationId=*/stage-reports-*.json")
+val df_tasks_reports = spark.read.option("basePath",sparkPath).json(sparkPath + "clusterName=*/date=*/applicationId=*/task-reports-*.json")
 
 // Reconcile reports from JSON files
 val df_tasks = df_jobs_reports

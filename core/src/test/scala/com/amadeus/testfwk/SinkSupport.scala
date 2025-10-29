@@ -21,7 +21,7 @@ object SinkSupport {
 
     override def close(): Unit = {}
 
-    override def asString: String = ""
+    override def asString: String = "TestableSink"
 
     override def generateViewSnippet(reportType: ReportType): String = "No snippet for test reports."
   }
