@@ -23,7 +23,7 @@ object SinkSupport {
 
     override def asString: String = "TestableSink"
 
-    override def generateViewSnippet(reportType: ReportType): String = "No snippet for test reports."
+    override def generateViewSnippet(reportType: ReportType): String = "No snippet for TestableSink."
   }
 }
 

@@ -36,14 +36,6 @@ object JsonSink {
       sys.env.contains("DATABRICKS_RUNTIME_VERSION")
     }
 
-    private def normalizeDir(path: String): String = {
-      if (runningOnDatabricks && path.startsWith("/dbfs")) {
-        path.replaceFirst("^/dbfs", "dbfs:")
-      } else {
-        path
-      }
-    }
-
     /** Generate the CREATE OR REPLACE TEMPORARY VIEW DDL for a partitioned JSON file path.
       *
       * Example of a partitioned path:
@@ -60,17 +52,19 @@ object JsonSink {
       * @param reportName  The report name, that is used as view name too (e.g. "job", "sql", ...).
       */
     def generateViewDDL(destination: String, reportName: String): String = {
-      val dominantSeparator = if (destination.count(_ == '\\') > destination.count(_ == '/')) "\\" else "/"
-      val basePath = normalizeDir(destination.extractBasePath().stripSuffix(dominantSeparator))
-      val starPathPart = destination.extractPartitions().stripSuffix(dominantSeparator).withWildcards()
+      var basePath = destination.extractBasePath()
+      val starPathPart = destination.extractPartitions().withWildcards()
       val fileNameWithWildcard = s"$reportName-reports-*.json"
-      val globPath = s"$basePath$starPathPart$dominantSeparator$fileNameWithWildcard"
+      if (runningOnDatabricks && basePath.startsWith("/dbfs/")) {
+        basePath = basePath.replaceFirst("/dbfs/", "dbfs:/")
+      }
+      val globPath = s"$basePath$starPathPart".normalizePath() + s"$fileNameWithWildcard"
       val ddl =
         s"""|CREATE OR REPLACE TEMPORARY VIEW $reportName
             |USING json
             |OPTIONS (
             |  path \"$globPath\",
-            |  basePath \"$basePath$dominantSeparator\"
+            |  basePath \"$basePath\"
             |);""".stripMargin
       ddl
     }

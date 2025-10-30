@@ -127,7 +127,7 @@ val df_tasks = df_jobs_reports
 display(df_tasks)
 ```
 > Spark reads files from dbfs directly.  
-> Example: `sparkPath = "dbfs:/logs/sparklear/jsonsink/"` (Databricks)
+> Example: `sparkPath = "dbfs:/sparklear/jsonsink/"` (Databricks)
 ---
 
 ## Developers
