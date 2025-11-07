@@ -6,10 +6,14 @@ import java.time.LocalDateTime
 import java.util.Properties
 import scala.util.matching.Regex
 
-
 object PathBuilder {
-  /**
-    * Implicit class that adds path-building methods to String using ad-hoc polymorphism with implicits.
+
+  private val SeparatorPattern: Regex = """([/\\]+)""".r
+  private val PartitionsPattern: Regex = """([/\\]+[^=/\\]+=[^/\\]+)+[/\\]*$""".r
+  private val PlaceholderPattern: Regex = """\$\{([^}]+)\}""".r
+  private val ValuePattern: Regex = """=([^/\\]+)""".r
+
+  /** Implicit class that adds path-building methods to String using ad-hoc polymorphism with implicits.
     * Allows fluent API for building filesystem paths with common patterns.
     *
     * Example usage:
@@ -17,12 +21,6 @@ object PathBuilder {
     * val fullPath = basePath.withDate.withPartition("region", "us-east-1").withPartition("year", "2025")
     * // Results in: "/tmp/a/date=2025-09-23/region=us-east-1/year=2025/"
     */
-
-  private val separatorPattern: Regex = """([/\\]+)""".r
-  private val partitionsPattern: Regex = """([/\\]+[^=/\\]+=[^/\\]+)+[/\\]*$""".r
-  private val placeholderPattern: Regex = """\$\{([^}]+)\}""".r
-  private val valuePattern: Regex = """=([^/\\]+)""".r
-
   implicit class PathOps(val path: String) extends AnyVal {
     private def appendPartition(key: String, value: String): String = {
       val cleanPath = if (path.endsWith("/")) path else path + "/"
@@ -57,11 +55,11 @@ object PathBuilder {
 
     def normalizePath(): String = {
       // Find the first separator used in the path (either / or \)
-      val normalized: String = separatorPattern.findFirstMatchIn(path) match {
+      val normalized: String = SeparatorPattern.findFirstMatchIn(path) match {
         case Some(m) =>
           val separator: String = m.group(1).take(1)
           // Replace all separators with the first one found, and ensure it ends with a separator
-          separatorPattern.replaceAllIn(path, separator.replace("\\", "\\\\")).stripSuffix(separator) + separator
+          SeparatorPattern.replaceAllIn(path, separator.replace("\\", "\\\\")).stripSuffix(separator) + separator
         case None =>
           path
       }
@@ -77,19 +75,20 @@ object PathBuilder {
       dateProps.setProperty("sparklear.now.hour", f"${now.getHour}%02d")
       dateProps.setProperty("sparklear.now.minute", f"${now.getMinute}%02d")
 
-      val resolved = placeholderPattern.replaceAllIn(path, m =>
-        Option(dateProps.getProperty(m.group(1))).orElse(sparkConf.getOption(m.group(1))).getOrElse("unknown")
+      val resolved = PlaceholderPattern.replaceAllIn(
+        path,
+        m => Option(dateProps.getProperty(m.group(1))).orElse(sparkConf.getOption(m.group(1))).getOrElse("unknown")
       )
       resolved.normalizePath()
     }
 
     def withWildcards(): String = {
-      val resolved = valuePattern.replaceAllIn(path, m => "=*")
+      val resolved = ValuePattern.replaceAllIn(path, m => "=*")
       resolved.normalizePath()
     }
 
     def extractBasePath(): String = {
-      val resolved: String = partitionsPattern.findFirstMatchIn(path) match {
+      val resolved: String = PartitionsPattern.findFirstMatchIn(path) match {
         case Some(m) =>
           path.substring(0, m.start)
         case None =>
@@ -99,7 +98,7 @@ object PathBuilder {
     }
 
     def extractPartitions(): String = {
-      val resolved: String = partitionsPattern.findFirstMatchIn(path) match {
+      val resolved: String = PartitionsPattern.findFirstMatchIn(path) match {
         case Some(m) =>
           path.substring(m.start)
         case None =>
