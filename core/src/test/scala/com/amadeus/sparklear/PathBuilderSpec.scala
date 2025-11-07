@@ -38,9 +38,23 @@ class PathBuilderSpec extends SimpleSpec with SparkSupport {
       val destination5 = tmpDirUnix
         .withPartition("customPartition", "myPartition")
         .withDatabricksTag("clusterName", "clusterName")
-        .resolveProperties(spark.sparkContext.getConf)
-      it("should build reports destination (withPartition / withDatabricksTag)") {
-        destination5 shouldBe tmpDirUnix + "/customPartition=myPartition/clusterName=unknown/"
+
+      it("should throw IllegalArgumentException if one of partition value cannot be resolved") {
+        an[IllegalArgumentException] should be thrownBy {
+          destination5.resolveProperties(spark.sparkContext.getConf)
+        }
+      }
+
+      it("should throw IllegalArgumentException if one of partition key contains invalid characters") {
+        an[IllegalArgumentException] should be thrownBy {
+          tmpDirUnix.withPartition("custom=Partition", "myPartition")
+        }
+      }
+
+      it("should throw IllegalArgumentException if one of partition value contains invalid characters") {
+        an[IllegalArgumentException] should be thrownBy {
+          tmpDirUnix.withPartition("customPartition", "my=Partition")
+        }
       }
 
       it("should handle a simple path with no ending /") {

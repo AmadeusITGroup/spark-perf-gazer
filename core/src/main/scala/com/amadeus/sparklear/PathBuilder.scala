@@ -24,9 +24,15 @@ object PathBuilder {
   implicit class PathOps(val path: String) extends AnyVal {
     private def appendPartition(key: String, value: String): String = {
       val cleanPath = if (path.endsWith("/")) path else path + "/"
-      val cleanKey = key.replace("=", "_").replace("/", "_")
-      val cleanValue = value.replace("=", "_").replace("/", "_")
-      cleanPath + s"$cleanKey=$cleanValue/"
+
+      if (key != key.replace("=", "_").replace("/", "_")) {
+        throw new IllegalArgumentException(key + " contains invalid characters '=' or '/'")
+      }
+      if (value != value.replace("=", "_").replace("/", "_")) {
+        throw new IllegalArgumentException(value + " contains invalid characters '=' or '/'")
+      }
+
+      cleanPath + s"$key=$value/"
     }
 
     def withDate: String = {
@@ -77,7 +83,7 @@ object PathBuilder {
 
       val resolved = PlaceholderPattern.replaceAllIn(
         path,
-        m => Option(dateProps.getProperty(m.group(1))).orElse(sparkConf.getOption(m.group(1))).getOrElse("unknown")
+        m => Option(dateProps.getProperty(m.group(1))).orElse(sparkConf.getOption(m.group(1))).getOrElse(throw new IllegalArgumentException(m.group(1) + " is not set"))
       )
       resolved.normalizePath()
     }
