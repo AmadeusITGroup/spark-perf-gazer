@@ -95,7 +95,7 @@ class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
 
   val destination: String = config.destination.resolveProperties(sparkConf)
 
-  private case class ReportBuffer[T <: Report](reportType: String, dir: String) {
+  private class ReportBuffer[T <: Report](reportType: String, dir: String) {
     private val folder = new File(dir)
     if (!folder.exists()) folder.mkdirs()
 
