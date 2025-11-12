@@ -30,18 +30,48 @@ There are some problems with the analysis of execution stats from the Spark UI:
 
 ### Setup Instructions
 
-#### 1. Add dependency
-
-#### 2. Add the JAR to your Databricks cluster
+#### 1. Install the SparklEar library on interactive clusters (Databricks)
 
 | Runtime Version | Spark Version | Installation Method                |
 |-----------------|---------------|------------------------------------|
 | 13.3            | Spark 3.4.1   | Upload and install from DBFS       |
 | 16.4            | Spark 3.5.2   | Upload and install from Workspace  |
 
+#### 2. Install the SparklEar library on job clusters (Databricks)
+
+Upload the SparklEar JAR to a location accessible by the job cluster (e.g., DBFS).
+Use an init script to install the SparklEar library on the job cluster.
+Example init script to install from DBFS:
+
+```shell
+if [ -f "/databricks/jars/sparklear_spark352_2_12_0_0_29_SNAPSHOT.jar" ]; then
+  rm -f "/databricks/jars/sparklear_spark352_2_12_0_0_29_SNAPSHOT.jar"
+fi
+
+cp -f /dbfs/FileStore/jars/sparklear_spark352_2_12_0_0_29_SNAPSHOT.jar /databricks/jars
+```
+
 ### Usage Instructions
 
-#### 1. Register the listener
+#### Configuration
+
+> The configuration of the SparklEar listener is done via Spark configuration properties.
+
+> The following properties are available:
+- `spark.sparklear.sql.enabled`: enable/disable sql level metrics collection (default: `true`)
+- `spark.sparklear.jobs.enabled`: enable/disable job level metrics collection (default: `true`)
+- `spark.sparklear.stages.enabled`: enable/disable stage level metrics collection (default: `true`)
+- `spark.sparklear.tasks.enabled`: enable/disable task level metrics collection (default: `false`)
+- `spark.sparklear.max.cache.size`: maximum number of events to keep in memory (default: `100` events)
+
+- `spark.sparklear.sink.class`: fully qualified class name of the sink to use (default: `com.amadeus.sparklear.JsonSink`)
+- `spark.sparklear.sink.json.destination`: destination path for the JSON sink (if using `JsonSink`)
+- `spark.sparklear.sink.json.writeBatchSize`: number of records JSON file (if using `JsonSink`, default: `100` records)
+- `spark.sparklear.sink.json.fileSizeLimit`: maximum size of each JSON file (if using `JsonSink`, default: `209715200` bytes = `200 MB`)
+
+#### Register the listener programmatically (notebook or application)
+
+##### 1. Register the listener
 
 ```scala
 import com.amadeus.sparklear.SparklEar
@@ -66,7 +96,7 @@ spark.sparkContext.addSparkListener(sparklear)
 > In order to analyze output directly, it's necessary to configure the listener to write directly to the dbfs mount point.  
 > Example: `basePath = "/dbfs/logs/sparklear/jsonsink"` (Databricks)
 
-#### 2. Remove and close the listener
+##### 2. Remove and close the listener
 
 ```scala
 // Remove listener and flush remaining events to disk by closing it
@@ -75,7 +105,18 @@ sparklear.close()
 print(sparklear.getSnippets)
 ```
 
-#### 3. Analyze listener data
+#### Register the listener using cluster configuration (Databricks)
+
+> Go to your cluster configuration page, and add the following Spark configuration properties:
+```
+spark.extraListeners com.amadeus.sparklear.SparklEar
+spark.sparklear.tasks.enabled true
+spark.sparklear.sink.class com.amadeus.sparklear.JsonSink
+spark.sparklear.sink.json.destination /dbfs/sparklear/jsonsink/clusterName=${spark.databricks.clusterUsageTags.clusterName}/date=${sparklear.now.year}-${sparklear.now.month}-${sparklear.now.day}/applicationId=${spark.app.id}
+```
+> Customize the destination path as needed.
+
+#### Analyze listener data
 
 ```sql
 CREATE OR REPLACE TEMPORARY VIEW sql

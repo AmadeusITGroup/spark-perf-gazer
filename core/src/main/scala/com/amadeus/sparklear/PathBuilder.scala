@@ -59,7 +59,7 @@ object PathBuilder {
       path.withDate.withApplicationId
     }
 
-    def normalizePath(): String = {
+    def normalizePath: String = {
       // Find the first separator used in the path (either / or \)
       val normalized: String = SeparatorPattern.findFirstMatchIn(path) match {
         case Some(m) =>
@@ -85,32 +85,32 @@ object PathBuilder {
         path,
         m => Option(dateProps.getProperty(m.group(1))).orElse(sparkConf.getOption(m.group(1))).getOrElse(throw new IllegalArgumentException(m.group(1) + " is not set"))
       )
-      resolved.normalizePath()
+      resolved.normalizePath
     }
 
-    def withWildcards(): String = {
+    def globPathValues: String = {
       val resolved = ValuePattern.replaceAllIn(path, m => "=*")
-      resolved.normalizePath()
+      resolved.normalizePath
     }
 
-    def extractBasePath(): String = {
+    def extractBasePath: String = {
       val resolved: String = PartitionsPattern.findFirstMatchIn(path) match {
         case Some(m) =>
           path.substring(0, m.start)
         case None =>
           path
       }
-      resolved.normalizePath()
+      resolved.normalizePath
     }
 
-    def extractPartitions(): String = {
+    def extractPartitions: String = {
       val resolved: String = PartitionsPattern.findFirstMatchIn(path) match {
         case Some(m) =>
           path.substring(m.start)
         case None =>
           ""
       }
-      resolved.normalizePath()
+      resolved.normalizePath
     }
   }
 }

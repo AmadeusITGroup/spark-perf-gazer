@@ -147,7 +147,7 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
         spark.stop()
       }
     }
-    it("should initialize JsonSink from SinkConfig and SparkConf") {
+    it("should initialize JsonSink from SparkConf") {
       withTmpDir { tmpDir =>
         val sparkConf = new SparkConf()
           .set(JsonSink.DestinationKey, s"$tmpDir")
@@ -164,7 +164,31 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
           new SparkConf()
         )
 
-        jsonSink1.asString shouldBe jsonSink2.asString
+        jsonSink1.toString shouldBe jsonSink2.toString
+      }
+    }
+    it("should initialize JsonSink from SparkConf using default values") {
+      withTmpDir { tmpDir =>
+        val sparkConf = new SparkConf()
+          .set(JsonSink.DestinationKey, s"$tmpDir")
+        val jsonSink1 = new JsonSink(sparkConf)
+
+        val jsonSink2 = new JsonSink(
+          JsonSink.Config(
+            destination = s"$tmpDir",
+            writeBatchSize = JsonSink.DefaultWriteBatchSize,
+            fileSizeLimit = JsonSink.DefaultFileSizeLimit
+          ),
+          new SparkConf()
+        )
+
+        jsonSink1.toString shouldBe jsonSink2.toString
+      }
+    }
+    it("should fail to initialize JsonSink from empty SparkConf - missing destination") {
+      val sparkConf = new SparkConf()
+      an[IllegalArgumentException] should be thrownBy {
+        new JsonSink(sparkConf)
       }
     }
   }
