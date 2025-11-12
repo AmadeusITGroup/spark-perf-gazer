@@ -39,8 +39,8 @@ There are some problems with the analysis of execution stats from the Spark UI:
 
 #### 2. Install the SparklEar library on job clusters (Databricks)
 
-> Upload the SparklEar JAR to a location accessible by the job cluster (e.g., DBFS).
-> Use an init script to install the SparklEar library on the job cluster.
+> Upload the SparklEar JAR to a location accessible by the job cluster (e.g., DBFS).  
+> Use an init script to install the SparklEar library on the job cluster.  
 > Example init script to install from DBFS:
 
 ```shell
