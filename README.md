@@ -56,18 +56,16 @@ cp -f /dbfs/FileStore/jars/sparklear_spark352_2_12_0_0_29_SNAPSHOT.jar /databric
 #### Configuration
 
 > The configuration of the SparklEar listener is done via Spark configuration properties.
-
 > The following properties are available:
 - `spark.sparklear.sql.enabled`: enable/disable sql level metrics collection (default: `true`)
 - `spark.sparklear.jobs.enabled`: enable/disable job level metrics collection (default: `true`)
 - `spark.sparklear.stages.enabled`: enable/disable stage level metrics collection (default: `true`)
 - `spark.sparklear.tasks.enabled`: enable/disable task level metrics collection (default: `false`)
 - `spark.sparklear.max.cache.size`: maximum number of events to keep in memory (default: `100` events)
-
 - `spark.sparklear.sink.class`: fully qualified class name of the sink to use (default: `com.amadeus.sparklear.JsonSink`)
 - `spark.sparklear.sink.json.destination`: destination path for the JSON sink (if using `JsonSink`)
-- `spark.sparklear.sink.json.writeBatchSize`: number of records JSON file (if using `JsonSink`, default: `100` records)
-- `spark.sparklear.sink.json.fileSizeLimit`: maximum size of each JSON file (if using `JsonSink`, default: `209715200` bytes = `200 MB`)
+- `spark.sparklear.sink.json.writeBatchSize`: number of records to reach before writing to disk (if using `JsonSink`, default: `100` records)
+- `spark.sparklear.sink.json.fileSizeLimit`: size of JSON file to reach before switching to a new file (if using `JsonSink`, default: `209715200` bytes = `200 MB`)
 
 #### Register the listener programmatically (notebook or application)
 
@@ -115,6 +113,8 @@ spark.sparklear.sink.class com.amadeus.sparklear.JsonSink
 spark.sparklear.sink.json.destination /dbfs/sparklear/jsonsink/clusterName=${spark.databricks.clusterUsageTags.clusterName}/date=${sparklear.now.year}-${sparklear.now.month}-${sparklear.now.day}/applicationId=${spark.app.id}
 ```
 > Customize the destination path as needed.
+> The `JsonSink` uses the POSIX interface on the driver to write JSON files.  
+> In order to analyze output directly, it's necessary to configure the listener to write directly to the dbfs mount point.
 
 #### Analyze listener data
 
@@ -256,5 +256,5 @@ sbt publishLocal
 # run spark shell with the listener (change the version accordingly)
 spark-shell \
 --packages com.amadeus:sparklear_spark352_2.12:0.0.29-SNAPSHOT \
---conf spark.extraListeners=com.amadeus.sparklear.SparklEarListener
+--conf spark.extraListeners=com.amadeus.sparklear.SparklEar
 ```
