@@ -55,7 +55,7 @@ cp -f /dbfs/FileStore/jars/sparklear_spark352_2_12_0_0_29_SNAPSHOT.jar /databric
 
 #### Configuration
 
-> The configuration of the SparklEar listener is done via Spark configuration properties.
+> The configuration of the SparklEar listener is done via Spark configuration properties.  
 > The following properties are available:
 - `spark.sparklear.sql.enabled`: enable/disable sql level metrics collection (default: `true`)
 - `spark.sparklear.jobs.enabled`: enable/disable job level metrics collection (default: `true`)
