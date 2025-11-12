@@ -4,7 +4,7 @@ import com.amadeus.sparklear.SparklEar.{configFrom, sinkFrom}
 import com.amadeus.sparklear.entities.{JobEntity, SqlEntity, StageEntity, TaskEntity}
 import com.amadeus.sparklear.events.JobEvent.EndUpdate
 import com.amadeus.sparklear.events.{JobEvent, SqlEvent, StageEvent, TaskEvent}
-import com.amadeus.sparklear.reports.{JobReport, SqlReport, StageReport, TaskReport}
+import com.amadeus.sparklear.reports._
 import com.amadeus.sparklear.utils.CappedConcurrentHashMap
 import org.apache.spark.SparkConf
 import org.apache.spark.scheduler._
@@ -18,11 +18,12 @@ import org.slf4j.{Logger, LoggerFactory}
   * - ...
   */
 class SparklEar(c: SparklearConfig, sink: Sink) extends SparkListener {
-
   implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
 
+  logSink() // Provide details on sink associated with listener during construction
+
   def this(sparkConf: SparkConf) = {
-    this(c = configFrom(sparkConf), sinkFrom(sparkConf))
+    this(c = configFrom(sparkConf), sink = sinkFrom(sparkConf))
   }
 
   type SqlKey = Long
@@ -32,11 +33,11 @@ class SparklEar(c: SparklearConfig, sink: Sink) extends SparkListener {
   private val sqlStartEvents = new CappedConcurrentHashMap[SqlKey, SqlEvent](c.maxCacheSize)
   private val jobStartEvents = new CappedConcurrentHashMap[JobKey, JobEvent](c.maxCacheSize)
 
-  // Register shutdown hook to ensure sink is closed on JVM termination
+  // Register shutdown hook to ensure listener is closed on JVM termination
   Runtime.getRuntime.addShutdownHook(new Thread() {
     override def run(): Unit = {
-      logger.info("Shutdown hook triggered, closing sink")
-      sink.close()
+      logger.info("Shutdown hook triggered, closing listener")
+      SparklEar.this.close()
     }
   })
 
@@ -139,12 +140,33 @@ class SparklEar(c: SparklearConfig, sink: Sink) extends SparkListener {
   }
 
   /**
-    * Close the sink (if not already done).
+    * Log SQL view snippets and close the sink (if not already done).
     */
   def close(): Unit = {
     sink.close()
+    logSnippets()
     logger.info("Listener closed, size of maps sql={} and job={})",
       sqlStartEvents.size, jobStartEvents.size)
+  }
+
+  private def logSink(): Unit = {
+    val sink = getSink
+    logger.info(s"Sink associated to the listener:\n${sink}")
+  }
+
+  private def logSnippets(): Unit = {
+    val ddl = getSnippets
+    logger.info(s"To create temporary views for all the reports, run the following SQL:\n${ddl}")
+  }
+
+  /**
+    * Expose sink and snippets for external usage (e.g., Databricks Notebooks).
+    */
+  def getSink: String = {
+    sink.asString
+  }
+  def getSnippets: String = {
+    sink.generateAllViewSnippets().mkString("\n")
   }
 }
 

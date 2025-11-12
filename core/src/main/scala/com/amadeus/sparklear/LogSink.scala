@@ -1,6 +1,6 @@
 package com.amadeus.sparklear
 
-import com.amadeus.sparklear.reports.Report
+import com.amadeus.sparklear.reports.{Report, ReportType}
 import org.apache.spark.SparkConf
 import org.slf4j.{Logger, LoggerFactory}
 import org.json4s.DefaultFormats
@@ -25,4 +25,6 @@ class LogSink() extends Sink {
   override def close(): Unit = {}
 
   override def asString: String = "LogSink"
+
+  override def generateViewSnippet(reportType: ReportType): String = "Reports available in the logs."
 }

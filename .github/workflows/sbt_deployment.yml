@@ -112,7 +112,7 @@ jobs:
 #          name: junit-results
 #          path: '**//scoverage-report/*.*'
   release:
-    name: Release to Artifactory (master only)
+    name: Release to Artifactory (main only)
     needs: build-and-test
     runs-on: gmsshr-maven-amadeus-cplatform
     if: github.ref == 'refs/heads/main' && needs.build.outputs.is_technical == 'false'

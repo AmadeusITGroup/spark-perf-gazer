@@ -1,7 +1,8 @@
 package com.amadeus.sparklear
 
 import com.amadeus.sparklear.JsonSink._
-import com.amadeus.sparklear.reports.{JobReport, Report, SqlReport, StageReport, TaskReport}
+import com.amadeus.sparklear.reports._
+import com.amadeus.sparklear.PathBuilder._
 import org.apache.spark.SparkConf
 import org.json4s.jackson.Serialization
 import org.json4s.{Formats, NoTypeHints}
@@ -12,23 +13,64 @@ import java.io.{File, FileWriter, PrintWriter}
 import java.time.Instant
 import scala.collection.mutable.ListBuffer
 
-/** Configuration object for JsonSink
-  *
-  * @param destination Base directory path where JSON files will be written, e.g., "/dbfs/logs/appid=my-app-id/"
-  * @param writeBatchSize Number of reports to accumulate before writing to disk
-  * @param fileSizeLimit file size to reach before switching to a new file
-  */
 object JsonSink {
-
   val DestinationKey = "spark.sparklear.sink.json.destination"
   val WriteBatchSizeKey = "spark.sparklear.sink.json.writeBatchSize"
   val FileSizeLimitKey = "spark.sparklear.sink.json.fileSizeLimit"
 
+  /** Configuration object for JsonSink
+    *
+    * @param destination Base directory path where JSON files will be written, e.g., "/dbfs/logs/appid=my-app-id/"
+    * @param writeBatchSize Number of reports to accumulate before writing to disk
+    * @param fileSizeLimit file size to reach before switching to a new file
+    */
   case class Config(
     destination: String = "/dbfs/tmp/listener/",
     writeBatchSize: Int = 100,
     fileSizeLimit: Long = 1L * 1024 * 1024
   )
+
+  trait JsonViewDDLGenerator {
+
+    protected def runningOnDatabricks: Boolean = {
+      sys.env.contains("DATABRICKS_RUNTIME_VERSION")
+    }
+
+    /** Generate the CREATE OR REPLACE TEMPORARY VIEW DDL for a partitioned JSON file path.
+      *
+      * Example of a partitioned path:
+      *
+      * /tmp/listener/date=2025-09-10/cluster=my-cluster/customer=my-customer/sql-reports-1234.json
+      *
+      * Rule: the view basePath must be up to (but not including) the first partition-style segment
+      * (e.g., date=2025-09-10) starting from which there are ONLY partition style segments.
+      * The path should have as many /\* as there are partition segments after the basePath.
+      *
+      * If the /dbfs mount point is detected (Databricks), it is stripped out.
+      *
+      * @param destination  The Sink destination directory path where JSON files are written.
+      * @param reportName  The report name, that is used as view name too (e.g. "job", "sql", ...).
+      */
+    def generateViewDDL(destination: String, reportName: String): String = {
+      var basePath = destination.extractBasePath()
+      val starPathPart = destination.extractPartitions().withWildcards()
+      val fileNameWithWildcard = s"$reportName-reports-*.json"
+      if (runningOnDatabricks && basePath.startsWith("/dbfs/")) {
+        basePath = basePath.replaceFirst("/dbfs/", "dbfs:/")
+      }
+      val globPath = s"$basePath$starPathPart".normalizePath() + s"$fileNameWithWildcard"
+      val ddl =
+        s"""|CREATE OR REPLACE TEMPORARY VIEW $reportName
+            |USING json
+            |OPTIONS (
+            |  path \"$globPath\",
+            |  basePath \"$basePath\"
+            |);""".stripMargin
+      ddl
+    }
+  }
+
+  object JsonViewDDLGenerator extends JsonViewDDLGenerator
 }
 
 /** Sink of a collection of reports to JSON files.
@@ -51,9 +93,9 @@ class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
     ), sparkConf)
   }
 
-  val destination = PathBuilder.PathOps(config.destination).resolveProperties(sparkConf)
+  val destination: String = config.destination.resolveProperties(sparkConf)
 
-  private case class ReportBuffer[T <: Report](reportType: String, dir: String) {
+  private class ReportBuffer[T <: Report](reportType: String, dir: String) {
     private val folder = new File(dir)
     if (!folder.exists()) folder.mkdirs()
 
@@ -61,10 +103,10 @@ class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
     private var writer = new PrintWriter(new FileWriter(path, true))
     private var file = new File(path)
 
-    private val reports : ListBuffer[T] = new ListBuffer[T]()
+    private val reports: ListBuffer[T] = new ListBuffer[T]()
 
     private def flushReportsToFile(): Unit = {
-      reports.foreach(r => writer.println(asJson(r)))  // scalastyle:ignore regex
+      reports.foreach(r => writer.println(asJson(r))) // scalastyle:ignore regex
       // flush writer to write to disk
       writer.flush()
       // clear reports
@@ -101,16 +143,20 @@ class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
     }
   }
 
-  private val sqlReports: ReportBuffer[SqlReport] = new ReportBuffer[SqlReport]("sql", destination)
-  private val jobReports: ReportBuffer[JobReport] = new ReportBuffer[JobReport]("job", destination)
-  private val stageReports: ReportBuffer[StageReport] = new ReportBuffer[StageReport]("stage", destination)
-  private val taskReports: ReportBuffer[TaskReport] = new ReportBuffer[TaskReport]("task", destination)
+  private val sqlReports: ReportBuffer[SqlReport] =
+    new ReportBuffer[SqlReport](SqlReportType.name, destination)
+  private val jobReports: ReportBuffer[JobReport] =
+    new ReportBuffer[JobReport](JobReportType.name, destination)
+  private val stageReports: ReportBuffer[StageReport] =
+    new ReportBuffer[StageReport](StageReportType.name, destination)
+  private val taskReports: ReportBuffer[TaskReport] =
+    new ReportBuffer[TaskReport](TaskReportType.name, destination)
 
   override def write(report: Report): Unit = report match {
-    case r: SqlReport   => sqlReports.write(r)
-    case r: JobReport   => jobReports.write(r)
+    case r: SqlReport => sqlReports.write(r)
+    case r: JobReport => jobReports.write(r)
     case r: StageReport => stageReports.write(r)
-    case r: TaskReport  => taskReports.write(r)
+    case r: TaskReport => taskReports.write(r)
   }
 
   override def flush(): Unit = {
@@ -135,4 +181,8 @@ class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
   /** String representation of the sink
     */
   override def asString: String = s"JsonSink($config)"
+
+  override def generateViewSnippet(reportType: ReportType): String = {
+    JsonViewDDLGenerator.generateViewDDL(destination, reportType.name)
+  }
 }
