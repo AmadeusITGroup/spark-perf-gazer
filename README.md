@@ -84,8 +84,6 @@ val sparklearConf = new SparkConf()
   .set("spark.sparklear.sink.json.destination", basePath + "clusterName=${spark.databricks.clusterUsageTags.clusterName}/date=${sparklear.now.year}-${sparklear.now.month}-${sparklear.now.day}/applicationId=${spark.app.id}")
 val sparklear = new SparklEar(sparklearConf)
 
-println(sparklear.getSink)
-
 // Register listener
 spark.sparkContext.addSparkListener(sparklear)
 ```

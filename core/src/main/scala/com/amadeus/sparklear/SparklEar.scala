@@ -27,7 +27,7 @@ class SparklEar(val c: SparklearConfig, val sink: Sink) extends SparkListener {
 
   // statements part of the main constructor
   // Provide details on sink associated with listener during construction
-  logSink()
+  logger.info(s"Listener instantiated with sink:\n${sink}")
 
   // Register shutdown hook to ensure listener is closed on JVM termination
   Runtime.getRuntime.addShutdownHook(new Thread() {
@@ -146,12 +146,7 @@ class SparklEar(val c: SparklearConfig, val sink: Sink) extends SparkListener {
   def close(): Unit = {
     sink.close()
     logSnippets()
-    logger.info("Listener closed, size of maps sql={} and job={})",
-      sqlStartEvents.size, jobStartEvents.size)
-  }
-
-  private def logSink(): Unit = {
-    logger.info(s"Sink associated to the listener:\n${sink.toString}")
+    logger.info("Listener closed, size of maps sql={} and job={})", sqlStartEvents.size, jobStartEvents.size)
   }
 
   private def logSnippets(): Unit = {
@@ -185,7 +180,6 @@ object SparklEar {
       case None =>
         throw new IllegalArgumentException(SinkClassKey + " is not set")
     }
-    logger.info(s"Sink: ${sink.toString}")
     sink
   }
 }
