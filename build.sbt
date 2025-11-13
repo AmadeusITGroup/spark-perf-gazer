@@ -67,7 +67,6 @@ def testGroups(tests: Seq[TestDefinition], baseDir: File): Seq[Group] = {
 
 val commonSettings = Seq(
   organization := "com.amadeus",
-  update / checksums := Nil,
   Compile / javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
   scalacOptions ++= Seq(
     "-Ypartial-unification",
