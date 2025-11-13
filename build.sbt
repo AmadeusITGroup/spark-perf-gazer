@@ -76,8 +76,7 @@ val commonSettings = Seq(
     "UTF-8",
     "-target:jvm-1.8"
   ),
-  libraryDependencies ++= Dependencies.coreDeps,
-  isSnapshot := version.value.contains("SNAPSHOT")
+  libraryDependencies ++= Dependencies.coreDeps
 )
 
 val testSettings = Seq(
