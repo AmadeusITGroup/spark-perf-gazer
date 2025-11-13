@@ -1,5 +1,4 @@
 [repositories]
-  local
   amadeus-proxy-sonatype: https://repository.rnd.amadeus.net/sbt-sonatype-remote
   amadeus-proxy-sbt-plugins: https://repository.rnd.amadeus.net/proxy-sbt-plugins
   amadeus-proxy-sbt-maven: https://repository.rnd.amadeus.net/proxy-sbt
