@@ -18,14 +18,14 @@ import org.slf4j.{Logger, LoggerFactory}
   * - ...
   */
 class SparklEar(val c: SparklearConfig, val sink: Sink) extends SparkListener {
-  type SqlKey = Long
-  type JobKey = Int
+  // Declare types for keys of maps
+  private type SqlKey = Long
+  private type JobKey = Int
 
   // Maps to keep sqls + jobs + stages raw events (initial information) until some completion
   private val sqlStartEvents = new CappedConcurrentHashMap[SqlKey, SqlEvent](c.maxCacheSize)
   private val jobStartEvents = new CappedConcurrentHashMap[JobKey, JobEvent](c.maxCacheSize)
 
-  // statements part of the main constructor
   // Provide details on sink associated with listener during construction
   logger.info(s"Listener instantiated with sink:\n${sink}")
 
@@ -37,7 +37,7 @@ class SparklEar(val c: SparklearConfig, val sink: Sink) extends SparkListener {
     }
   })
 
-  // auxiliary constructor
+  // Auxiliary constructor
   def this(sparkConf: SparkConf) = {
     this(c = SparklearConfig(sparkConf), sink = sinkFrom(sparkConf))
   }
