@@ -1,5 +1,9 @@
 # SPARKLEAR
 
+[![License](https://img.shields.io/github/license/amadeus-creation-platform/bdp-ssce-sparklear?style=flat-square)](https://github.com/amadeus-creation-platform/bdp-ssce-sparklear/blob/main/LICENSE)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/amadeus-creation-platform/bdp-ssce-sparklear/test.yml?branch=main&style=flat-square)](https://github.com/amadeus-creation-platform/bdp-ssce-sparklear/actions?query=workflow%3ATest)
+[![Coverage Status](https://img.shields.io/codecov/c/github/amadeus-creation-platform/bdp-ssce-sparklear?style=flat-square)](https://codecov.io/gh/amadeus-creation-platform/bdp-ssce-sparklear)
+
 This repository contains the SparklEar Spark Listener.
 
 SparklEar is a configurable Spark Listener that allows to retrieve important stats about Spark SQL queries, jobs and stages in a post-mortem way.
@@ -84,7 +88,7 @@ val sparklearConf = new SparkConf()
   .set("spark.sparklear.sink.json.destination", basePath + "clusterName=${spark.databricks.clusterUsageTags.clusterName}/date=${sparklear.now.year}-${sparklear.now.month}-${sparklear.now.day}/applicationId=${spark.app.id}")
 val sparklear = new SparklEar(sparklearConf)
 
-print(sparklear.sink)
+print(sparklear.sink.description)
 
 // Register listener
 spark.sparkContext.addSparkListener(sparklear)
@@ -154,18 +158,18 @@ SELECT *
 import org.apache.spark.sql.functions._
 
 val sparkPath = basePath.replaceFirst("^/dbfs/", "dbfs:/")
-val df_jobs_reports = spark.read.option("basePath",sparkPath).json(sparkPath + "clusterName=*/date=*/applicationId=*/job-reports-*.json")
-val df_stages_reports = spark.read.option("basePath",sparkPath).json(sparkPath + "clusterName=*/date=*/applicationId=*/stage-reports-*.json")
-val df_tasks_reports = spark.read.option("basePath",sparkPath).json(sparkPath + "clusterName=*/date=*/applicationId=*/task-reports-*.json")
+val dfJobsReports = spark.read.option("basePath",sparkPath).json(sparkPath + "clusterName=*/date=*/applicationId=*/job-reports-*.json")
+val dfStagesReports = spark.read.option("basePath",sparkPath).json(sparkPath + "clusterName=*/date=*/applicationId=*/stage-reports-*.json")
+val dfTasksReports = spark.read.option("basePath",sparkPath).json(sparkPath + "clusterName=*/date=*/applicationId=*/task-reports-*.json")
 
 // Reconcile reports from JSON files
-val df_tasks = df_jobs_reports
+val dfTasks = dfJobsReports
   .withColumn("stageId", explode(col("stages")))
   .drop("stages")
-  .join(df_stages_reports, Seq("date", "applicationId", "stageId"))
-  .join(df_tasks_reports, Seq("date", "applicationId", "stageId"))
+  .join(dfStagesReports, Seq("date", "applicationId", "stageId"))
+  .join(dfTasksReports, Seq("date", "applicationId", "stageId"))
 
-display(df_tasks)
+display(dfTasks)
 ```
 > Spark reads files from dbfs directly.  
 > Example: `sparkPath = "dbfs:/sparklear/jsonsink/"` (Databricks)

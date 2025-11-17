@@ -69,8 +69,9 @@ class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
   }
 
   /** String representation of the sink
+    * Used upon sink initialization to log the sink type and configuration.
     */
-  override def toString: String = s"JsonSink($config)"
+  override def description: String = s"JsonSink($config)"
 
   override def generateViewSnippet(reportType: ReportType): String = {
     JsonViewDDLGenerator.generateViewDDL(destination, reportType.name)
@@ -78,7 +79,7 @@ class JsonSink(val config: JsonSink.Config, sparkConf: SparkConf) extends Sink {
 }
 
 object JsonSink {
-  implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
+  val logger: Logger = LoggerFactory.getLogger(getClass.getName)
 
   val DestinationKey = "spark.sparklear.sink.json.destination"
   val WriteBatchSizeKey = "spark.sparklear.sink.json.writeBatchSize"

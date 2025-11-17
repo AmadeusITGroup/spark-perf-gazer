@@ -21,7 +21,10 @@ object SinkSupport {
 
     override def close(): Unit = {}
 
-    override def toString: String = "TestableSink"
+    /** String representation of the sink
+      * Used upon sink initialization to log the sink type and configuration.
+      */
+    override def description: String = "TestableSink()"
 
     override def generateViewSnippet(reportType: ReportType): String = "No snippet for TestableSink."
   }

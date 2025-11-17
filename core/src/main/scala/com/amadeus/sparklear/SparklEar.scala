@@ -27,7 +27,7 @@ class SparklEar(val c: SparklearConfig, val sink: Sink) extends SparkListener {
   private val jobStartEvents = new CappedConcurrentHashMap[JobKey, JobEvent](c.maxCacheSize)
 
   // Provide details on sink associated with listener during construction
-  logger.info(s"Listener instantiated with sink:\n${sink}")
+  logger.info(s"Listener instantiated with sink:\n${sink.description}")
 
   // Register shutdown hook to ensure listener is closed on JVM termination
   Runtime.getRuntime.addShutdownHook(new Thread() {
@@ -163,7 +163,7 @@ class SparklEar(val c: SparklearConfig, val sink: Sink) extends SparkListener {
 }
 
 object SparklEar {
-  implicit lazy val logger: Logger = LoggerFactory.getLogger(getClass.getName)
+  val logger: Logger = LoggerFactory.getLogger(getClass.getName)
 
   val SinkClassKey = "spark.sparklear.sink.class"
 

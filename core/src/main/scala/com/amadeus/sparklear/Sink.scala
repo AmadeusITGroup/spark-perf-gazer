@@ -24,8 +24,9 @@ trait Sink {
   def close(): Unit
 
   /** String representation of the sink
+    * Used upon sink initialization to log the sink type and configuration.
     */
-  def toString: String
+  def description: String
 
   /** Generate SQL snippet to create a view to easily access a report of a given type
     */

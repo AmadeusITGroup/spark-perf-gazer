@@ -164,7 +164,7 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
           new SparkConf()
         )
 
-        jsonSink1.toString shouldBe jsonSink2.toString
+        jsonSink1.description shouldBe jsonSink2.description
       }
     }
     it("should initialize JsonSink from SparkConf using default values") {
@@ -182,7 +182,7 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
           new SparkConf()
         )
 
-        jsonSink1.toString shouldBe jsonSink2.toString
+        jsonSink1.description shouldBe jsonSink2.description
       }
     }
     it("should fail to initialize JsonSink from empty SparkConf - missing destination") {
