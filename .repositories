@@ -1,9 +1,2 @@
 [repositories]
-  local
-  amadeus-proxy-sonatype: https://repository.rnd.amadeus.net/sbt-sonatype-remote
-  amadeus-proxy-sbt-plugins: https://repository.rnd.amadeus.net/proxy-sbt-plugins
   amadeus-proxy-sbt-maven: https://repository.rnd.amadeus.net/proxy-sbt
-  amadeus-proxy-sbt-ivy: https://repository.rnd.amadeus.net/proxy-sbt-ivy/, [organization]/[module]/(scala_[scalaVersion]/)(sbt_[sbtVersion]/)[revision]/[type]s/[artifact](-[classifier]).[ext]
-  amadeus-proxy-sbt-releases-ivy: https://repository.rnd.amadeus.net/proxy-scala-sbt-releases/, [organization]/[module]/(scala_[scalaVersion]/)(sbt_[sbtVersion]/)[revision]/[type]s/[artifact](-[classifier]).[ext]
-  amadeus-proxy-maven: https://repository.rnd.amadeus.net/mvn-production
-  amadeus-sbt-built: https://repository.rnd.amadeus.net/sbt-built
