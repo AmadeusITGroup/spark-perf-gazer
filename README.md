@@ -1,5 +1,9 @@
 # SPARKLEAR
 
+[![License](https://img.shields.io/github/license/amadeus-creation-platform/bdp-ssce-sparklear?style=flat-square)](https://github.com/amadeus-creation-platform/bdp-ssce-sparklear/blob/main/LICENSE)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/amadeus-creation-platform/bdp-ssce-sparklear/test.yml?branch=main&style=flat-square)](https://github.com/amadeus-creation-platform/bdp-ssce-sparklear/actions?query=workflow%3ATest)
+[![Coverage Status](https://img.shields.io/codecov/c/github/amadeus-creation-platform/bdp-ssce-sparklear?style=flat-square)](https://codecov.io/gh/amadeus-creation-platform/bdp-ssce-sparklear)
+
 This repository contains the SparklEar Spark Listener.
 
 SparklEar is a configurable Spark Listener that allows to retrieve important stats about Spark SQL queries, jobs and stages in a post-mortem way.
@@ -30,18 +34,46 @@ There are some problems with the analysis of execution stats from the Spark UI:
 
 ### Setup Instructions
 
-#### 1. Add dependency
-
-#### 2. Add the JAR to your Databricks cluster
+#### 1. Install the SparklEar library on interactive clusters (Databricks)
 
 | Runtime Version | Spark Version | Installation Method                |
 |-----------------|---------------|------------------------------------|
 | 13.3            | Spark 3.4.1   | Upload and install from DBFS       |
 | 16.4            | Spark 3.5.2   | Upload and install from Workspace  |
 
+#### 2. Install the SparklEar library on job clusters (Databricks)
+
+> Upload the SparklEar JAR to a location accessible by the job cluster (e.g., DBFS).  
+> Use an init script to install the SparklEar library on the job cluster.  
+> Example init script to install from DBFS:
+
+```shell
+if [ -f "/databricks/jars/sparklear_spark352_2_12_0_0_29_SNAPSHOT.jar" ]; then
+  rm -f "/databricks/jars/sparklear_spark352_2_12_0_0_29_SNAPSHOT.jar"
+fi
+
+cp -f /dbfs/FileStore/jars/sparklear_spark352_2_12_0_0_29_SNAPSHOT.jar /databricks/jars
+```
+
 ### Usage Instructions
 
-#### 1. Register the listener
+#### Configuration
+
+> The configuration of the SparklEar listener is done via Spark configuration properties.  
+> The following properties are available:
+- `spark.sparklear.sql.enabled`: enable/disable sql level metrics collection (default: `true`)
+- `spark.sparklear.jobs.enabled`: enable/disable job level metrics collection (default: `true`)
+- `spark.sparklear.stages.enabled`: enable/disable stage level metrics collection (default: `true`)
+- `spark.sparklear.tasks.enabled`: enable/disable task level metrics collection (default: `false`)
+- `spark.sparklear.max.cache.size`: maximum number of events to keep in memory (default: `100` events)
+- `spark.sparklear.sink.class`: fully qualified class name of the sink to use (default: `com.amadeus.sparklear.JsonSink`)
+- `spark.sparklear.sink.json.destination`: destination path for the JSON sink (if using `JsonSink`)
+- `spark.sparklear.sink.json.writeBatchSize`: number of records to reach before writing to disk (if using `JsonSink`, default: `100` records)
+- `spark.sparklear.sink.json.fileSizeLimit`: size of JSON file to reach before switching to a new file (if using `JsonSink`, default: `209715200` bytes = `200 MB`)
+
+#### Register the listener programmatically (notebook or application)
+
+##### 1. Register the listener
 
 ```scala
 import com.amadeus.sparklear.SparklEar
@@ -56,7 +88,7 @@ val sparklearConf = new SparkConf()
   .set("spark.sparklear.sink.json.destination", basePath + "clusterName=${spark.databricks.clusterUsageTags.clusterName}/date=${sparklear.now.year}-${sparklear.now.month}-${sparklear.now.day}/applicationId=${spark.app.id}")
 val sparklear = new SparklEar(sparklearConf)
 
-println(sparklear.getSink)
+print(sparklear.sink.description)
 
 // Register listener
 spark.sparkContext.addSparkListener(sparklear)
@@ -66,7 +98,7 @@ spark.sparkContext.addSparkListener(sparklear)
 > In order to analyze output directly, it's necessary to configure the listener to write directly to the dbfs mount point.  
 > Example: `basePath = "/dbfs/logs/sparklear/jsonsink"` (Databricks)
 
-#### 2. Remove and close the listener
+##### 2. Remove and close the listener
 
 ```scala
 // Remove listener and flush remaining events to disk by closing it
@@ -75,7 +107,20 @@ sparklear.close()
 print(sparklear.getSnippets)
 ```
 
-#### 3. Analyze listener data
+#### Register the listener using cluster configuration (Databricks)
+
+> Go to your cluster configuration page, and add the following Spark configuration properties:
+```
+spark.extraListeners com.amadeus.sparklear.SparklEar
+spark.sparklear.tasks.enabled true
+spark.sparklear.sink.class com.amadeus.sparklear.JsonSink
+spark.sparklear.sink.json.destination /dbfs/sparklear/jsonsink/clusterName=${spark.databricks.clusterUsageTags.clusterName}/date=${sparklear.now.year}-${sparklear.now.month}-${sparklear.now.day}/applicationId=${spark.app.id}
+```
+> Customize the destination path as needed.
+> The `JsonSink` uses the POSIX interface on the driver to write JSON files.  
+> In order to analyze output directly, it's necessary to configure the listener to write directly to the dbfs mount point.
+
+#### Analyze listener data
 
 ```sql
 CREATE OR REPLACE TEMPORARY VIEW sql
@@ -113,18 +158,18 @@ SELECT *
 import org.apache.spark.sql.functions._
 
 val sparkPath = basePath.replaceFirst("^/dbfs/", "dbfs:/")
-val df_jobs_reports = spark.read.option("basePath",sparkPath).json(sparkPath + "clusterName=*/date=*/applicationId=*/job-reports-*.json")
-val df_stages_reports = spark.read.option("basePath",sparkPath).json(sparkPath + "clusterName=*/date=*/applicationId=*/stage-reports-*.json")
-val df_tasks_reports = spark.read.option("basePath",sparkPath).json(sparkPath + "clusterName=*/date=*/applicationId=*/task-reports-*.json")
+val dfJobsReports = spark.read.option("basePath",sparkPath).json(sparkPath + "clusterName=*/date=*/applicationId=*/job-reports-*.json")
+val dfStagesReports = spark.read.option("basePath",sparkPath).json(sparkPath + "clusterName=*/date=*/applicationId=*/stage-reports-*.json")
+val dfTasksReports = spark.read.option("basePath",sparkPath).json(sparkPath + "clusterName=*/date=*/applicationId=*/task-reports-*.json")
 
 // Reconcile reports from JSON files
-val df_tasks = df_jobs_reports
+val dfTasks = dfJobsReports
   .withColumn("stageId", explode(col("stages")))
   .drop("stages")
-  .join(df_stages_reports, Seq("date", "applicationId", "stageId"))
-  .join(df_tasks_reports, Seq("date", "applicationId", "stageId"))
+  .join(dfStagesReports, Seq("date", "applicationId", "stageId"))
+  .join(dfTasksReports, Seq("date", "applicationId", "stageId"))
 
-display(df_tasks)
+display(dfTasks)
 ```
 > Spark reads files from dbfs directly.  
 > Example: `sparkPath = "dbfs:/sparklear/jsonsink/"` (Databricks)
@@ -215,5 +260,5 @@ sbt publishLocal
 # run spark shell with the listener (change the version accordingly)
 spark-shell \
 --packages com.amadeus:sparklear_spark352_2.12:0.0.29-SNAPSHOT \
---conf spark.extraListeners=com.amadeus.sparklear.SparklEarListener
+--conf spark.extraListeners=com.amadeus.sparklear.SparklEar
 ```

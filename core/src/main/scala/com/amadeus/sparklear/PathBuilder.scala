@@ -59,7 +59,11 @@ object PathBuilder {
       path.withDate.withApplicationId
     }
 
-    def normalizePath(): String = {
+    /**
+      * The normalizePath method is used to standardize the format of a file system path.
+      * It ensures that all directory separators in the path are consistent and that the path ends with a separator.
+      */
+    def normalizePath: String = {
       // Find the first separator used in the path (either / or \)
       val normalized: String = SeparatorPattern.findFirstMatchIn(path) match {
         case Some(m) =>
@@ -72,6 +76,11 @@ object PathBuilder {
       normalized
     }
 
+    /**
+      * The resolveProperties method replaces property placeholders in a string path.
+      * Placeholders are in the format ${key}.
+      * Placeholders are replaced with their corresponding values from a provided map (SparkConf) or internal dateProps map.
+      */
     def resolveProperties(sparkConf: SparkConf): String = {
       val now = LocalDateTime.now()
       val dateProps = new Properties()
@@ -83,34 +92,48 @@ object PathBuilder {
 
       val resolved = PlaceholderPattern.replaceAllIn(
         path,
-        m => Option(dateProps.getProperty(m.group(1))).orElse(sparkConf.getOption(m.group(1))).getOrElse(throw new IllegalArgumentException(m.group(1) + " is not set"))
+        m => Option(dateProps.getProperty(m.group(1)))
+          .orElse(sparkConf.getOption(m.group(1)))
+          .getOrElse(throw new IllegalArgumentException(m.group(1) + " is not set"))
       )
-      resolved.normalizePath()
+      resolved.normalizePath
     }
 
-    def withWildcards(): String = {
+    /**
+      * The globPathValues method is used to replace all partition values in a file system path with a wildcard (*).
+      * This is useful for creating a glob pattern to match multiple paths with varying partition values.
+      */
+    def globPathValues: String = {
       val resolved = ValuePattern.replaceAllIn(path, m => "=*")
-      resolved.normalizePath()
+      resolved.normalizePath
     }
 
-    def extractBasePath(): String = {
+    /**
+      * The extractBasePath method is used to retrieve the base path of a file system path by removing any partition information.
+      * Partition information typically follows the format key=value.
+      */
+    def extractBasePath: String = {
       val resolved: String = PartitionsPattern.findFirstMatchIn(path) match {
         case Some(m) =>
           path.substring(0, m.start)
         case None =>
           path
       }
-      resolved.normalizePath()
+      resolved.normalizePath
     }
 
-    def extractPartitions(): String = {
+    /**
+      * The extractPartitions method is used to retrieve the partition information from a file system path.
+      * Partition information typically follows the format key=value.
+      */
+    def extractPartitions: String = {
       val resolved: String = PartitionsPattern.findFirstMatchIn(path) match {
         case Some(m) =>
           path.substring(m.start)
         case None =>
           ""
       }
-      resolved.normalizePath()
+      resolved.normalizePath
     }
   }
 }
