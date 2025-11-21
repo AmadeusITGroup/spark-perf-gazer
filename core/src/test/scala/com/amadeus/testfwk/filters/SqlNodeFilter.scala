@@ -18,7 +18,7 @@ case class SqlNodeFilter(
   parentNodeNameRegex: Option[String] = None,
   metricRegex: Option[String] = None,
   isLeaf: Option[Boolean] = None
-) extends Filter {
+) {
 
   def eligible(report: SqlNode): Boolean = {
     val j = jobNameRegex.map(r => report.jobName.matches(r)).getOrElse(true)
