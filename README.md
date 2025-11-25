@@ -1,10 +1,8 @@
 # PerfGazer, Performance Gazer for Apache Spark
 
-TODO fix links below (build/coverage).
-
 [![License](http://img.shields.io/:license-Apache%202-brightgreen.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
-[![Build](https://github.com/AmadeusITGroup/spark-perf-gazer/actions/workflows/sbt_deployment.yml/badge.svg)](https://github.com/AmadeusITGroup/spark-perf-gazer/actions/workflows/sbt_deployment.yml)
-[![Coverage](https://codecov.io/gh/AmadeusITGroup/spark-perf-gazer/graph/badge.svg?token=X7uHgfmZir)](https://codecov.io/gh/AmadeusITGroup/spark-perf-gazer)
+[![Build](https://github.com/AmadeusITGroup/spark-perf-gazer/actions/workflows/cicd.yml/badge.svg)](https://github.com/AmadeusITGroup/spark-perf-gazer/actions/workflows/cicd.yml)
+[![codecov](https://codecov.io/gh/AmadeusITGroup/spark-perf-gazer/graph/badge.svg?token=ZC4fzrZxI7)](https://codecov.io/gh/AmadeusITGroup/spark-perf-gazer)
 
 This repository contains the PerfGazer Spark Listener.
 

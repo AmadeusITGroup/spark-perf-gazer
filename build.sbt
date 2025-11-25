@@ -6,8 +6,6 @@ import sbtrelease.ReleaseStateTransformations.*
 import sbtrelease.{Version, versionFormatError}
 import sbtrelease.ReleasePlugin.autoImport.*
 
-//import DbrCross.DbrAxis.{Dbr13_3, Dbr16_4}
-//import DbrCross.ProjectMatrixOps
 import SparkCross.SparkAxis.{Spark341, Spark352}
 import SparkCross.ProjectMatrixOps
 
@@ -93,14 +91,16 @@ val testSettings = Seq(
   Test / testOptions += Tests.Argument(TestFrameworks.JUnit, "-v", "-a"),
   libraryDependencies ++= Dependencies.testDeps
 )
-
 val publishSettings = Seq(
-  /* publishTo := {
-    val artifactory = ...
-  },
-  */
+  publishTo := Some("GitHub Packages" at "https://maven.pkg.github.com/AmadeusITGroup/spark-perf-gazer"),
   otherResolvers += Resolver.defaultLocal,
-  Test / publishArtifact := true
+  Test / publishArtifact := true,
+  credentials += Credentials(
+    "GitHub Package Registry",
+    "maven.pkg.github.com",
+    "", // no username needed when using GITHUB_TOKEN
+    sys.env.getOrElse("GITHUB_TOKEN", "")
+  )
 )
 
 val releaseSettings = Seq(
@@ -144,18 +144,6 @@ lazy val core = (projectMatrix in file("core"))
     coverageMinimumStmtTotal := 95.0,
     coverageMinimumBranchTotal := 95.0
   )
-  /*
-  .addDatabricksRuntimeRow(Dbr13_3, customSetup = {
-    _.settings(
-      libraryDependencies ++= sparkDependencies(Dbr13_3.sparkVersion)
-    )
-  })
-  .addDatabricksRuntimeRow(Dbr16_4, customSetup = {
-    _.settings(
-      libraryDependencies ++= sparkDependencies(Dbr16_4.sparkVersion)
-    )
-  })
-  */
   .addSparkVersionRow(spark = Spark341, scalaVersions = Seq("2.12.17"), customSetup = {
     _.settings(
       libraryDependencies ++= testDependencies(Spark341.sparkVersion)

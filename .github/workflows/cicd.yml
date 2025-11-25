@@ -1,0 +1,121 @@
+name: Scala CI/CD Pipeline
+on:
+  push:
+    branches: [ "main", "hotfix/*", "feature/*" ]
+  pull_request:
+    branches: [ "main", "hotfix/*", "release/*" ]
+
+permissions:
+  contents: write # Required to create a release
+env:
+  APP_NAME: ${{ github.repository }}
+  USERNAME: ${{ vars.GIT_ROBOTIC_USER }}
+
+jobs:
+  build-and-test:
+    runs-on: self-hosted
+    outputs:
+      is_technical: ${{ steps.technical_commit.outputs.is_technical }}
+    strategy:
+      fail-fast: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache sbt dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.ivy2/cache
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
+          restore-keys: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
+
+#      - name: Set up JDK 8
+#        uses: actions/setup-java@v5
+#        with:
+#          java-version: '8'
+#          distribution: 'temurin'
+#          cache: 'sbt'
+
+#      - name: Setup sbt launcher
+#        uses: sbt/setup-sbt@v1
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "${USERNAME}"
+          git config --global user.email "${USERNAME}@amadeus.com"
+
+      - name: Check if last commit is technical
+        id: technical_commit
+        run: |
+          LAST_LOG=$(git log -1 --pretty=%B | tail -n 1)
+          echo "lastLog=${LAST_LOG}"
+          if [[ "$LAST_LOG" == "[sbt-release]"* || "$LAST_LOG" == "[doc]"* ]]; then
+            echo "is_technical=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_technical=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build
+        if: steps.technical_commit.outputs.is_technical == 'false'
+        run: |
+          sbt -batch clean compile
+
+#      - name: Unit Tests
+#        if: steps.technical_commit.outputs.is_technical == 'false'
+#        run: |
+#          sbt -batch coverageOn test coverageReport coverageAggregate
+#
+#      - name: Upload coverage reports to Codecov
+#        uses: codecov/codecov-action@v5
+#        with:
+#          token: ${{ secrets.CODECOV_TOKEN }}
+#          files: target/scala-2.12/coverage-report/cobertura.xml
+#          verbose: true
+
+      # This step uploads information to the GitHub dependency graph and unlocks Dependabot alerts for the repository
+      - name: Upload dependency graph
+        uses: scalacenter/sbt-dependency-submission@v3
+        if: github.event_name != 'pull_request'
+
+  release:
+    name: Release to Artifactory (main only)
+    needs: build-and-test
+    runs-on: self-hosted
+    if: github.ref == 'refs/heads/main' && needs.build-and-test.outputs.is_technical == 'false'
+    permissions:
+      contents: write # needed because sbt-release pushes some commits
+      packages: write # needed to be able to publish on GitHub Packages
+
+    steps:
+      - uses: actions/checkout@v4
+
+#      - name: Set up JDK 8
+#        uses: actions/setup-java@v5
+#        with:
+#          java-version: '8'
+#          distribution: 'temurin'
+#          cache: 'sbt'
+#
+#      - name: Setup sbt launcher
+#        uses: sbt/setup-sbt@v1
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "${USERNAME}"
+          git config --global user.email "${USERNAME}@amadeus.com"
+
+      - name: Fetch main tags
+        run: |
+          git fetch --tags origin +refs/heads/main:refs/remotes/origin/main
+          git tag -d $(git tag --no-merged origin/main) || true
+          git tag -l
+
+      - name: Release with sbt
+        run: |
+          git checkout main
+          git branch -u origin/main
+          sbt -batch 'release with-defaults skip-tests'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
