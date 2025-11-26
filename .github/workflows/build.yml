@@ -1,0 +1,56 @@
+name: Scala CI/CD Pipeline
+on:
+  push:
+    branches: [ "main", "hotfix/*", "feature/*" ]
+  pull_request:
+    branches: [ "main", "hotfix/*", "release/*" ]
+
+permissions:
+  contents: write # Required to upload dependency graph
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Cache sbt dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.ivy2/cache
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
+          restore-keys: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
+
+      - name: Set up java
+        uses: actions/setup-java@v5
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+          cache: 'sbt'
+
+      - name: Set up sbt
+        uses: sbt/setup-sbt@v1
+
+      - name: Build
+        run: |
+          sbt -batch clean compile
+
+      - name: Unit Tests
+        run: |
+          sbt -batch coverageOn test coverageReport coverageAggregate
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: target/scala-2.12/coverage-report/cobertura.xml
+          verbose: true
+
+      # This step uploads information to the GitHub dependency graph and unlocks Dependabot alerts for the repository
+      - name: Upload dependency graph
+        uses: scalacenter/sbt-dependency-submission@v3
+        if: github.event_name != 'pull_request'
