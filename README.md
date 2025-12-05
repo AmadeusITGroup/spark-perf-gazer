@@ -69,14 +69,18 @@ PerfGazer settings:
 - `spark.perfgazer.stages.enabled`: enable/disable stage level metrics collection (default: `true`)
 - `spark.perfgazer.tasks.enabled`: enable/disable task level metrics collection (default: `false`)
 - `spark.perfgazer.max.cache.size`: maximum number of events to keep in memory (default: `100` events)
+- `spark.perfgazer.sink.class`: fully qualified class name of the sink to use
 
 Json Sink settings:
-- `spark.perfgazer.sink.class`: fully qualified class name of the sink to use
 - `spark.perfgazer.sink.json.destination`: destination path for the JSON sink (if using `JsonSink`)
 - `spark.perfgazer.sink.json.writeBatchSize`: number of records to reach before writing to disk (if using `JsonSink`, default: `100` records)
 - `spark.perfgazer.sink.json.fileSizeLimit`: size of JSON file to reach before switching to a new file (if using `JsonSink`, default: `209715200` bytes = `200 MB`)
+- `spark.perfgazer.sink.json.asyncFlushTimeoutMillisecsKey`: maximum time to wait regularly before flushing reports to disk (in milliseconds)
+- `spark.perfgazer.sink.json.waitForCloseTimeoutMillisecsKey`: maximum time to wait for graceful close of the sink (in milliseconds)
 
 Note: the `JsonSink` uses the POSIX interface on the driver to write JSON files.
+
+PerfGazer comes with a shutdown hook that ensures that the listener is closed gracefully on driver JVM shutdown.
 
 ##### Configuration via code change
 
@@ -103,7 +107,15 @@ val perfGazerConfig = PerfGazerConfig(
 )
 
 val perfGazer = new PerfGazer(perfGazerConfig, jsonSink)
+
+// register the listener
 spark.sparkContext.addSparkListener(perfgazer)
+
+// your spark code here ...
+
+// At the end of your application ensure you remove the listener and close it properly
+spark.sparkContext.removeSparkListener(perfgazer)
+perfgazer.close()
 ```
 
 #### Analyze listener data
@@ -208,7 +220,7 @@ Settings -> Editor -> Code Style -> Scala -> Formatter: ScalaFMT
 You can run a local `spark-shell` with the listener as follows:
 
 ```bash
-# (optional) clean previous local publishes and publish
+# (optional) clean previous local publishes and publish, for example
 find ~/.ivy2 -type f -name *perfgazer* | xargs rm
 # publish a local snapshot version
 sbt publishLocal

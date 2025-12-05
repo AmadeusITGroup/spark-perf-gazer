@@ -6,6 +6,9 @@ import com.amadeus.perfgazer.reports.{Report, ReportType}
   *
   * Sink implementations are encouraged to provide a constructor that takes a SparkConf as parameter
   * so that they can be instantiated with spark.extraListener configuration
+  *
+  * Implementations must be thread-safe: methods write and close are
+  * invoked by Spark ListenerBus.
   */
 trait Sink {
 
@@ -14,10 +17,6 @@ trait Sink {
     * @param report Report to write
     */
   def write(report: Report): Unit
-
-  /** Flush any remaining reports
-    */
-  def flush(): Unit
 
   /** Close the sink, flushing any remaining reports first
     */
@@ -32,9 +31,13 @@ trait Sink {
     */
   def generateViewSnippet(reportType: ReportType): String
 
+  /** Report types supported by this sink
+    */
+  def supportedReportTypes: Set[ReportType]
+
   /** Generate SQL snippets to create views to easily access all report types
     */
-  def generateAllViewSnippets(): Seq[String] = {
-    ReportType.values.map(r => generateViewSnippet(r))
+  def generateAllViewSnippets(): Set[String] = {
+    supportedReportTypes.map(r => generateViewSnippet(r))
   }
 }

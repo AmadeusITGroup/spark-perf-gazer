@@ -16,7 +16,9 @@ case class StageReport(
   attempt: Int,
   memoryBytesSpilled: Long,
   diskBytesSpilled: Long
-) extends Report
+) extends Report {
+  override def reportType: ReportType = StageReportType
+}
 
 object StageReport {
 

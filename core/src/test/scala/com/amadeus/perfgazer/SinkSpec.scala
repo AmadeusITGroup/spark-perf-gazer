@@ -14,13 +14,13 @@ class SinkSpec extends SimpleSpec with Matchers with SinkSupport {
         val allSnippets = sink.generateAllViewSnippets()
 
         // Generate snippets one by one
-        val individualSnippets = ReportType.values.map(reportType => sink.generateViewSnippet(reportType))
+        val individualSnippets = sink.supportedReportTypes.map(reportType => sink.generateViewSnippet(reportType))
 
         // They should be the same
         allSnippets shouldBe individualSnippets
 
         // Verify we have snippets for all report types
-        allSnippets.size shouldBe ReportType.values.size
+        allSnippets.size shouldBe sink.supportedReportTypes.size
       }
     }
   }

@@ -95,7 +95,6 @@ class SampleSkewDetectionSpec
           it("should save SQL reports in json file") {
             dfSqlReportsCnt shouldBe 1
           }
-          dfSqlReports.show()
 
           val dfJobReports = spark.read.json(s"$destination/job-reports-*.json")
           val dfJobReportsCnt = dfJobReports.count()
@@ -120,7 +119,6 @@ class SampleSkewDetectionSpec
             .drop("stages")
             .join(dfStageReports, Seq("stageId"))
             .join(dfTaskReports, Seq("stageId"))
-          dfTasks.show()
           val dfTasksCnt = dfTasks.count()
 
           it("should reconcile reports") {

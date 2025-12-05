@@ -1,6 +1,6 @@
 package com.amadeus.perfgazer.reports
 
-sealed trait ReportType {
+trait ReportType {
   def name: String
 }
 
@@ -21,5 +21,5 @@ case object SqlReportType extends ReportType {
 }
 
 object ReportType {
-  val values: Seq[ReportType] = Seq(SqlReportType, JobReportType, StageReportType, TaskReportType)
+  val standardTypes: Set[ReportType] = Set(SqlReportType, JobReportType, StageReportType, TaskReportType)
 }

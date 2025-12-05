@@ -11,7 +11,9 @@ case class SqlReport(
   description: String,
   details: String,
   nodes: Seq[SqlNode]
-) extends Report
+) extends Report {
+  override def reportType: ReportType = SqlReportType
+}
 
 object SqlReport {
 

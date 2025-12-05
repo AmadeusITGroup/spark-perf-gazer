@@ -17,11 +17,11 @@ class LogSink() extends Sink {
 
   val logger: Logger = LoggerFactory.getLogger(getClass.getName)
 
+  override def supportedReportTypes: Set[ReportType] = ReportType.standardTypes
+
   override def write(report: Report): Unit = {
     logger.info(toJson(Record(report.getClass.getName, report))(DefaultFormats))
   }
-
-  override def flush(): Unit = {}
 
   override def close(): Unit = {}
 

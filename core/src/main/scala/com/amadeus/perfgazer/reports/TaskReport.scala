@@ -33,7 +33,9 @@ case class TaskReport(
   shuffleBytesWritten: Long,
   shuffleRecordsWritten: Long,
   shuffleWriteTime: Long
-) extends Report
+) extends Report {
+  override def reportType: ReportType = TaskReportType
+}
 
 object TaskReport {
 

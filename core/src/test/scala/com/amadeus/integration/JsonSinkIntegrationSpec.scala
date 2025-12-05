@@ -36,7 +36,7 @@ class JsonSinkIntegrationSpec
           // Wait for listener asynchronous operations before removing it from sparkContext
           Thread.sleep(3000)
           spark.sparkContext.removeSparkListener(eventsListener)
-          jsonSink.close()
+          eventsListener.close()
 
           val dfSqlReports = spark.read.json(s"$destination/sql-reports-*.json")
           val dfSqlReportsCnt = dfSqlReports.count()
@@ -44,7 +44,6 @@ class JsonSinkIntegrationSpec
             dfSqlReports.schema.names.toSet should contain("sqlId")
             dfSqlReportsCnt shouldBe 1
           }
-          dfSqlReports.show()
 
           val dfJobReports = spark.read.json(s"$destination/job-reports-*.json")
           val dfJobReportsCnt = dfJobReports.count()
@@ -73,7 +72,6 @@ class JsonSinkIntegrationSpec
             .drop("stages")
             .join(dfStageReports, Seq("stageId"))
             .join(dfTaskReports, Seq("stageId"))
-          dfTasks.show()
           val dfTasksCnt = dfTasks.count()
 
           it("should reconcile reports") {

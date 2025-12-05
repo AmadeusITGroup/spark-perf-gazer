@@ -10,7 +10,9 @@ case class JobReport(
   jobEndTime: Long,
   sqlId: String,
   stages: Seq[Int]
-) extends Report
+) extends Report {
+  override def reportType: ReportType = JobReportType
+}
 
 object JobReport{
 

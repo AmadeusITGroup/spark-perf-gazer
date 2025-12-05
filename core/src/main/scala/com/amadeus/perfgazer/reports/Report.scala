@@ -6,4 +6,6 @@ package com.amadeus.perfgazer.reports
   * It can represent one entity: an SQL query, a job, a stage, or even go at a deper level and represent one
   * of their constituent parts (like an SQL query node)
   */
-trait Report
+trait Report {
+  def reportType: ReportType
+}

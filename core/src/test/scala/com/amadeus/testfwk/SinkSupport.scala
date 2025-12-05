@@ -17,8 +17,6 @@ object SinkSupport {
       reports += report
     }
 
-    override def flush(): Unit = {}
-
     override def close(): Unit = {}
 
     /** String representation of the sink
@@ -26,7 +24,11 @@ object SinkSupport {
       */
     override def description: String = "TestableSink()"
 
-    override def generateViewSnippet(reportType: ReportType): String = "No snippet for TestableSink."
+    override def generateViewSnippet(reportType: ReportType): String = s"No ${reportType.name} snippet."
+
+    /** Report types supported by this sink
+     */
+    override def supportedReportTypes: Set[ReportType] = ReportType.standardTypes
   }
 }
 
