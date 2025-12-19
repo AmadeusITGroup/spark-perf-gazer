@@ -15,9 +15,6 @@ class ReportWriter(val config: Config, val reportType: ReportType, val dir: Stri
   // Queue of messages/requests to be processed asynchronously by the executor thread
   private val messagesQueue: LinkedBlockingQueue[Message] = new LinkedBlockingQueue[Message]()
 
-  // Executor thread processing the queue
-  private val executorThread: Thread = startExecutorThread(s"${getClass.getSimpleName}-${reportType}-executor")
-
   // Indicates if the executor thread should remain active
   private val executorActive = new AtomicBoolean(true)
 
@@ -26,6 +23,9 @@ class ReportWriter(val config: Config, val reportType: ReportType, val dir: Stri
 
   // Indicates if the writer has been closed via close() method
   private val writerClosed = new AtomicBoolean(false)
+
+  // Executor thread processing the queue
+  private val executorThread: Thread = startExecutorThread(s"${getClass.getSimpleName}-${reportType}-executor")
 
   private def startExecutorThread(threadName: String): Thread = {
     val thread = new Thread(
