@@ -1,0 +1,19 @@
+name: Release Drafter
+
+# Please refer to Release Drafter documentation: https://github.com/release-drafter/release-drafter
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  update_release_draft:
+    permissions:
+      contents: write
+      pull-requests: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Draft release notes
+        uses: release-drafter/release-drafter@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

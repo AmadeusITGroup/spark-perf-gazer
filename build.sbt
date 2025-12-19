@@ -1,13 +1,17 @@
 import Dependencies.deltaDepsBySparkVersion
-import sbt.{Compile, *}
+import SparkCross.ProjectMatrixOps
+import SparkCross.SparkAxis.{Spark341, Spark352}
 import sbt.Keys.*
 import sbt.Tests.*
-import sbtrelease.ReleaseStateTransformations.*
-import sbtrelease.{Version, versionFormatError}
-import sbtrelease.ReleasePlugin.autoImport.*
+import sbt.Compile
 
-import SparkCross.SparkAxis.{Spark341, Spark352}
-import SparkCross.ProjectMatrixOps
+// Publishing settings
+inThisBuild(List(
+  organization := "com.amadeus",
+  homepage := Some(url("https://github.com/AmadeusITGroup/spark-perf-gazer")),
+  licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
+  versionScheme := Some("semver-spec")
+))
 
 val DefaultForkJavaOptions = Seq(
   "-Dspark.driver.bindAddress=127.0.0.1",
@@ -38,15 +42,16 @@ def testDependencies(sparkVersion: String): Seq[ModuleID] = {
 def testGroups(tests: Seq[TestDefinition], baseDir: File): Seq[Group] = {
   val exportOptions = {
     val javaVersion = sys.props("java.specification.version").toDouble
-    if (javaVersion >= 11)
+    if (javaVersion >= 11) {
       Seq(
         "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
         "--add-opens=java.base/java.lang=ALL-UNNAMED",
         "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
         "--add-exports=java.base/sun.util.calendar=ALL-UNNAMED"
       )
-    else
+    } else {
       Seq.empty
+    }
   }
   tests
     .groupBy(t => t.name)
@@ -60,7 +65,7 @@ def testGroups(tests: Seq[TestDefinition], baseDir: File): Seq[Group] = {
           ) ++ DefaultForkJavaOptions ++ exportOptions
         )
       new Group(group, tests, SubProcess(options))
-    } toSeq
+    }.toSeq
 }
 
 val commonSettings = Seq(
@@ -91,55 +96,12 @@ val testSettings = Seq(
   Test / testOptions += Tests.Argument(TestFrameworks.JUnit, "-v", "-a"),
   libraryDependencies ++= Dependencies.testDeps
 )
-val publishSettings = Seq(
-  publishTo := Some("GitHub Packages" at "https://maven.pkg.github.com/AmadeusITGroup/spark-perf-gazer"),
-  otherResolvers += Resolver.defaultLocal,
-  Test / publishArtifact := true,
-  credentials += Credentials(
-    "GitHub Package Registry",
-    "maven.pkg.github.com",
-    "", // no username needed when using GITHUB_TOKEN
-    sys.env.getOrElse("GITHUB_TOKEN", "")
-  )
-)
-
-val releaseSettings = Seq(
-  releaseCommitMessage := s"[sbt-release] Setting version to ${(ThisBuild / version).value}",
-  releaseNextCommitMessage := s"[sbt-release] Setting version to ${(ThisBuild / version).value}",
-  releaseIgnoreUntrackedFiles := true,
-  releaseVersion := { ver =>
-    Version(ver)
-      .map { v =>
-        suggestedBump.value match {
-          case Version.Bump.Bugfix => v.withoutQualifier.string
-          case _ => v.bump(suggestedBump.value).withoutQualifier.string
-        }
-      }
-      .getOrElse(versionFormatError(ver))
-  },
-  releaseProcess := Seq[ReleaseStep](
-    checkSnapshotDependencies,
-    inquireVersions,
-    setReleaseVersion,
-    commitReleaseVersion,
-    tagRelease,
-    pushChanges,
-    publishArtifacts,
-    setNextVersion,
-    commitNextVersion,
-    pushChanges
-  ),
-  bugfixRegexes := List("""\[bugfix\].*""", """\[fix\].*""", """\[technical\].*""").map(_.r),
-  minorRegexes := List("""\[minor\].*""", """\[feature\].*""").map(_.r),
-  majorRegexes := List("""\[major\].*""", """\[breaking\].*""").map(_.r)
-)
 
 lazy val core = (projectMatrix in file("core"))
   .settings(
     name := "perfgazer",
     commonSettings,
     testSettings,
-    publishSettings,
     coverageFailOnMinimum := false,
     coverageMinimumStmtTotal := 95.0,
     coverageMinimumBranchTotal := 95.0
@@ -161,5 +123,4 @@ lazy val root = (project in file("."))
   .settings(
     name := "perfgazer-root",
     publish / skip := true, // Do not publish artifacts from the root project (empty jars anyway)
-    releaseSettings
   )
