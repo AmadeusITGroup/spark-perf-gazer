@@ -7,7 +7,7 @@ import sbt.Compile
 
 // Publishing settings
 inThisBuild(List(
-  organization := "com.amadeus",
+  organization := "io.github.amadeusitgroup",
   homepage := Some(url("https://github.com/AmadeusITGroup/spark-perf-gazer")),
   licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
   versionScheme := Some("semver-spec")
@@ -69,7 +69,6 @@ def testGroups(tests: Seq[TestDefinition], baseDir: File): Seq[Group] = {
 }
 
 val commonSettings = Seq(
-  organization := "com.amadeus",
   Compile / javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
   scalacOptions ++= Seq(
     "-Ypartial-unification",

@@ -54,7 +54,7 @@ A typical usage of PerfGazer via `spark-shell` is the following (for `spark-subm
 
 ```
 spark-shell \
-  --packages com.amadeus:perfgazer_spark_3-5-2_2.12:0.0.1 \
+  --packages io.github.amadeusitgroup:perfgazer_spark_3-5-2_2.12:0.0.1 \
   --conf spark.extraListeners=com.amadeus.perfgazer.PerfGazer \
   --conf spark.perfgazer.sink.class=com.amadeus.perfgazer.JsonSink \
   --conf spark.perfgazer.sink.json.destination=/tmp/perfgazer/jsonsink/date={{perfgazer.now.year}}-{{perfgazer.now.month}}-{{perfgazer.now.day}}/applicationId={{spark.app.id}}
@@ -225,7 +225,7 @@ find ~/.ivy2 -type f -name *perfgazer* | xargs rm
 # publish a local snapshot version
 sbt publishLocal
 # run spark shell with the listener (change the version accordingly) using the snippet provided above
-spark-shell --packages com.amadeus:perfgazer_spark_3.5.2_2.12:0.0.2-SNAPSHOT ...
+spark-shell --packages io.github.amadeusitgroup:perfgazer_spark_3.5.2_2.12:0.0.2-SNAPSHOT ...
 ```
 
 #### Contributing
