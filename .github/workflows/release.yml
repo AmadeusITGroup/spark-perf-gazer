@@ -22,11 +22,10 @@ jobs:
       - name: Set up sbt
         uses: sbt/setup-sbt@v1
 
-# Temporarily comment out releasing
-#      - name: Release on Maven Central
-#        run: sbt ci-release
-#        env:
-#          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
-#          PGP_SECRET: ${{ secrets.PGP_SECRET }}
-#          SONATYPE_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
-#          SONATYPE_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+      - name: Release on Maven Central
+        run: sbt ci-release
+        env:
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+          PGP_SECRET: ${{ secrets.PGP_SECRET }}
+          SONATYPE_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+          SONATYPE_USERNAME: ${{ secrets.OSSRH_USERNAME }}

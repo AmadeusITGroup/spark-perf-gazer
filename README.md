@@ -232,6 +232,10 @@ spark-shell --packages com.amadeus:perfgazer_spark_3.5.2_2.12:0.0.2-SNAPSHOT ...
 
 To contribute to this project, see [this](CONTRIBUTING.md).
 
+#### Releasing
+
+To release a new version of this project, see [this](RELEASING.md).
+
 ## Authors
 
 - Mauricio JOST
