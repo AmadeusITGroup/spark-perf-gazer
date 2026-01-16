@@ -10,6 +10,12 @@ inThisBuild(List(
   organization := "io.github.amadeusitgroup",
   homepage := Some(url("https://github.com/AmadeusITGroup/spark-perf-gazer")),
   licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
+  developers := List(
+    Developer("mauriciojost", "Mauricio JOST", "mauricio.jost@amadeus.com", url("https://www.linkedin.com/in/mauriciojost")),
+    Developer("generoso", "Generoso PAGANO", "generoso.pagano@amadeus.com", url("https://www.linkedin.com/in/generoso-pagano-b4244230/")),
+    Developer("b-joubert", "Bruno JOUBERT", "bruno.joubert@gmail.com", url("https://www.linkedin.com/in/bruno-joubert-0294415"))
+    // To be completed by the other contributors via PR :)
+  ),
   versionScheme := Some("semver-spec")
 ))
 
