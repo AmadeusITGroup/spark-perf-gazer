@@ -50,7 +50,8 @@ or programmatically via code change.
 
 ##### Configuration via Spark properties
 
-A typical usage of PerfGazer via `spark-shell` is the following (for `spark-submit` it is similar):
+A typical usage of PerfGazer via `spark-shell` is the following (for `spark-submit` it is similar).
+Please, change the version, using the latest release: ![GitHub Release](https://img.shields.io/github/v/release/AmadeusITGroup/spark-perf-gazer).
 
 ```
 spark-shell \
