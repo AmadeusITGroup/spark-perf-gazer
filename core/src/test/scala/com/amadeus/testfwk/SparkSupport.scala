@@ -20,6 +20,35 @@ trait SparkSupport {
     )
   val DefaultUiWaitMs: Long = 1000 * 60 * 60 // 1h
 
+  private def clearSparkSessionState(): Unit = {
+    SparkSession.clearActiveSession()
+    SparkSession.clearDefaultSession()
+  }
+
+  private def ensureNoActiveSession(appName: String): Unit = {
+    val sessions = Seq(
+      SparkSession.getActiveSession,
+      SparkSession.getDefaultSession
+    ).flatten.distinct
+
+    sessions.find(session => !session.sparkContext.isStopped).foreach { session =>
+      throw new IllegalStateException(
+        s"[$appName] An active Spark session already exists in this JVM: ${session.sparkContext.appName}"
+      )
+    }
+
+    if (sessions.nonEmpty) {
+      clearSparkSessionState()
+    }
+  }
+
+  private def stopSparkSession(spark: SparkSession): Unit = {
+    if (!spark.sparkContext.isStopped) {
+      spark.stop()
+    }
+    clearSparkSessionState()
+  }
+
   def getOrCreateSparkSession(conf: List[(String, String)] = DefaultConfigs, appName: String): SparkSession = {
     val builder = SparkSession.builder
       .appName(appName)
@@ -28,11 +57,7 @@ trait SparkSupport {
       b.config(k, v)
     }
 
-    SparkSession.getActiveSession.foreach { s =>
-      throw new IllegalStateException(
-        s"[$appName] An active Spark session already exists in this JVM: ${s.sparkContext.appName}"
-      )
-    }
+    ensureNoActiveSession(appName)
 
     customized.getOrCreate()
   }
@@ -46,20 +71,21 @@ trait SparkSupport {
     finallyCode: SparkSession => Unit
   ): T = {
     val spark = getOrCreateSparkSession(conf, name)
-    val r =
+    try {
+      testCode(spark)
+    } finally {
       try {
-        testCode(spark)
-      } finally {
         finallyCode(spark)
+      } finally {
+        stopSparkSession(spark)
       }
-    spark.stop()
-    r
+    }
   }
 
   def withSpark[T](conf: List[(String, String)] = DefaultConfigs, appName: String = "no name")(
     testCode: SparkSession => T
   ): T = {
-    withSparkInternal(conf, appName)(testCode)(_.stop())
+    withSparkInternal(conf, appName)(testCode)(_ => ())
   }
 
   def withSparkAndUi[T](conf: List[(String, String)] = DefaultConfigs, appName: String = "no name")(
@@ -69,7 +95,6 @@ trait SparkSupport {
       println(s"Launched ${this.getClass.getName}.withSparkUI at ${spark.sparkContext.uiWebUrl}...")
       println("Go to the web Spark UI now. We will wait...")
       Thread.sleep(DefaultUiWaitMs)
-      spark.stop()
       throw new IllegalStateException("The method withSparkUi should only be used in a developer environment")
     }
 }
