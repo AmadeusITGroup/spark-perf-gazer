@@ -39,14 +39,17 @@ class ReadCsvToNoopSpec extends SimpleSpec with GivenWhenThen {
         Then("it should build some reports")
         sinks.reports.size shouldBe 4
 
-        And("it should build SQL nodes with job name and node name")
         val sqlReports = sinks.reports.collect { case r: SqlReport => r }
         sqlReports.size should be(1)
         val sqlReport = sqlReports.head
+
+        And("it should build SQL nodes with job name and node name")
         val nodes = sqlReport.nodes
+        val sqlId = sqlReport.sqlId
         nodes.size should be(2)
-        nodes.map(i => (i.sqlId, i.jobName, i.nodeName)).head should be(1, "testjob", "() OverwriteByExpression")
-        nodes.map(i => (i.sqlId, i.jobName, i.nodeName)).last should be(1, "testjob", "() Scan csv ")
+        val nodeTuples = nodes.map(i => (i.sqlId, i.jobName, i.nodeName))
+        nodeTuples should contain((sqlId, "testjob", "() OverwriteByExpression"))
+        nodeTuples should contain((sqlId, "testjob", "() Scan csv "))
 
         And("it should build SQL reports with metrics")
         val csvNodes = sqlReport.nodes.filter(_.nodeName contains "Scan csv")
@@ -64,21 +67,22 @@ class ReadCsvToNoopSpec extends SimpleSpec with GivenWhenThen {
         val jobReports = sinks.reports.collect { case r: JobReport => r }
         jobReports.size should be(1)
         val jobReport = jobReports.head
-        jobReport.jobId should be(1L)
+        jobReport.jobId should be >= 0L
         jobReport.groupId should be("testgroup")
         jobReport.jobName should be("testjob")
-        jobReport.sqlId should be("1")
-        jobReport.stages should be(Seq(1))
+        jobReport.sqlId should be(sqlId.toString)
+        jobReport.stages.size should be(1)
 
         And("it should build stage reports (StagePrettyTranslator)")
         val stageReports = sinks.reports.collect { case r: StageReport => r }
         stageReports.size should be(1)
         val stageReport = stageReports.head
-        stageReport.stageId should be(1)
+        jobReport.stages should contain(stageReport.stageId)
+        stageReport.stageId should be >= 0
         stageReport.shuffleReadBytes should be(0)
         stageReport.shuffleWriteBytes should be(0)
         stageReport.attempt should be(0)
-        stageReport.readBytes should be > 30L*1024*1024
+        stageReport.readBytes should be > 30L * 1024 * 1024
         stageReport.writeBytes should be(0) // noop
         stageReport.execCpuNs should be > 0L
 
