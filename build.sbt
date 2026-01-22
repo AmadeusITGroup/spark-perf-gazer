@@ -13,6 +13,20 @@ val BuildScalaVersion = sys.props.getOrElse(ScalaVersionKey, DefaultScalaVersion
 def sparkIdSuffix(version: String): String =
   "spark_" + version.replace('.', '-')
 
+def testJvmExportOptions: Seq[String] = {
+  val javaVersion = sys.props("java.specification.version").toDouble
+  if (javaVersion >= 11) {
+    Seq(
+      "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+      "--add-opens=java.base/java.lang=ALL-UNNAMED",
+      "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+      "--add-exports=java.base/sun.util.calendar=ALL-UNNAMED"
+    )
+  } else {
+    Seq.empty
+  }
+}
+
 // Publishing settings
 inThisBuild(List(
   organization := "io.github.amadeusitgroup",
@@ -29,17 +43,6 @@ inThisBuild(List(
   crossScalaVersions := Seq(BuildScalaVersion)
 ))
 
-val DefaultForkJavaOptions = Seq(
-  "-Dspark.driver.bindAddress=127.0.0.1",
-  "-Duser.country.format=US",
-  "-Duser.language.format=en",
-  "-Duser.timezone=UTC",
-  "-Xms2000M",
-  "-Xmx4000M",
-  "-XX:+UseCompressedOops",
-  "-XX:+UseG1GC"
-)
-
 def testDependencies(sparkVersion: String): Seq[ModuleID] = {
   Seq(
     "org.apache.spark"   %% "spark-core"   % sparkVersion  % Test,
@@ -50,38 +53,6 @@ def testDependencies(sparkVersion: String): Seq[ModuleID] = {
       throw new IllegalArgumentException(s"Missing delta dependency for spark version $sparkVersion")
     ) % Test
   )
-}
-
-// Given tests, define test groups where each will have its own forked JVM for execution
-// Currently there is one test group per *Spec.scala file
-// Given that each test group has a different JVM, the SparkSession is not shared
-def testGroups(tests: Seq[TestDefinition], baseDir: File): Seq[Group] = {
-  val exportOptions = {
-    val javaVersion = sys.props("java.specification.version").toDouble
-    if (javaVersion >= 11) {
-      Seq(
-        "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
-        "--add-opens=java.base/java.lang=ALL-UNNAMED",
-        "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
-        "--add-exports=java.base/sun.util.calendar=ALL-UNNAMED"
-      )
-    } else {
-      Seq.empty
-    }
-  }
-  tests
-    .groupBy(t => t.name)
-    .map { case (group, tests) =>
-      val options = ForkOptions()
-        .withWorkingDirectory(baseDir)
-        .withRunJVMOptions(
-          Vector(
-            s"-Dtest.group=$group",
-            s"-Dtest.basedir=$baseDir",
-          ) ++ DefaultForkJavaOptions ++ exportOptions
-        )
-      new Group(group, tests, SubProcess(options))
-    }.toSeq
 }
 
 val commonSettings = Seq(
@@ -99,15 +70,16 @@ val commonSettings = Seq(
 
 val testSettings = Seq(
   Test / scalacOptions ++= Seq("-Yrangepos"),
-  Test / testGrouping := testGroups((Test / definedTests).value, (Test / run / baseDirectory).value),
   Test / parallelExecution := false,
   Test / fork := true,
   Test / javaOptions ++= Seq(
+    "-Dspark.driver.bindAddress=127.0.0.1",
     "-Duser.country.format=US",
     "-Duser.language.format=en",
+    "-Duser.timezone=UTC",
     "-Xms512M",
     "-Xmx1G"
-  ),
+  ) ++ testJvmExportOptions,
   Test / testOptions += Tests.Argument(TestFrameworks.JUnit, "-v", "-a"),
   libraryDependencies ++= Dependencies.testDeps ++ testDependencies(SparkVersion)
 )
