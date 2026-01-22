@@ -11,8 +11,15 @@ permissions:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    name: Build and Test (Spark ${{ matrix.spark }})
     strategy:
       fail-fast: true
+      matrix:
+        spark: ["3.4.1", "3.5.2"]
+    env:
+      SPARK_VERSION: ${{ matrix.spark }}
+      SCALA_VERSION: "2.12.17"
+      SCALA_BINARY: "2.12"
 
     steps:
       - name: Checkout code
@@ -37,17 +44,18 @@ jobs:
 
       - name: Build
         run: |
-          sbt -batch clean compile
+          sbt -batch -Dspark.perfgazer.sparkVersion=$SPARK_VERSION -Dspark.perfgazer.scalaVersion=$SCALA_VERSION clean compile
 
       - name: Unit Tests
         run: |
-          sbt -batch coverageOn test coverageReport coverageAggregate
+          sbt -batch -Dspark.perfgazer.sparkVersion=$SPARK_VERSION -Dspark.perfgazer.scalaVersion=$SCALA_VERSION coverageOn test coverageReport coverageAggregate
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: target/scala-2.12/coverage-report/cobertura.xml
+          files: target/scala-${{ env.SCALA_BINARY }}/coverage-report/cobertura.xml
+          flags: spark-${{ matrix.spark }}
           verbose: true
 
       # This step uploads information to the GitHub dependency graph and unlocks Dependabot alerts for the repository
