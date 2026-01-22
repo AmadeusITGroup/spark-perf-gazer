@@ -1,9 +1,17 @@
 import Dependencies.deltaDepsBySparkVersion
-import SparkCross.ProjectMatrixOps
-import SparkCross.SparkAxis.{Spark341, Spark352}
 import sbt.Keys.*
 import sbt.Tests.*
 import sbt.Compile
+
+val SparkVersionKey = "spark.perfgazer.sparkVersion"
+val ScalaVersionKey = "spark.perfgazer.scalaVersion"
+val DefaultSparkVersion = "3.5.2"
+val DefaultScalaVersion = "2.12.17"
+val SparkVersion = sys.props.getOrElse(SparkVersionKey, DefaultSparkVersion)
+val BuildScalaVersion = sys.props.getOrElse(ScalaVersionKey, DefaultScalaVersion)
+
+def sparkIdSuffix(version: String): String =
+  "spark_" + version.replace('.', '-')
 
 // Publishing settings
 inThisBuild(List(
@@ -17,7 +25,9 @@ inThisBuild(List(
     Developer("taccart", "Thierry ACCART", "thierry.accart@amadeus.com", url("https://www.linkedin.com/in/taccart/"))
     // To be completed by the other contributors via PR :)
   ),
-  versionScheme := Some("semver-spec")
+  versionScheme := Some("semver-spec"),
+  scalaVersion := BuildScalaVersion,
+  crossScalaVersions := Seq(BuildScalaVersion)
 ))
 
 val DefaultForkJavaOptions = Seq(
@@ -91,7 +101,7 @@ val commonSettings = Seq(
     }
     base ++ versionSpecific
   },
-  libraryDependencies ++= Dependencies.coreDeps
+  libraryDependencies ++= Dependencies.coreDeps(SparkVersion)
 )
 
 val testSettings = Seq(
@@ -106,32 +116,22 @@ val testSettings = Seq(
     "-Xmx1G"
   ),
   Test / testOptions += Tests.Argument(TestFrameworks.JUnit, "-v", "-a"),
-  libraryDependencies ++= Dependencies.testDeps
+  libraryDependencies ++= Dependencies.testDeps ++ testDependencies(SparkVersion)
 )
 
-lazy val core = (projectMatrix in file("core"))
+lazy val core = (project in file("core"))
   .settings(
-    name := "perfgazer",
+    name := s"perfgazer_${sparkIdSuffix(SparkVersion)}",
     commonSettings,
     testSettings,
     coverageFailOnMinimum := false,
     coverageMinimumStmtTotal := 95.0,
     coverageMinimumBranchTotal := 95.0
   )
-  .addSparkVersionRow(spark = Spark341, scalaVersions = Seq("2.12.17"), customSetup = {
-    _.settings(
-      libraryDependencies ++= testDependencies(Spark341.sparkVersion)
-    )
-  })
-  .addSparkVersionRow(spark = Spark352, scalaVersions = Seq("2.12.17", "2.13.16"), customSetup = {
-    _.settings(
-      libraryDependencies ++= testDependencies(Spark352.sparkVersion)
-    )
-  })
 
 lazy val root = (project in file("."))
   // Aggregate all subprojects (like core) so their tasks are triggered from the root.
-  .aggregate(core.projectRefs: _*)
+  .aggregate(core)
   .settings(
     name := "perfgazer-root",
     publish / skip := true, // Do not publish artifacts from the root project (empty jars anyway)
