@@ -3,6 +3,7 @@ package com.amadeus.integration
 import com.amadeus.perfgazer.PerfGazer
 import com.amadeus.perfgazer.reports.SqlReport
 import com.amadeus.testfwk._
+import com.amadeus.testfwk.SinkSupport.TestableSink
 import com.amadeus.testfwk.filters.SqlNodeFilter
 import io.delta.tables.DeltaTable
 
@@ -12,10 +13,8 @@ class JoinFromDeltaSpec
     extends SimpleSpec
     with SparkSupport
     with OptdSupport
-    with JsonSupport
     with ConfigSupport
-    with TempDirSupport
-    with SinkSupport {
+    with TempDirSupport {
   val DeltaSettings: List[(String, String)] = List(
     ("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension"),
     ("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"),
@@ -25,12 +24,13 @@ class JoinFromDeltaSpec
   private def subdir(base: Path, s: String) = base.resolve(s).toAbsolutePath.toFile.toString
 
   describe("The listener when joining two dataframes read from delta") {
-    withSpark(DeltaSettings, appName = this.getClass.getName) { spark =>
-      withTmpDir { tmpDir =>
-        val df = readOptd(spark)
-        df.write.format("delta").mode("overwrite").save(subdir(tmpDir, "deltadir1"))
+    it("should report scan and join nodes for the delta join") {
+      withSpark(DeltaSettings, appName = this.getClass.getName) { spark =>
+        withTmpDir { tmpDir =>
+          val df = readOptd(spark)
+          df.write.format("delta").mode("overwrite").save(subdir(tmpDir, "deltadir1"))
 
-        withTestableSink { sinks =>
+          val sinks = new TestableSink()
           // DF TABLE: iata_code, icao_code, ..., name, ..., country_name, country_code, ...
           val df = DeltaTable.forPath(subdir(tmpDir, "deltadir1")).toDF
           val cfg = defaultTestConfig.withOnlySqlEnabled
@@ -58,33 +58,29 @@ class JoinFromDeltaSpec
             .join(DeltaTable.forPath(subdir(tmpDir, "joblookuptabledir")).toDF.as("r"), "country_code")
           df3.write.format("delta").mode("overwrite").save(subdir(tmpDir, "deltadirjob3"))
 
-          it("should report the two scan parquet nodes: build side and probe side of the join") {
-            val f = SqlNodeFilter(
-              nodeNameRegex = Some(".*Scan parquet.*"),
-              jobNameRegex = Some("jobjoin"),
-              isLeaf = Some(true)
-            )
-            val actual = sinks.reports
-              .collect { case i: SqlReport => i.nodes }
-              .flatten
-              .filter(r => f.eligible(r))
-              .map(i => (i.jobName, i.metrics("number of files read"), i.metrics("number of output rows")))
-            actual.size should equal(2) // one for the build side and one for the probe side
-            actual should contain(("jobjoin", "1", "252")) // lookup table scan (probe side)
-          }
+          val scanFilter = SqlNodeFilter(
+            nodeNameRegex = Some(".*Scan parquet.*"),
+            jobNameRegex = Some("jobjoin"),
+            isLeaf = Some(true)
+          )
+          val scanActual = sinks.reports
+            .collect { case i: SqlReport => i.nodes }
+            .flatten
+            .filter(r => scanFilter.eligible(r))
+            .map(i => (i.jobName, i.metrics("number of files read"), i.metrics("number of output rows")))
+          scanActual.size should equal(2) // one for the build side and one for the probe side
+          scanActual should contain(("jobjoin", "1", "252")) // lookup table scan (probe side)
 
-          it("should report the join plan node") {
-            val f = SqlNodeFilter(
-              nodeNameRegex = Some(".*Join.*"),
-              jobNameRegex = Some("jobjoin")
-            )
-            val actual = sinks.reports
-              .collect { case i: SqlReport => i.nodes }
-              .flatten
-              .filter(r => f.eligible(r))
-              .map(i => (i.jobName, i.metrics))
-            actual should equal(Seq(("jobjoin", Map("number of output rows" -> "2"))))
-          }
+          val joinFilter = SqlNodeFilter(
+            nodeNameRegex = Some(".*Join.*"),
+            jobNameRegex = Some("jobjoin")
+          )
+          val joinActual = sinks.reports
+            .collect { case i: SqlReport => i.nodes }
+            .flatten
+            .filter(r => joinFilter.eligible(r))
+            .map(i => (i.jobName, i.metrics))
+          joinActual should equal(Seq(("jobjoin", Map("number of output rows" -> "2"))))
         }
       }
     }
