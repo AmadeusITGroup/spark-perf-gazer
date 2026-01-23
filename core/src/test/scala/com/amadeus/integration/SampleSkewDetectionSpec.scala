@@ -2,7 +2,10 @@ package com.amadeus.integration
 
 import com.amadeus.perfgazer.{JsonSink, PerfGazer}
 import com.amadeus.perfgazer.PathBuilder.PathOps
-import com.amadeus.testfwk._
+import com.amadeus.testfwk.ConfigSupport._
+import com.amadeus.testfwk.SimpleSpec
+import com.amadeus.testfwk.SparkSupport.withSpark
+import com.amadeus.testfwk.TempDirSupport.withTmpDir
 import org.apache.spark.SparkConf
 
 // Define your case class
@@ -11,10 +14,7 @@ case class CarRegistration(registration: String, make: String, model: String, en
 case class CarPrice(make: String, model: String, engine_size: BigDecimal, sale_price: Double)
 
 class SampleSkewDetectionSpec
-    extends SimpleSpec
-    with SparkSupport
-    with ConfigSupport
-    with TempDirSupport {
+    extends SimpleSpec {
 
   describe("The listener for skew detection") {
     it("should write skewed data reports and reconcile them") {

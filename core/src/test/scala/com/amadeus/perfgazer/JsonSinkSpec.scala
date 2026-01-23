@@ -1,7 +1,8 @@
 package com.amadeus.perfgazer
 
 import com.amadeus.perfgazer.reports.{Report, ReportType}
-import com.amadeus.testfwk.{SimpleSpec, TempDirSupport}
+import com.amadeus.testfwk.SimpleSpec
+import com.amadeus.testfwk.TempDirSupport.withTmpDir
 import com.jayway.jsonpath.JsonPath
 import org.apache.spark.SparkConf
 import scala.concurrent.{Await, Future}
@@ -10,7 +11,7 @@ import scala.concurrent.duration._
 
 import java.io.File
 
-class JsonSinkSpec extends SimpleSpec with TempDirSupport {
+class JsonSinkSpec extends SimpleSpec {
 
   case object DummyReportType extends ReportType {
     override def name: String = "dummy"
@@ -224,4 +225,3 @@ class JsonSinkSpec extends SimpleSpec with TempDirSupport {
   }
 
 }
-

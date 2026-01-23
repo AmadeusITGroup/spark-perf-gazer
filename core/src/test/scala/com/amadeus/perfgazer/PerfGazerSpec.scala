@@ -1,12 +1,13 @@
 package com.amadeus.perfgazer
 
 import com.amadeus.perfgazer.fixtures.Fixtures
-import com.amadeus.testfwk.{ConfigSupport, SimpleSpec}
+import com.amadeus.testfwk.ConfigSupport._
+import com.amadeus.testfwk.SimpleSpec
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.execution.ui.{SparkListenerSQLAdaptiveExecutionUpdate, SparkListenerSQLExecutionEnd}
 import org.apache.spark.scheduler.{JobSucceeded, SparkListenerJobEnd}
 
-class PerfGazerSpec extends SimpleSpec with ConfigSupport {
+class PerfGazerSpec extends SimpleSpec {
   describe(s"The listener") {
     it("should not fail upon unhandled messages") {
       val c = defaultTestConfig

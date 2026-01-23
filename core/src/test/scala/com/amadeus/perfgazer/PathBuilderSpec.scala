@@ -1,12 +1,13 @@
 package com.amadeus.perfgazer
 
 import com.amadeus.perfgazer.PathBuilder.PathOps
-import com.amadeus.testfwk.{SimpleSpec, SparkSupport}
+import com.amadeus.testfwk.SimpleSpec
+import com.amadeus.testfwk.SparkSupport.withSpark
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-class PathBuilderSpec extends SimpleSpec with SparkSupport {
+class PathBuilderSpec extends SimpleSpec {
   describe("Path builder for JSON Sink") {
     it("should build reports destinations using Spark properties") {
       withSpark(appName = this.getClass.getName) { spark =>

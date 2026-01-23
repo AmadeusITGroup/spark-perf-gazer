@@ -2,19 +2,18 @@ package com.amadeus.integration
 
 import com.amadeus.perfgazer.PerfGazer
 import com.amadeus.perfgazer.reports.SqlReport
-import com.amadeus.testfwk._
+import com.amadeus.testfwk.ConfigSupport._
 import com.amadeus.testfwk.SinkSupport.TestableSink
 import com.amadeus.testfwk.filters.SqlNodeFilter
+import com.amadeus.testfwk.{OptdSupport, SimpleSpec}
+import com.amadeus.testfwk.SparkSupport.withSpark
+import com.amadeus.testfwk.TempDirSupport.withTmpDir
 import io.delta.tables.DeltaTable
 
 import java.nio.file.Path
 
 class ReadCsvToDeltaSpec
-    extends SimpleSpec
-    with SparkSupport
-    with OptdSupport
-    with ConfigSupport
-    with TempDirSupport {
+    extends SimpleSpec {
   val DeltaSettings: List[(String, String)] = List(
     ("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension"),
     ("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"),
@@ -27,8 +26,8 @@ class ReadCsvToDeltaSpec
     it("should report the filter plan nodes") {
       withSpark(DeltaSettings, appName = this.getClass.getName) { spark =>
         withTmpDir { tmpDir =>
-          val df = readOptd(spark)
-          df.write.format("delta").mode("overwrite").save(subdir(tmpDir, "deltadir1"))
+          val optdDf = OptdSupport.readOptd(spark)
+          optdDf.write.format("delta").mode("overwrite").save(subdir(tmpDir, "deltadir1"))
 
           val sinks = new TestableSink()
           // DF TABLE: iata_code, icao_code, ..., name, ..., country_name, country_code, ...

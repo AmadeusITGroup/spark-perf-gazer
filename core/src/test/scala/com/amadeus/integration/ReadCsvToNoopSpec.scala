@@ -2,21 +2,19 @@ package com.amadeus.integration
 
 import com.amadeus.perfgazer.PerfGazer
 import com.amadeus.perfgazer.reports._
+import com.amadeus.testfwk.ConfigSupport._
 import com.amadeus.testfwk.SinkSupport.TestableSink
-import com.amadeus.testfwk._
+import com.amadeus.testfwk.{OptdSupport, SimpleSpec}
+import com.amadeus.testfwk.SparkSupport.withSpark
 
-class ReadCsvToNoopSpec
-    extends SimpleSpec
-    with SparkSupport
-    with OptdSupport
-    with ConfigSupport {
+class ReadCsvToNoopSpec extends SimpleSpec {
 
   describe("The listener when reading a .csv and writing to noop") {
     it("should build reports for a noop write") {
       withSpark(appName = this.getClass.getName) { spark =>
         val sinks = new TestableSink()
         val emptySinks = new TestableSink()
-        val df = readOptd(spark)
+        val df = OptdSupport.readOptd(spark)
 
         // regular setup
         val cfg = defaultTestConfig.withAllEnabled

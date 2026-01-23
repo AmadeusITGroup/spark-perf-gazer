@@ -2,15 +2,14 @@ package com.amadeus.integration
 
 import com.amadeus.perfgazer.{JsonSink, PerfGazer}
 import com.amadeus.perfgazer.PathBuilder.PathOps
-import com.amadeus.testfwk._
+import com.amadeus.testfwk.ConfigSupport._
+import com.amadeus.testfwk.{OptdSupport, SimpleSpec}
+import com.amadeus.testfwk.SparkSupport.withSpark
+import com.amadeus.testfwk.TempDirSupport.withTmpDir
 import org.apache.spark.SparkConf
 
 class JsonSinkIntegrationSpec
-  extends SimpleSpec
-    with SparkSupport
-    with OptdSupport
-    with ConfigSupport
-    with TempDirSupport {
+  extends SimpleSpec {
 
   describe("The listener when reading a .csv and writing to noop") {
     it("should write and reconcile json reports") {
@@ -28,7 +27,7 @@ class JsonSinkIntegrationSpec
 
           import org.apache.spark.sql.functions._
 
-          val df = readOptd(spark)
+          val df = OptdSupport.readOptd(spark)
 
           // regular setup
           val cfg = defaultTestConfig.withAllEnabled

@@ -2,7 +2,7 @@ package com.amadeus.testfwk
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-trait OptdSupport {
+object OptdSupport {
   def readOptd(spark: SparkSession): DataFrame = {
     spark
       .read
