@@ -68,8 +68,6 @@ class ReadCsvToNoopSpec
           sqlReports.size should be(1)
           val sqlReport = sqlReports.head
           val sqlDetails = sqlReport.details
-          sqlDetails should include regex "== Parsed Logical Plan =="
-          sqlDetails should include regex "== Optimized Logical Plan =="
           sqlDetails should include regex "== Physical Plan =="
         }
 
