@@ -5,7 +5,7 @@ import com.amadeus.perfgazer.events.JobEvent.EndUpdate
 import com.amadeus.perfgazer.events.{JobEvent, SqlEvent, StageEvent, TaskEvent}
 import com.amadeus.perfgazer.reports._
 import com.amadeus.perfgazer.utils.CappedConcurrentHashMap
-import org.apache.spark.SparkConf
+import org.apache.spark.{SparkConf, SparkEnv}
 import org.apache.spark.scheduler._
 import org.apache.spark.sql.execution.ui._
 import org.slf4j.{Logger, LoggerFactory}
@@ -16,7 +16,11 @@ import org.slf4j.{Logger, LoggerFactory}
   * - spilled tasks
   * - ...
   */
-class PerfGazer(val c: PerfGazerConfig, val sink: Sink) extends SparkListener {
+class PerfGazer(
+  val c: PerfGazerConfig,
+  val sink: Sink,
+  private val providedSparkConf: Option[SparkConf] = None
+) extends SparkListener {
   // Declare types for keys of maps
   private type SqlKey = Long
   private type JobKey = Int
@@ -24,6 +28,14 @@ class PerfGazer(val c: PerfGazerConfig, val sink: Sink) extends SparkListener {
   // Maps to keep sqls + jobs + stages raw events (initial information) until some completion
   private val sqlStartEvents = new CappedConcurrentHashMap[SqlKey, SqlEvent](c.maxCacheSize)
   private val jobStartEvents = new CappedConcurrentHashMap[JobKey, JobEvent](c.maxCacheSize)
+  private lazy val sqlStatusTracker: Option[PerfGazerSqlStatusTracker] =
+    if (c.sqlEnabled) {
+      val conf = sparkConfForSqlTracking
+      val live = SparkEnv.get != null
+      Some(new PerfGazerSqlStatusTracker(conf, live))
+    } else {
+      None
+    }
 
   // Provide details on sink associated with listener during construction
   logger.info(s"Listener instantiated with sink:\n${sink.description}")
@@ -38,7 +50,7 @@ class PerfGazer(val c: PerfGazerConfig, val sink: Sink) extends SparkListener {
 
   // Auxiliary constructor
   def this(sparkConf: SparkConf) = {
-    this(c = PerfGazerConfig(sparkConf), sink = sinkFrom(sparkConf))
+    this(c = PerfGazerConfig(sparkConf), sink = sinkFrom(sparkConf), providedSparkConf = Some(sparkConf))
   }
 
   /** LISTENERS
@@ -49,6 +61,7 @@ class PerfGazer(val c: PerfGazerConfig, val sink: Sink) extends SparkListener {
     * It is NOT a trigger for automatic purge of stages (job end will purge stages).
     */
   override def onTaskEnd(taskEnd: SparkListenerTaskEnd): Unit = {
+    sqlStatusTracker.foreach(_.onTaskEnd(taskEnd))
     if (c.tasksEnabled) {
       logger.trace("onTaskEnd(...) id = {}", taskEnd.taskInfo.taskId)
       val te = TaskEvent(taskEnd)
@@ -64,7 +77,20 @@ class PerfGazer(val c: PerfGazerConfig, val sink: Sink) extends SparkListener {
     }
   }
 
+  override def onStageSubmitted(stageSubmitted: SparkListenerStageSubmitted): Unit = {
+    sqlStatusTracker.foreach(_.onStageSubmitted(stageSubmitted))
+  }
+
+  override def onTaskStart(taskStart: SparkListenerTaskStart): Unit = {
+    sqlStatusTracker.foreach(_.onTaskStart(taskStart))
+  }
+
+  override def onExecutorMetricsUpdate(event: SparkListenerExecutorMetricsUpdate): Unit = {
+    sqlStatusTracker.foreach(_.onExecutorMetricsUpdate(event))
+  }
+
   override def onJobStart(jobStart: SparkListenerJobStart): Unit = {
+    sqlStatusTracker.foreach(_.onJobStart(jobStart))
     if (c.jobsEnabled) {
       jobStartEvents.put(jobStart.jobId, JobEvent.from(jobStart))
       logger.trace("onJobStart(...) id = {} (size of map {})", jobStart.jobId, jobStartEvents.size)
@@ -76,6 +102,7 @@ class PerfGazer(val c: PerfGazerConfig, val sink: Sink) extends SparkListener {
     * It is a trigger for automatic purge of job and stages.
     */
   override def onJobEnd(jobEnd: SparkListenerJobEnd): Unit = {
+    sqlStatusTracker.foreach(_.onJobEnd(jobEnd))
     if (c.jobsEnabled) {
       logger.trace("onJobEnd(...), id = {}", jobEnd.jobId)
       val jobStartOpt = Option(jobStartEvents.get(jobEnd.jobId)) // retrieve initial image of job
@@ -90,9 +117,12 @@ class PerfGazer(val c: PerfGazerConfig, val sink: Sink) extends SparkListener {
   }
 
   override def onOtherEvent(event: SparkListenerEvent): Unit = {
+    sqlStatusTracker.foreach(_.onOtherEvent(event))
     event match {
       case event: SparkListenerSQLExecutionStart =>
         onSqlStart(event)
+      case event: SparkListenerSQLAdaptiveExecutionUpdate =>
+        onSqlAdaptiveUpdate(event)
       //case event: SparkListenerDriverAccumUpdates =>
       case event: SparkListenerSQLExecutionEnd =>
         onSqlEnd(event)
@@ -107,7 +137,15 @@ class PerfGazer(val c: PerfGazerConfig, val sink: Sink) extends SparkListener {
 
   private def onSqlStart(event: SparkListenerSQLExecutionStart): Unit = {
     if (c.sqlEnabled) {
-      sqlStartEvents.put(event.executionId, SqlEvent(event.executionId, event.description))
+      sqlStartEvents.put(
+        event.executionId,
+        SqlEvent(
+          id = event.executionId,
+          description = event.description,
+          details = event.physicalPlanDescription,
+          planInfo = event.sparkPlanInfo
+        )
+      )
       logger.trace("onSqlStart(...) id = {} (size of map {})", event.executionId, sqlStartEvents.size)
     }
   }
@@ -122,8 +160,29 @@ class PerfGazer(val c: PerfGazerConfig, val sink: Sink) extends SparkListener {
       val sqlStartOpt = Option(sqlStartEvents.get(event.executionId))
       sqlStartOpt match {
         case Some(sqlStart) =>
-          sink.write(SqlReport(sqlStart, event))
+          val metricsById = sqlStatusTracker
+            .map(_.executionMetrics(event.executionId))
+            .getOrElse(Map.empty)
+          sink.write(SqlReport(sqlStart, metricsById))
           sqlStartEvents.remove(event.executionId)
+        case None =>
+          logger.warn("SQL start event not found for executionId: {}", event.executionId)
+      }
+    }
+  }
+
+  private def onSqlAdaptiveUpdate(event: SparkListenerSQLAdaptiveExecutionUpdate): Unit = {
+    if (c.sqlEnabled) {
+      val sqlStartOpt = Option(sqlStartEvents.get(event.executionId))
+      sqlStartOpt match {
+        case Some(sqlStart) =>
+          sqlStartEvents.put(
+            event.executionId,
+            sqlStart.copy(
+              details = event.physicalPlanDescription,
+              planInfo = event.sparkPlanInfo
+            )
+          )
         case None =>
           logger.warn("SQL start event not found for executionId: {}", event.executionId)
       }
@@ -140,6 +199,7 @@ class PerfGazer(val c: PerfGazerConfig, val sink: Sink) extends SparkListener {
     */
   def close(): Unit = {
     sink.close()
+    sqlStatusTracker.foreach(_.close())
     logSnippets()
     logger.info("Listener closed, size of maps sql={} and job={})", sqlStartEvents.size, jobStartEvents.size)
   }
@@ -154,6 +214,12 @@ class PerfGazer(val c: PerfGazerConfig, val sink: Sink) extends SparkListener {
     */
   def getSnippets: String = {
     sink.generateAllViewSnippets().mkString("\n")
+  }
+
+  private def sparkConfForSqlTracking: SparkConf = {
+    providedSparkConf
+      .orElse(Option(SparkEnv.get).map(_.conf))
+      .getOrElse(new SparkConf(false))
   }
 }
 

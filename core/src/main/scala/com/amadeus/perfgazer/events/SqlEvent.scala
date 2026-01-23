@@ -7,5 +7,7 @@ import org.apache.spark.sql.execution.SparkPlanInfo
   */
 case class SqlEvent(
   id: Long,
-  description: String
+  description: String,
+  details: String,
+  planInfo: SparkPlanInfo
 )
