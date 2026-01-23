@@ -1,10 +1,10 @@
 package com.amadeus.perfgazer.reports
 
 import com.amadeus.perfgazer.events.StageEvent
-import com.amadeus.testfwk.{ConfigSupport, SimpleSpec}
+import com.amadeus.testfwk.SimpleSpec
 import org.apache.spark.Fixtures2
 
-class StageReportSpec extends SimpleSpec with ConfigSupport {
+class StageReportSpec extends SimpleSpec {
   describe(s"The ${StageReport.getClass.getName}") {
     it("should generate reports in a basic scenario") {
       val rs = StageReport(StageEvent(Fixtures2.Stage1.stageInfo))

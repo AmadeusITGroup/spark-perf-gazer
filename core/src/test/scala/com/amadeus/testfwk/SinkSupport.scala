@@ -1,9 +1,7 @@
 package com.amadeus.testfwk
 
-import com.amadeus.perfgazer.{JsonSink, LogSink, Sink}
+import com.amadeus.perfgazer.Sink
 import com.amadeus.perfgazer.reports.{Report, ReportType}
-import com.amadeus.testfwk.SinkSupport.TestableSink
-import org.apache.spark.SparkConf
 
 import scala.collection.mutable.ListBuffer
 
@@ -27,28 +25,7 @@ object SinkSupport {
     override def generateViewSnippet(reportType: ReportType): String = s"No ${reportType.name} snippet."
 
     /** Report types supported by this sink
-     */
+      */
     override def supportedReportTypes: Set[ReportType] = ReportType.standardTypes
-  }
-}
-
-trait SinkSupport {
-  def withTestableSink[T](testCode: TestableSink => T): T = {
-    val testableSink = new TestableSink()
-    testCode(testableSink)
-  }
-  def withLogSink[T](testCode: LogSink => T): T = {
-    val logSink = new LogSink()
-    testCode(logSink)
-  }
-  def withJsonSink[T](destination: String, writeBatchSize: Int, fileSizeLimit: Long)(testCode: JsonSink => T): T = {
-    // build a SparkConf using the JsonSink keys
-    val sparkConf = new SparkConf(false)
-      .set(JsonSink.DestinationKey, destination)
-      .set(JsonSink.WriteBatchSizeKey, writeBatchSize.toString)
-      .set(JsonSink.FileSizeLimitKey, fileSizeLimit.toString)
-
-    val jsonSink = new JsonSink(sparkConf)
-    testCode(jsonSink)
   }
 }

@@ -1,29 +1,33 @@
 package com.amadeus.integration
 
-import com.amadeus.perfgazer.PerfGazer
+import com.amadeus.perfgazer.{JsonSink, PerfGazer}
 import com.amadeus.perfgazer.PathBuilder.PathOps
-import com.amadeus.testfwk._
+import com.amadeus.testfwk.ConfigSupport._
+import com.amadeus.testfwk.{OptdSupport, SimpleSpec}
+import com.amadeus.testfwk.SparkSupport.withSpark
+import com.amadeus.testfwk.TempDirSupport.withTmpDir
+import org.apache.spark.SparkConf
 
 class JsonSinkIntegrationSpec
-  extends SimpleSpec
-    with SparkSupport
-    with OptdSupport
-    with JsonSupport
-    with ConfigSupport
-    with TempDirSupport
-    with SinkSupport {
+  extends SimpleSpec {
 
   describe("The listener when reading a .csv and writing to noop") {
-    withSpark(appName = this.getClass.getName) { spark =>
-      withTmpDir { tmpDir =>
-        // Set thresholds for coverage - only flush at the end
-        val destination = s"$tmpDir".withDefaultPartitions.resolveProperties(spark.sparkContext.getConf)
-        val writeBatchSize = 200
-        val fileSizeLimit = 200L*1024*1024
-        withJsonSink(destination, writeBatchSize, fileSizeLimit) { jsonSink =>
+    it("should write and reconcile json reports") {
+      withSpark(appName = this.getClass.getName) { spark =>
+        withTmpDir { tmpDir =>
+          // Set thresholds for coverage - only flush at the end
+          val destination = s"$tmpDir".withDefaultPartitions.resolveProperties(spark.sparkContext.getConf)
+          val writeBatchSize = 200
+          val fileSizeLimit = 200L*1024*1024
+          val sparkConf = new SparkConf(false)
+            .set(JsonSink.DestinationKey, destination)
+            .set(JsonSink.WriteBatchSizeKey, writeBatchSize.toString)
+            .set(JsonSink.FileSizeLimitKey, fileSizeLimit.toString)
+          val jsonSink = new JsonSink(sparkConf)
+
           import org.apache.spark.sql.functions._
 
-          val df = readOptd(spark)
+          val df = OptdSupport.readOptd(spark)
 
           // regular setup
           val cfg = defaultTestConfig.withAllEnabled
@@ -40,31 +44,23 @@ class JsonSinkIntegrationSpec
 
           val dfSqlReports = spark.read.json(s"$destination/sql-reports-*.json")
           val dfSqlReportsCnt = dfSqlReports.count()
-          it("should save SQL reports in json file") {
-            dfSqlReports.schema.names.toSet should contain("sqlId")
-            dfSqlReportsCnt shouldBe 1
-          }
+          dfSqlReports.schema.names.toSet should contain("sqlId")
+          dfSqlReportsCnt shouldBe 1
 
           val dfJobReports = spark.read.json(s"$destination/job-reports-*.json")
           val dfJobReportsCnt = dfJobReports.count()
-          it("should save Job reports in json file") {
-            dfJobReports.schema.names.toSet should contain("jobId")
-            dfJobReportsCnt shouldBe 1
-          }
+          dfJobReports.schema.names.toSet should contain("jobId")
+          dfJobReportsCnt shouldBe 1
 
           val dfStageReports = spark.read.json(s"$destination/stage-reports-*.json")
           val dfStageReportsCnt = dfStageReports.count()
-          it("should save Stage reports in json file") {
-            dfStageReports.schema.names.toSet should contain("stageId")
-            dfStageReportsCnt shouldBe 1
-          }
+          dfStageReports.schema.names.toSet should contain("stageId")
+          dfStageReportsCnt shouldBe 1
 
           val dfTaskReports = spark.read.json(s"$destination/task-reports-*.json")
           val dfTaskReportsCnt = dfTaskReports.count()
-          it("should save Task reports in json file") {
-            dfTaskReports.schema.names.toSet should contain("taskId")
-            dfTaskReportsCnt shouldBe 1
-          }
+          dfTaskReports.schema.names.toSet should contain("taskId")
+          dfTaskReportsCnt shouldBe 1
 
           // Reconcile reports from json files
           val dfTasks = dfJobReports
@@ -74,12 +70,7 @@ class JsonSinkIntegrationSpec
             .join(dfTaskReports, Seq("stageId"))
           val dfTasksCnt = dfTasks.count()
 
-          it("should reconcile reports") {
-            dfTasksCnt should equal(dfTaskReportsCnt)
-          }
-
-          // Close the listener
-          eventsListener.close()
+          dfTasksCnt should equal(dfTaskReportsCnt)
         }
       }
     }
