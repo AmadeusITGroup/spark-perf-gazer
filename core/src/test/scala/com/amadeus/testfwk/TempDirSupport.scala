@@ -5,9 +5,9 @@ import org.slf4j.{Logger, LoggerFactory}
 import java.nio.file.{Files, Path}
 import scala.reflect.io.Directory
 
-trait TempDirSupport {
+object TempDirSupport {
 
-  lazy val tmpDirLogger: Logger = LoggerFactory.getLogger(getClass.getName)
+  private val tmpDirLogger: Logger = LoggerFactory.getLogger(getClass.getName)
 
   /**
     * Method to be used in unit tests for automatic creation and cleaning of a temporary directory.

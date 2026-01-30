@@ -1,101 +1,94 @@
 package com.amadeus.perfgazer
 
 import com.amadeus.perfgazer.PathBuilder.PathOps
-import com.amadeus.testfwk.{SimpleSpec, SparkSupport}
+import com.amadeus.testfwk.SimpleSpec
+import com.amadeus.testfwk.SparkSupport.withSpark
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-class PathBuilderSpec extends SimpleSpec with SparkSupport {
+class PathBuilderSpec extends SimpleSpec {
   describe("Path builder for JSON Sink") {
-    withSpark(appName = this.getClass.getName) { spark =>
-      val tmpDirUnix: String = "/tmp/perfgazer/pathbuilder/spec"
-      val tmpDirWin: String = "C:\\tmp\\perfgazer\\pathbuilder\\spec"
+    it("should build reports destinations using Spark properties") {
+      withSpark(appName = this.getClass.getName) { spark =>
+        val tmpDirUnix: String = "/tmp/perfgazer/pathbuilder/spec"
+        val tmpDirWin: String = "C:\\tmp\\perfgazer\\pathbuilder\\spec"
+        val currentDate = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE)
 
-      val currentDate = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE)
-
-      val destination2Unix = tmpDirUnix.withDefaultPartitions.resolveProperties(spark.sparkContext.getConf)
-      val destination2Win = tmpDirWin.withDefaultPartitions.resolveProperties(spark.sparkContext.getConf)
-      it("should build reports destination (withDefaultPartitions)") {
+        val destination2Unix = tmpDirUnix.withDefaultPartitions.resolveProperties(spark.sparkContext.getConf)
+        val destination2Win = tmpDirWin.withDefaultPartitions.resolveProperties(spark.sparkContext.getConf)
         destination2Unix shouldBe tmpDirUnix + s"/date=$currentDate/applicationId=${spark.sparkContext.applicationId}/"
         destination2Win shouldBe tmpDirWin + s"\\date=$currentDate\\applicationId=${spark.sparkContext.applicationId}\\"
-      }
 
-      val destination3Unix = tmpDirUnix.withDate.withSparkConf("applicationId", "spark.app.id").resolveProperties(spark.sparkContext.getConf)
-      val destination3Win = tmpDirWin.withDate.withSparkConf("applicationId", "spark.app.id").resolveProperties(spark.sparkContext.getConf)
-      it("should build reports destination (withDate / withSparkConf)") {
+        val destination3Unix = tmpDirUnix.withDate.withSparkConf("applicationId", "spark.app.id").resolveProperties(spark.sparkContext.getConf)
+        val destination3Win = tmpDirWin.withDate.withSparkConf("applicationId", "spark.app.id").resolveProperties(spark.sparkContext.getConf)
         destination3Unix shouldBe tmpDirUnix + s"/date=$currentDate/applicationId=${spark.sparkContext.applicationId}/"
         destination3Win shouldBe tmpDirWin + s"\\date=$currentDate\\applicationId=${spark.sparkContext.applicationId}\\"
-      }
 
-      val destination4Unix = tmpDirUnix.withDate.withApplicationId.resolveProperties(spark.sparkContext.getConf)
-      val destination4Win = tmpDirWin.withDate.withApplicationId.resolveProperties(spark.sparkContext.getConf)
-      it("should build reports destination (withDate / withApplicationId)") {
+        val destination4Unix = tmpDirUnix.withDate.withApplicationId.resolveProperties(spark.sparkContext.getConf)
+        val destination4Win = tmpDirWin.withDate.withApplicationId.resolveProperties(spark.sparkContext.getConf)
         destination4Unix shouldBe tmpDirUnix + s"/date=$currentDate/applicationId=${spark.sparkContext.applicationId}/"
         destination4Win shouldBe tmpDirWin + s"\\date=$currentDate\\applicationId=${spark.sparkContext.applicationId}\\"
-      }
 
-      val destination5 = tmpDirUnix
-        .withPartition("customPartition", "myPartition")
-        .withDatabricksTag("clusterName", "clusterName")
-
-      it("should throw IllegalArgumentException if one of partition value cannot be resolved") {
+        val destination5 = tmpDirUnix
+          .withPartition("customPartition", "myPartition")
+          .withDatabricksTag("clusterName", "clusterName")
         an[IllegalArgumentException] should be thrownBy {
           destination5.resolveProperties(spark.sparkContext.getConf)
         }
       }
+    }
 
-      it("should throw IllegalArgumentException if one of partition key contains invalid characters") {
-        an[IllegalArgumentException] should be thrownBy {
-          tmpDirUnix.withPartition("custom=Partition", "myPartition")
-        }
+    it("should throw IllegalArgumentException if one of partition key contains invalid characters") {
+      an[IllegalArgumentException] should be thrownBy {
+        "/tmp/perfgazer/pathbuilder/spec".withPartition("custom=Partition", "myPartition")
       }
+    }
 
-      it("should throw IllegalArgumentException if one of partition value contains invalid characters") {
-        an[IllegalArgumentException] should be thrownBy {
-          tmpDirUnix.withPartition("customPartition", "my=Partition")
-        }
+    it("should throw IllegalArgumentException if one of partition value contains invalid characters") {
+      an[IllegalArgumentException] should be thrownBy {
+        "/tmp/perfgazer/pathbuilder/spec".withPartition("customPartition", "my=Partition")
       }
+    }
 
-      it("should handle a simple path with no ending /") {
-        val path = "/tmp"
-        path.extractBasePath shouldBe "/tmp/"
-        path.extractPartitions shouldBe ""
-      }
+    it("should handle a simple path with no ending /") {
+      val path = "/tmp"
+      path.extractBasePath shouldBe "/tmp/"
+      path.extractPartitions shouldBe ""
+    }
 
-      it("should handle a simple path with intermediate / and no partitions") {
-        val path = "/tmp/listener"
-        path.extractBasePath shouldBe "/tmp/listener/"
-        path.extractPartitions shouldBe ""
-      }
+    it("should handle a simple path with intermediate / and no partitions") {
+      val path = "/tmp/listener"
+      path.extractBasePath shouldBe "/tmp/listener/"
+      path.extractPartitions shouldBe ""
+    }
 
-      it("should handle a path with one partition segment") {
-        val path = "/tmp/listener/date=2025-09-10"
-        path.extractPartitions.globPathValues shouldBe "/date=*/"
-        path.extractBasePath shouldBe "/tmp/listener/"
-        path.extractPartitions shouldBe "/date=2025-09-10/"
-      }
+    it("should handle a path with one partition segment") {
+      val path = "/tmp/listener/date=2025-09-10"
+      path.extractPartitions.globPathValues shouldBe "/date=*/"
+      path.extractBasePath shouldBe "/tmp/listener/"
+      path.extractPartitions shouldBe "/date=2025-09-10/"
+    }
 
-      it("should handle a path with multiple partition segments") {
-        val path = "/tmp/listener/date=2025-09-10/cluster=111/id=ffff/level=ggg"
-        path.extractPartitions.globPathValues shouldBe "/date=*/cluster=*/id=*/level=*/"
-        path.extractBasePath shouldBe "/tmp/listener/"
-        path.extractPartitions shouldBe "/date=2025-09-10/cluster=111/id=ffff/level=ggg/"
-      }
+    it("should handle a path with multiple partition segments") {
+      val path = "/tmp/listener/date=2025-09-10/cluster=111/id=ffff/level=ggg"
+      path.extractPartitions.globPathValues shouldBe "/date=*/cluster=*/id=*/level=*/"
+      path.extractBasePath shouldBe "/tmp/listener/"
+      path.extractPartitions shouldBe "/date=2025-09-10/cluster=111/id=ffff/level=ggg/"
+    }
 
-      it("should handle a path with only partition segments after base") {
-        val path = "/base/a=10/b=20/c=30/"
-        path.extractPartitions.globPathValues shouldBe "/a=*/b=*/c=*/"
-        path.extractBasePath shouldBe "/base/"
-        path.extractPartitions shouldBe "/a=10/b=20/c=30/"
-      }
+    it("should handle a path with only partition segments after base") {
+      val path = "/base/a=10/b=20/c=30/"
+      path.extractPartitions.globPathValues shouldBe "/a=*/b=*/c=*/"
+      path.extractBasePath shouldBe "/base/"
+      path.extractPartitions shouldBe "/a=10/b=20/c=30/"
+    }
 
-      it("should handle a path with non-partition segments between partitions") {
-        val path = "/base/a=10/something/b=10/c=30"
-        path.extractPartitions.globPathValues shouldBe "/b=*/c=*/"
-        path.extractBasePath shouldBe "/base/a=10/something/"
-        path.extractPartitions shouldBe "/b=10/c=30/"
-      }
+    it("should handle a path with non-partition segments between partitions") {
+      val path = "/base/a=10/something/b=10/c=30"
+      path.extractPartitions.globPathValues shouldBe "/b=*/c=*/"
+      path.extractBasePath shouldBe "/base/a=10/something/"
+      path.extractPartitions shouldBe "/b=10/c=30/"
     }
   }
 }
