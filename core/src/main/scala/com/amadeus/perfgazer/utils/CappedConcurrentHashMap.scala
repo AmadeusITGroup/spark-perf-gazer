@@ -14,12 +14,10 @@ class CappedConcurrentHashMap[K: ClassTag, V](cap: Int, evictRatio: Double = 0.5
   require(cap > 2, "Capacity must be greater than 2")
   require(evictRatio >= 0.5 && evictRatio <= 1.0, "Drop ratio (% of items to drop if cap reached) must be in [0.5, 1.0]")
 
-  import scala.collection.JavaConverters._
-
   private val m = new ConcurrentHashMap[K, V](cap)
   def put(k: K, v: V)(implicit cmp: Ordering[K]): V = {
     if (m.size() >= cap) {
-      val keys = m.keys().asScala.toArray.sorted
+      val keys = JavaCollectionOps.enumerationToIterator(m.keys()).toArray.sorted
       val kPercentile = keys(Math.ceil(keys.length * evictRatio).toInt)
       m.keySet().removeIf(k => cmp.lt(k, kPercentile))
     }
@@ -30,5 +28,5 @@ class CappedConcurrentHashMap[K: ClassTag, V](cap: Int, evictRatio: Double = 0.5
   }
   def get(k: K): V = m.get(k)
   def size: Int = m.size()
-  private[utils] def keys: Iterator[K] = m.keys().asScala
+  private[utils] def keys: Iterator[K] = JavaCollectionOps.enumerationToIterator(m.keys())
 }

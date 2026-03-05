@@ -77,14 +77,20 @@ def testGroups(tests: Seq[TestDefinition], baseDir: File): Seq[Group] = {
 
 val commonSettings = Seq(
   Compile / javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
-  scalacOptions ++= Seq(
-    "-Ypartial-unification",
-    "-deprecation",
-    "-feature",
-    "-encoding",
-    "UTF-8",
-    "-target:jvm-1.8"
-  ),
+  scalacOptions ++= {
+    val base = Seq(
+      "-deprecation",
+      "-feature",
+      "-encoding",
+      "UTF-8"
+    )
+    val versionSpecific = CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 12)) => Seq("-Ypartial-unification", "-target:jvm-1.8")
+      case Some((2, 13)) => Seq("-release:8")
+      case _             => Seq.empty
+    }
+    base ++ versionSpecific
+  },
   libraryDependencies ++= Dependencies.coreDeps
 )
 
@@ -117,7 +123,7 @@ lazy val core = (projectMatrix in file("core"))
       libraryDependencies ++= testDependencies(Spark341.sparkVersion)
     )
   })
-  .addSparkVersionRow(spark = Spark352, scalaVersions = Seq("2.12.17"), customSetup = {
+  .addSparkVersionRow(spark = Spark352, scalaVersions = Seq("2.12.17", "2.13.16"), customSetup = {
     _.settings(
       libraryDependencies ++= testDependencies(Spark352.sparkVersion)
     )
