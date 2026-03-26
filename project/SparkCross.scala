@@ -65,6 +65,18 @@ object SparkCross {
       override val directorySuffix: String = "spark3.5.2"
       override val idSuffix: String = "spark_3-5-2"
     }
+
+    case object Spark410 extends SparkAxis {
+      override val sparkVersion: String = "4.1.0"
+
+      override val providedDeps: Seq[sbt.ModuleID] = Seq(
+        "org.apache.spark"   %% "spark-core"   % sparkVersion  % Dependencies.compileIfLocalOtherwiseProvided,
+        "org.apache.spark"   %% "spark-sql"    % sparkVersion  % Dependencies.compileIfLocalOtherwiseProvided
+      )
+
+      override val directorySuffix: String = "spark4.1.0"
+      override val idSuffix: String = "spark_4-1-0"
+    }
   }
 
   implicit class ProjectMatrixOps(val project: ProjectMatrix) extends AnyVal {

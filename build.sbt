@@ -1,6 +1,6 @@
 import Dependencies.deltaDepsBySparkVersion
 import SparkCross.ProjectMatrixOps
-import SparkCross.SparkAxis.{Spark341, Spark352}
+import SparkCross.SparkAxis.{Spark341, Spark352, Spark410}
 import sbt.Keys.*
 import sbt.Tests.*
 import sbt.Compile
@@ -22,6 +22,7 @@ inThisBuild(List(
 
 val DefaultForkJavaOptions = Seq(
   "-Dspark.driver.bindAddress=127.0.0.1",
+  "-Dspark.driver.host=127.0.0.1",
   "-Duser.country.format=US",
   "-Duser.language.format=en",
   "-Duser.timezone=UTC",
@@ -126,6 +127,11 @@ lazy val core = (projectMatrix in file("core"))
   .addSparkVersionRow(spark = Spark352, scalaVersions = Seq("2.12.17", "2.13.16"), customSetup = {
     _.settings(
       libraryDependencies ++= testDependencies(Spark352.sparkVersion)
+    )
+  })
+  .addSparkVersionRow(spark = Spark410, scalaVersions = Seq("2.13.18"), customSetup = {
+    _.settings(
+      libraryDependencies ++= testDependencies(Spark410.sparkVersion)
     )
   })
 
