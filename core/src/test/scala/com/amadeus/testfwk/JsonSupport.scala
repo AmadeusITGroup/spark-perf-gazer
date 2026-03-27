@@ -3,7 +3,7 @@ package com.amadeus.testfwk
 import com.jayway.jsonpath.JsonPath
 import net.minidev.json.JSONArray
 
-trait JsonSupport {
+object JsonSupport {
   type JsonString = String
   type JsonpathQuery = String
   def query(json: JsonString, query: JsonpathQuery): Array[AnyRef] =

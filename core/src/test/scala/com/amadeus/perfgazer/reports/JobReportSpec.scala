@@ -2,11 +2,11 @@ package com.amadeus.perfgazer.reports
 
 import com.amadeus.perfgazer.events.JobEvent.EndUpdate
 import com.amadeus.perfgazer.events.{JobEvent, StageEvent, StageRef}
-import com.amadeus.testfwk.{ConfigSupport, SimpleSpec}
+import com.amadeus.testfwk.SimpleSpec
 import org.apache.spark.Fixtures2
 import org.apache.spark.scheduler.{JobSucceeded, SparkListenerJobEnd}
 
-class JobReportSpec extends SimpleSpec with ConfigSupport {
+class JobReportSpec extends SimpleSpec {
 
   describe(s"${JobReport.getClass.getSimpleName}") {
     it("should generate a simple job report") {

@@ -1,8 +1,13 @@
 package com.amadeus.integration
 
-import com.amadeus.perfgazer.PerfGazer
+import com.amadeus.perfgazer.{JsonSink, PerfGazer}
 import com.amadeus.perfgazer.PathBuilder.PathOps
-import com.amadeus.testfwk._
+import com.amadeus.testfwk.ConfigSupport._
+import com.amadeus.testfwk.SimpleSpec
+import com.amadeus.testfwk.SparkSupport.withSpark
+import com.amadeus.testfwk.TempDirSupport.withTmpDir
+import org.apache.spark.SparkConf
+import org.scalatest.GivenWhenThen
 
 // Define your case class
 case class MakeModel(make: String, model: String)
@@ -10,27 +15,26 @@ case class CarRegistration(registration: String, make: String, model: String, en
 case class CarPrice(make: String, model: String, engine_size: BigDecimal, sale_price: Double)
 
 class SampleSkewDetectionSpec
-    extends SimpleSpec
-    with SparkSupport
-    with OptdSupport
-    with JsonSupport
-    with ConfigSupport
-    with SinkSupport
-    with TempDirSupport {
+    extends SimpleSpec with GivenWhenThen {
 
   describe("The listener for skew detection") {
-    withTmpDir { tmpDir =>
-      withSpark(appName = this.getClass.getName) { spark =>
-        // Set thresholds for coverage - write and switch files for every report
-        val destination = s"$tmpDir".withDefaultPartitions.resolveProperties(spark.sparkContext.getConf)
-        val writeBatchSize = 1
-        val fileSizeLimit = 1L*100
-        withJsonSink(destination, writeBatchSize, fileSizeLimit) { jsonSink =>
+    it("should write skewed data reports and reconcile them") {
+      withTmpDir { tmpDir =>
+        withSpark(appName = this.getClass.getName) { spark =>
+          Given("a JsonSink configured to write and switch files for every report")
+          val destination = s"$tmpDir".withDefaultPartitions.resolveProperties(spark.sparkContext.getConf)
+          val writeBatchSize = 1
+          val fileSizeLimit = 1L*100
+          val sparkConf = new SparkConf(false)
+            .set(JsonSink.DestinationKey, destination)
+            .set(JsonSink.WriteBatchSizeKey, writeBatchSize.toString)
+            .set(JsonSink.FileSizeLimitKey, fileSizeLimit.toString)
+          val jsonSink = new JsonSink(sparkConf)
+
           import org.apache.spark.sql.functions._
           import spark.implicits._
           import scala.util.Random
 
-          // regular setup
           val cfg = defaultTestConfig.withAllEnabled
           val eventsListener = new PerfGazer(cfg, jsonSink)
           spark.sparkContext.addSparkListener(eventsListener)
@@ -73,7 +77,7 @@ class SampleSkewDetectionSpec
           val small_df_registrations = Seq.fill(10000)(randomCarRegistration()).toDS()
           val large_df_prices = Seq.fill(100000)(randomCarPrice()).toDS()
 
-          // Join with skewed data
+          When("skewed data is joined and written to noop")
           spark.sparkContext.setJobDescription("Join skewed data")
 
           val small_df_avg_price = small_df_registrations
@@ -90,30 +94,27 @@ class SampleSkewDetectionSpec
           spark.sparkContext.removeSparkListener(eventsListener)
           jsonSink.close()
 
+          Then("it should save SQL reports in json file")
           val dfSqlReports = spark.read.json(s"$destination/sql-reports-*.json")
           val dfSqlReportsCnt = dfSqlReports.count()
-          it("should save SQL reports in json file") {
-            dfSqlReportsCnt shouldBe 1
-          }
+          dfSqlReportsCnt shouldBe 1
 
+          And("it should save Job reports in json file")
           val dfJobReports = spark.read.json(s"$destination/job-reports-*.json")
           val dfJobReportsCnt = dfJobReports.count()
-          it("should save Job reports in json file") {
-            dfJobReportsCnt should be > 1L
-          }
+          dfJobReportsCnt should be > 1L
 
+          And("it should save Stage reports in json file")
           val dfStageReports = spark.read.json(s"$destination/stage-reports-*.json")
           val dfStageReportsCnt = dfStageReports.count()
-          it("should save Stage reports in json file") {
-            dfStageReportsCnt should be > 1L
-          }
+          dfStageReportsCnt should be > 1L
 
+          And("it should save Task reports in json file")
           val dfTaskReports = spark.read.json(s"$destination/task-reports-*.json")
           val dfTaskReportsCnt = dfTaskReports.count()
-          it("should save Task reports in json file") {
-            dfTaskReportsCnt should be > 1L
-          }
+          dfTaskReportsCnt should be > 1L
 
+          And("it should reconcile reports")
           val dfTasks = dfJobReports
             .withColumn("stageId", explode(col("stages")))
             .drop("stages")
@@ -121,9 +122,7 @@ class SampleSkewDetectionSpec
             .join(dfTaskReports, Seq("stageId"))
           val dfTasksCnt = dfTasks.count()
 
-          it("should reconcile reports") {
-            dfTasksCnt should equal(dfTaskReportsCnt)
-          }
+          dfTasksCnt should equal(dfTaskReportsCnt)
 
           // Close the listener
           eventsListener.close()

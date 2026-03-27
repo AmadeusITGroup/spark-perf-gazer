@@ -1,11 +1,8 @@
 package com.amadeus.testfwk
 
 import org.apache.spark.sql.SparkSession
-import org.slf4j.{Logger, LoggerFactory}
 
-trait SparkSupport {
-  val logger: Logger = LoggerFactory.getLogger(getClass.getName)
-
+object SparkSupport {
   val DefaultConfigs: List[(String, String)] =
     List(
       ("spark.sql.shuffle.partitions", "1"),

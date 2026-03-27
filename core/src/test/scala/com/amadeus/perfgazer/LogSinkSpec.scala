@@ -1,11 +1,11 @@
 package com.amadeus.perfgazer
 
 import com.amadeus.perfgazer.reports.JobReport
-import com.amadeus.testfwk.{SimpleSpec, SinkSupport, TempDirSupport}
+import com.amadeus.testfwk.SimpleSpec
 
 import java.time.Instant
 
-class LogSinkSpec extends SimpleSpec with TempDirSupport with SinkSupport {
+class LogSinkSpec extends SimpleSpec {
   describe("log sink") {
     it("should write log") {
       val logSink = new LogSink()
