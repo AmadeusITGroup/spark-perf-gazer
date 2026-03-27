@@ -44,7 +44,7 @@ jobs:
           sbt -batch coverageOn test coverageReport coverageAggregate
 
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: target/scala-2.12/coverage-report/cobertura.xml
