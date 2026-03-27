@@ -47,7 +47,7 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: target/scala-2.12/coverage-report/cobertura.xml
+          files: target/**/coverage-report/cobertura.xml
           verbose: true
 
       # This step uploads information to the GitHub dependency graph and unlocks Dependabot alerts for the repository
