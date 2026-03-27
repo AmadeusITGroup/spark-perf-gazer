@@ -9,11 +9,12 @@ import com.amadeus.testfwk.{OptdSupport, SimpleSpec}
 import com.amadeus.testfwk.SparkSupport.withSpark
 import com.amadeus.testfwk.TempDirSupport.withTmpDir
 import io.delta.tables.DeltaTable
+import org.scalatest.GivenWhenThen
 
 import java.nio.file.Path
 
 class ReadCsvToDeltaSpec
-    extends SimpleSpec {
+    extends SimpleSpec with GivenWhenThen {
   val DeltaSettings: List[(String, String)] = List(
     ("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension"),
     ("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"),
@@ -26,22 +27,24 @@ class ReadCsvToDeltaSpec
     it("should report the filter plan nodes") {
       withSpark(DeltaSettings, appName = this.getClass.getName) { spark =>
         withTmpDir { tmpDir =>
+          Given("a delta table created from OPTD CSV data")
           val optdDf = OptdSupport.readOptd(spark)
           optdDf.write.format("delta").mode("overwrite").save(subdir(tmpDir, "deltadir1"))
 
           val sinks = new TestableSink()
-          // DF TABLE: iata_code, icao_code, ..., name, ..., country_name, country_code, ...
           val df = DeltaTable.forPath(subdir(tmpDir, "deltadir1")).toDF
           val cfg = defaultTestConfig.withOnlySqlEnabled
 
           val eventsListener = new PerfGazer(cfg, sinks)
           spark.sparkContext.addSparkListener(eventsListener)
 
-          // FILTER on adm1_name_ascii and fcode
+          When("a filter is applied and written to delta")
           spark.sparkContext.setJobDescription("jobfilter")
           val dfFiltered1 =
             df.filter(df("adm1_name_ascii") === "Cordoba" && df("fcode") === "AIRP") // 16 records matching
           dfFiltered1.write.format("delta").mode("overwrite").save(subdir(tmpDir, "jobfilterdir"))
+
+          Then("it should report the filter plan nodes")
 
           val f = SqlNodeFilter(
             nodeNameRegex = Some(".*Filter.*"),

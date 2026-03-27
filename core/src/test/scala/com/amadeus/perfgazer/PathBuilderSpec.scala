@@ -3,33 +3,39 @@ package com.amadeus.perfgazer
 import com.amadeus.perfgazer.PathBuilder.PathOps
 import com.amadeus.testfwk.SimpleSpec
 import com.amadeus.testfwk.SparkSupport.withSpark
+import org.scalatest.GivenWhenThen
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-class PathBuilderSpec extends SimpleSpec {
+class PathBuilderSpec extends SimpleSpec with GivenWhenThen {
   describe("Path builder for JSON Sink") {
     it("should build reports destinations using Spark properties") {
       withSpark(appName = this.getClass.getName) { spark =>
+        Given("path templates and a Spark session")
         val tmpDirUnix: String = "/tmp/perfgazer/pathbuilder/spec"
         val tmpDirWin: String = "C:\\tmp\\perfgazer\\pathbuilder\\spec"
         val currentDate = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE)
 
+        Then("it should build reports destination (withDefaultPartitions)")
         val destination2Unix = tmpDirUnix.withDefaultPartitions.resolveProperties(spark.sparkContext.getConf)
         val destination2Win = tmpDirWin.withDefaultPartitions.resolveProperties(spark.sparkContext.getConf)
         destination2Unix shouldBe tmpDirUnix + s"/date=$currentDate/applicationId=${spark.sparkContext.applicationId}/"
         destination2Win shouldBe tmpDirWin + s"\\date=$currentDate\\applicationId=${spark.sparkContext.applicationId}\\"
 
+        And("it should build reports destination (withDate / withSparkConf)")
         val destination3Unix = tmpDirUnix.withDate.withSparkConf("applicationId", "spark.app.id").resolveProperties(spark.sparkContext.getConf)
         val destination3Win = tmpDirWin.withDate.withSparkConf("applicationId", "spark.app.id").resolveProperties(spark.sparkContext.getConf)
         destination3Unix shouldBe tmpDirUnix + s"/date=$currentDate/applicationId=${spark.sparkContext.applicationId}/"
         destination3Win shouldBe tmpDirWin + s"\\date=$currentDate\\applicationId=${spark.sparkContext.applicationId}\\"
 
+        And("it should build reports destination (withDate / withApplicationId)")
         val destination4Unix = tmpDirUnix.withDate.withApplicationId.resolveProperties(spark.sparkContext.getConf)
         val destination4Win = tmpDirWin.withDate.withApplicationId.resolveProperties(spark.sparkContext.getConf)
         destination4Unix shouldBe tmpDirUnix + s"/date=$currentDate/applicationId=${spark.sparkContext.applicationId}/"
         destination4Win shouldBe tmpDirWin + s"\\date=$currentDate\\applicationId=${spark.sparkContext.applicationId}\\"
 
+        And("it should throw IllegalArgumentException if one of partition value cannot be resolved")
         val destination5 = tmpDirUnix
           .withPartition("customPartition", "myPartition")
           .withDatabricksTag("clusterName", "clusterName")
