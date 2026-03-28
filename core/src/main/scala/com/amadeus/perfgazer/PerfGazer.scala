@@ -163,7 +163,9 @@ class PerfGazer(
           val metricsById = sqlStatusTracker
             .map(_.executionMetrics(event.executionId))
             .getOrElse(Map.empty)
-          sink.write(SqlReport(sqlStart, metricsById))
+          val enrichedStart = SparkInternal.extendedDetails(event)
+            .fold(sqlStart)(details => sqlStart.copy(details = details))
+          sink.write(SqlReport(enrichedStart, metricsById))
           sqlStartEvents.remove(event.executionId)
         case None =>
           logger.warn("SQL start event not found for executionId: {}", event.executionId)

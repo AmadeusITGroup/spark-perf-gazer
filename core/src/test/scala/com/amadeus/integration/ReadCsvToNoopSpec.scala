@@ -56,6 +56,8 @@ class ReadCsvToNoopSpec extends SimpleSpec with GivenWhenThen {
 
         And("it should build SQL reports with details")
         val sqlDetails = sqlReport.details
+        sqlDetails should include regex "== Parsed Logical Plan =="
+        sqlDetails should include regex "== Optimized Logical Plan =="
         sqlDetails should include regex "== Physical Plan =="
 
         And("it should build job reports")
