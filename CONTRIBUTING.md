@@ -4,7 +4,9 @@ All contributions must go through a Pull Request review before being accepted.
 
 - Before opening a Pull Request, please consider the following questions:
   - Is the change ready enough to ask the community to spend time reviewing?
-  - Is the change being proposed clearly explained and motivated?
+  - Is the change being proposed clearly explained and motivated? PRs without a clear motivation will not be reviewed.
+- Each PR must contain a single, focused change to make reviews manageable.
+- All checklist tasks in the PR template must be completed before requesting review.
 - Keep PRs to a reasonable number of meaningful commits; avoid many minor or typo-only commits by squashing them.
 - Use squash intentionally—preserve layered commits if they clarify the logic and aid code review.
 - Please follow [the Apache Software Foundation Code of Conduct](https://www.apache.org/foundation/policies/conduct.html).
