@@ -35,6 +35,10 @@ jobs:
       - name: Set up sbt
         uses: sbt/setup-sbt@v1
 
+      - name: Style Check
+        run: |
+          sbt -batch scalastyle
+
       - name: Build
         run: |
           sbt -batch clean compile
