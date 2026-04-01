@@ -60,6 +60,23 @@ sbt publishLocal
 spark-shell --packages io.github.amadeusitgroup:perfgazer_spark_3.5.2_2.12:0.0.2-SNAPSHOT ...
 ```
 
+## Documentation
+
+The project uses [MkDocs](https://www.mkdocs.org/) with the [Material theme](https://squidfunk.github.io/mkdocs-material/).
+
+### Local preview
+
+```bash
+pip install mkdocs mkdocs-material
+mkdocs serve
+```
+
+Then open http://127.0.0.1:8000 in your browser.
+
+### Deployment
+
+Documentation is automatically deployed to GitHub Pages when changes to `docs/` or `mkdocs.yml` are pushed to `main`.
+
 ## Contributing
 
 To contribute to this project, see [this](../CONTRIBUTING.md).
