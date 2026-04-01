@@ -13,7 +13,30 @@ spark-shell \
 ```
 
 !!! note
-    Change the version to the latest release.
+    Change the version to the latest release: ![GitHub Release](https://img.shields.io/github/v/release/AmadeusITGroup/spark-perf-gazer)
+
+Run some Spark actions:
+
+```scala
+spark.range(1000000).groupBy("id").count().collect()
+```
+
+Then explore the generated reports:
+
+```bash
+ls /tmp/perfgazer/output/
+# job-reports-*.json, stage-reports-*.json, sql-reports-*.json
+```
+
+You can now query them directly in Spark (example for job reports):
+
+```sql
+CREATE OR REPLACE TEMPORARY VIEW job
+USING json
+OPTIONS (path '/tmp/perfgazer/output/job-reports-*.json');
+
+SELECT * FROM job;
+```
 
 ## Next Steps
 
