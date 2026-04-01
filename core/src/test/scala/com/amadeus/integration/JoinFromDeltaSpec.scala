@@ -18,7 +18,8 @@ class JoinFromDeltaSpec
   val DeltaSettings: List[(String, String)] = List(
     ("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension"),
     ("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"),
-    ("spark.sql.adaptive.enabled", "false")
+    ("spark.sql.adaptive.enabled", "false"),
+    ("spark.driver.host", "localhost")
   )
 
   private def subdir(base: Path, s: String) = base.resolve(s).toAbsolutePath.toFile.toString
