@@ -14,7 +14,8 @@ object Dependencies {
     "3.4.1" -> "io.delta" %% "delta-core" % "2.4.0",
     "3.5.0" -> "io.delta" %% "delta-spark" % "3.2.0",
     "3.5.2" -> "io.delta" %% "delta-spark" % "3.2.0",
-    "4.0.0" -> "io.delta" %% "delta-spark" % "4.0.0"
+    "4.0.0" -> "io.delta" %% "delta-spark" % "4.0.0",
+    "4.1.1" -> "io.delta" %% "delta-spark" % "4.1.0"
   )
 
   // @formatter:off
