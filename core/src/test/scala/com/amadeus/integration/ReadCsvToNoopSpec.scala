@@ -45,8 +45,9 @@ class ReadCsvToNoopSpec extends SimpleSpec with GivenWhenThen {
         val sqlReport = sqlReports.head
         val nodes = sqlReport.nodes
         nodes.size should be(2)
-        nodes.map(i => (i.sqlId, i.jobName, i.nodeName)).head should be(1, "testjob", "() OverwriteByExpression")
-        nodes.map(i => (i.sqlId, i.jobName, i.nodeName)).last should be(1, "testjob", "() Scan csv ")
+        val sqlId = sqlReport.sqlId // Spark 4 may assign a different execution ID than Spark 3
+        nodes.map(i => (i.sqlId, i.jobName, i.nodeName)).head should be(sqlId, "testjob", "() OverwriteByExpression")
+        nodes.map(i => (i.sqlId, i.jobName, i.nodeName)).last should be(sqlId, "testjob", "() Scan csv ")
 
         And("it should build SQL reports with metrics")
         val csvNodes = sqlReport.nodes.filter(_.nodeName contains "Scan csv")
@@ -67,7 +68,7 @@ class ReadCsvToNoopSpec extends SimpleSpec with GivenWhenThen {
         jobReport.jobId should be(1L)
         jobReport.groupId should be("testgroup")
         jobReport.jobName should be("testjob")
-        jobReport.sqlId should be("1")
+        jobReport.sqlId should be(sqlReports.head.sqlId.toString) // Spark 4 may assign a different execution ID
         jobReport.stages should be(Seq(1))
 
         And("it should build stage reports (StagePrettyTranslator)")
