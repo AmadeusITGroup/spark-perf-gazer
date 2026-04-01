@@ -23,11 +23,15 @@ Please, change the version, using the latest release: ![GitHub Release](https://
 ```
 spark-shell \
   --packages io.github.amadeusitgroup:perfgazer_spark_3-5-2_2.12:0.0.1 \
+  --conf spark.driver.bindAddress=127.0.0.1 \
+  --conf spark.driver.host=127.0.0.1 \
   --conf spark.extraListeners=com.amadeus.perfgazer.PerfGazer \
   --conf spark.perfgazer.sink.class=com.amadeus.perfgazer.JsonSink \
   --conf spark.perfgazer.sink.json.destination=/tmp/perfgazer/jsonsink/date={{perfgazer.now.year}}-{{perfgazer.now.month}}-{{perfgazer.now.day}}/applicationId={{spark.app.id}}
 ```
 Change the versions as needed.
+
+> Note: `spark.driver.bindAddress` and `spark.driver.host` force Spark to bind to the loopback interface (`127.0.0.1`). This is required on macOS to prevent the OS firewall from blocking Spark's internal Netty RPC channel (used to transfer JARs and shuffle data between the driver and its local executor, even in local mode). Without these settings, macOS may prompt to allow network access and fail if denied.
 
 The following properties are available to configure the PerfGazer listener and its sink:
 
