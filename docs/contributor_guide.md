@@ -84,8 +84,8 @@ The doc site is available at https://amadeusitgroup.github.io/spark-perf-gazer/.
 
 ## Contributing
 
-To contribute to this project, see [this](../CONTRIBUTING.md).
+To contribute to this project, see [CONTRIBUTING.md](https://github.com/AmadeusITGroup/spark-perf-gazer/blob/main/CONTRIBUTING.md).
 
 ## Releasing
 
-To release a new version of this project, see [this](../RELEASING.md).
+To release a new version of this project, see [RELEASING.md](https://github.com/AmadeusITGroup/spark-perf-gazer/blob/main/RELEASING.md).
