@@ -31,14 +31,10 @@ There are some problems with the analysis of execution stats from the Spark UI:
 - not made for analytics (i.e. how many of my SQL queries used 'BroadcastHashJoin'?)
 
 ---
-## User Guide
 
-See the [User Guide](docs/user_guide.md) for setup and usage instructions.
+## Documentation
 
----
-## Contributor Guide
-
-See the [Contributor Guide](docs/contributor_guide.md) for technical overview, build instructions, and development setup.
+For setup instructions, usage guides, and more, visit the [documentation site](https://amadeusitgroup.github.io/spark-perf-gazer/).
 
 ## Authors
 

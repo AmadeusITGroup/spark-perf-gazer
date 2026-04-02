@@ -80,7 +80,7 @@ Documentation is versioned using [mike](https://github.com/jimporter/mike) and d
 - Push to `main` (changes in `docs/` or `mkdocs.yml`) → deploys the `dev` version
 - Publishing a GitHub Release → deploys a versioned copy (e.g. `v0.1.0`) and updates the `latest` alias
 
-The doc site is available at https://amadeusitgroup.github.io/spark-perf-gazer/.
+The doc site is available at [amadeusitgroup.github.io/spark-perf-gazer](https://amadeusitgroup.github.io/spark-perf-gazer/).
 
 ## Contributing
 
