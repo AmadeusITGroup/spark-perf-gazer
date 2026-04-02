@@ -4,32 +4,42 @@ on:
   push:
     branches: [main, doc-site]  # TODO: remove 'doc-site' after testing
     paths: ['docs/**', 'mkdocs.yml']
+  release:
+    types: [published]
 
 permissions:
-  pages: write
-  id-token: write
-  contents: read
+  contents: write
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install mkdocs mkdocs-material
-      - run: mkdocs build
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/deploy-pages@v4
-        id: deployment
+      - run: pip install mkdocs mkdocs-material mike
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch gh-pages
+        run: git fetch origin gh-pages --depth=1 || true
+
+      - name: Deploy dev (on push to main)
+        if: github.event_name == 'push'
+        run: |
+          mike deploy --push dev
+          mike set-default --push dev
+
+      - name: Deploy release version
+        if: github.event_name == 'release'
+        run: |
+          mike deploy --push --update-aliases ${{ github.event.release.tag_name }} latest
+          mike set-default --push latest
