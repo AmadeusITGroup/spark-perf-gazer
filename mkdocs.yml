@@ -1,0 +1,34 @@
+site_name: PerfGazer
+site_url: https://AmadeusITGroup.github.io/spark-perf-gazer/
+site_description: Performance Gazer for Apache Spark - A configurable Spark Listener for post-mortem analysis
+
+repo_name: AmadeusITGroup/spark-perf-gazer
+repo_url: https://github.com/AmadeusITGroup/spark-perf-gazer
+
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.indexes
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - User Guide:
+      - user_guide/index.md
+      - Setup via Spark Properties: user_guide/setup_spark_properties.md
+      - Setup via Code: user_guide/setup_code.md
+      - Databricks: user_guide/databricks.md
+      - Analyze with SQL: user_guide/analyze_sql.md
+      - Analyze with Scala: user_guide/analyze_scala.md
+  - Contributor Guide: contributor_guide.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+extra:
+  version:
+    provider: mike

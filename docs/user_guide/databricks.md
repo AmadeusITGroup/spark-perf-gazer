@@ -1,4 +1,4 @@
-# Databricks setup
+# Databricks job cluster setup
 
 You will need to install the library according to the Databricks runtime being used.
 

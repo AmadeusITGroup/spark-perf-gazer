@@ -63,3 +63,6 @@ metastore_db/
 spark-warehouse-tests/
 .bloop/
 metals.sbt
+
+# MkDocs
+site/

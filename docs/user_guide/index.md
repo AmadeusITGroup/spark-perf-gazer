@@ -25,7 +25,7 @@ The listener can be configured in two ways. The default and recommended approach
 - [Configuration via Spark properties](setup_spark_properties.md) ← start here
 - [Configuration via code change](setup_code.md)
 
-For Databricks-specific setup, see [databricks.md](databricks.md).
+For Databricks-specific setup, see [Databricks](databricks.md).
 
 ## Step 3 — Run your Spark application
 
