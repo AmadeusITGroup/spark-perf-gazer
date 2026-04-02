@@ -61,10 +61,6 @@ object PathBuilder {
       appendPartition(partitionName, "{{spark.databricks.clusterUsageTags." + tagName + "}}")
     }
 
-    def withDefaultPartitions: String = {
-      path.withDate.withApplicationId
-    }
-
     /**
       * The normalizePath method is used to standardize the format of a file system path.
       * It ensures that all directory separators in the path are consistent and that the path ends with a separator.

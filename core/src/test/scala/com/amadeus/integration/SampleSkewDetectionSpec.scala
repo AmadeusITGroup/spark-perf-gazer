@@ -22,7 +22,7 @@ class SampleSkewDetectionSpec
       withTmpDir { tmpDir =>
         withSpark(appName = this.getClass.getName) { spark =>
           Given("a JsonSink configured to write and switch files for every report")
-          val destination = s"$tmpDir".withDefaultPartitions.resolveProperties(spark.sparkContext.getConf)
+          val destination = s"$tmpDir".withDate.withApplicationId.resolveProperties(spark.sparkContext.getConf)
           val writeBatchSize = 1
           val fileSizeLimit = 1L*100
           val sparkConf = new SparkConf(false)

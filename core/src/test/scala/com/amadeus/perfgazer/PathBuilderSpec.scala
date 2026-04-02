@@ -18,8 +18,8 @@ class PathBuilderSpec extends SimpleSpec with GivenWhenThen {
         val currentDate = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE)
 
         Then("it should build reports destination (withDefaultPartitions)")
-        val destination2Unix = tmpDirUnix.withDefaultPartitions.resolveProperties(spark.sparkContext.getConf)
-        val destination2Win = tmpDirWin.withDefaultPartitions.resolveProperties(spark.sparkContext.getConf)
+        val destination2Unix = tmpDirUnix.withDate.withApplicationId.resolveProperties(spark.sparkContext.getConf)
+        val destination2Win = tmpDirWin.withDate.withApplicationId.resolveProperties(spark.sparkContext.getConf)
         destination2Unix shouldBe tmpDirUnix + s"/date=$currentDate/applicationId=${spark.sparkContext.applicationId}/"
         destination2Win shouldBe tmpDirWin + s"\\date=$currentDate\\applicationId=${spark.sparkContext.applicationId}\\"
 
