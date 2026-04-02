@@ -870,7 +870,12 @@ mkdocs<span class="w"> </span>serve
 </code></pre></div>
 <p>Then open http://127.0.0.1:8000 in your browser.</p>
 <h3 id="deployment">Deployment</h3>
-<p>Documentation is automatically deployed to GitHub Pages when changes to <code>docs/</code> or <code>mkdocs.yml</code> are pushed to <code>main</code>.</p>
+<p>Documentation is versioned using <a href="https://github.com/jimporter/mike">mike</a> and deployed to GitHub Pages automatically:</p>
+<ul>
+<li>Push to <code>main</code> (changes in <code>docs/</code> or <code>mkdocs.yml</code>) → deploys the <code>dev</code> version</li>
+<li>Publishing a GitHub Release → deploys a versioned copy (e.g. <code>v0.1.0</code>) and updates the <code>latest</code> alias</li>
+</ul>
+<p>The doc site is available at https://amadeusitgroup.github.io/spark-perf-gazer/.</p>
 <h2 id="contributing">Contributing</h2>
 <p>To contribute to this project, see <a href="../CONTRIBUTING.md">this</a>.</p>
 <h2 id="releasing">Releasing</h2>
