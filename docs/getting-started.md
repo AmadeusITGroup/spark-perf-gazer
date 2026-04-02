@@ -40,5 +40,5 @@ SELECT * FROM job;
 
 ## Next Steps
 
-- [User Guide](user_guide.md) - Full setup, configuration options, and data analysis
+- [User Guide](user_guide/index.md) - Full setup, configuration options, and data analysis
 - [Contributor Guide](contributor_guide.md) - Build instructions and development setup

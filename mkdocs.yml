@@ -9,12 +9,19 @@ theme:
   name: material
   features:
     - navigation.instant
+    - navigation.indexes
     - content.code.copy
 
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
-  - User Guide: user_guide.md
+  - User Guide:
+      - user_guide/index.md
+      - Setup via Spark Properties: user_guide/setup_spark_properties.md
+      - Setup via Code: user_guide/setup_code.md
+      - Databricks: user_guide/databricks.md
+      - Analyze with SQL: user_guide/analyze_sql.md
+      - Analyze with Scala: user_guide/analyze_scala.md
   - Contributor Guide: contributor_guide.md
 
 markdown_extensions:
