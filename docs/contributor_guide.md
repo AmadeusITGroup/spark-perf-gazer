@@ -75,7 +75,12 @@ Then open http://127.0.0.1:8000 in your browser.
 
 ### Deployment
 
-Documentation is automatically deployed to GitHub Pages when changes to `docs/` or `mkdocs.yml` are pushed to `main`.
+Documentation is versioned using [mike](https://github.com/jimporter/mike) and deployed to GitHub Pages automatically:
+
+- Push to `main` (changes in `docs/` or `mkdocs.yml`) → deploys the `dev` version
+- Publishing a GitHub Release → deploys a versioned copy (e.g. `v0.1.0`) and updates the `latest` alias
+
+The doc site is available at https://amadeusitgroup.github.io/spark-perf-gazer/.
 
 ## Contributing
 
