@@ -114,19 +114,16 @@ object JsonSink {
       * @param reportName  The report name, that is used as view name too (e.g. "job", "sql", ...).
       */
     def generateViewDDL(destination: String, reportName: String): String = {
-      var basePath = destination.extractBasePath
-      val starPathPart = destination.extractPartitions.globPathValues
-      val fileNameWithWildcard = s"$reportName-reports-*.json"
-      if (runningOnDatabricks && basePath.startsWith("/dbfs/")) {
-        basePath = basePath.replaceFirst("/dbfs/", "dbfs:/")
+      var resolvedDestination = destination
+      if (runningOnDatabricks && resolvedDestination.startsWith("/dbfs/")) {
+        resolvedDestination = resolvedDestination.replaceFirst("/dbfs/", "dbfs:/")
       }
-      val globPath = s"$basePath$starPathPart".normalizePath + s"$fileNameWithWildcard"
+      val globPath = resolvedDestination.normalizePath + s"$reportName-reports-*.json"
       val ddl =
         s"""|CREATE OR REPLACE TEMPORARY VIEW $reportName
             |USING json
             |OPTIONS (
-            |  path \"$globPath\",
-            |  basePath \"$basePath\"
+            |  path \"$globPath\"
             |);""".stripMargin
       ddl
     }
