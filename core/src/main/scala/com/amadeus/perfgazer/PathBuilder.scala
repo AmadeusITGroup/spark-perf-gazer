@@ -3,10 +3,12 @@ package com.amadeus.perfgazer
 import org.apache.spark.SparkConf
 
 import java.time.LocalDateTime
-import java.util.Properties
+import java.util.{Properties, UUID}
 import scala.util.matching.Regex
 
 object PathBuilder {
+
+  private val jvmRunId: UUID = UUID.randomUUID()
 
   private val SeparatorPattern: Regex = """([/\\]+)""".r
   private val PartitionsPattern: Regex = """([/\\]+[^=/\\]+=[^/\\]+)+[/\\]*$""".r
@@ -51,6 +53,10 @@ object PathBuilder {
       appendPartition("applicationId", "{{spark.app.id}}")
     }
 
+    def withRunId: String = {
+      appendPartition("runId", "{{perfgazer.runid}}")
+    }
+
     def withDatabricksTag(partitionName: String, tagName: String): String = {
       appendPartition(partitionName, "{{spark.databricks.clusterUsageTags." + tagName + "}}")
     }
@@ -81,18 +87,22 @@ object PathBuilder {
       * Placeholders are in the format {{key}}.
       * Placeholders are replaced with their corresponding values from a provided map (SparkConf) or internal dateProps map.
       */
-    def resolveProperties(sparkConf: SparkConf): String = {
+    def resolveProperties(
+      sparkConf: SparkConf,
+      uuidGen: () => UUID = () => jvmRunId
+    ): String = {
       val now = LocalDateTime.now()
-      val dateProps = new Properties()
-      dateProps.setProperty("perfgazer.now.year", now.getYear.toString)
-      dateProps.setProperty("perfgazer.now.month", f"${now.getMonthValue}%02d")
-      dateProps.setProperty("perfgazer.now.day", f"${now.getDayOfMonth}%02d")
-      dateProps.setProperty("perfgazer.now.hour", f"${now.getHour}%02d")
-      dateProps.setProperty("perfgazer.now.minute", f"${now.getMinute}%02d")
+      val extraProps = new Properties()
+      extraProps.setProperty("perfgazer.now.year", now.getYear.toString)
+      extraProps.setProperty("perfgazer.now.month", f"${now.getMonthValue}%02d")
+      extraProps.setProperty("perfgazer.now.day", f"${now.getDayOfMonth}%02d")
+      extraProps.setProperty("perfgazer.now.hour", f"${now.getHour}%02d")
+      extraProps.setProperty("perfgazer.now.minute", f"${now.getMinute}%02d")
+      extraProps.setProperty("perfgazer.runid", uuidGen().toString())
 
       val resolved = PlaceholderPattern.replaceAllIn(
         path,
-        m => Option(dateProps.getProperty(m.group(1)))
+        m => Option(extraProps.getProperty(m.group(1)))
           .orElse(sparkConf.getOption(m.group(1)))
           .getOrElse(throw new IllegalArgumentException(m.group(1) + " is not set"))
       )

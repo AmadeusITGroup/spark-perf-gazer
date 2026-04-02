@@ -35,6 +35,19 @@ class PathBuilderSpec extends SimpleSpec with GivenWhenThen {
         destination4Unix shouldBe tmpDirUnix + s"/date=$currentDate/applicationId=${spark.sparkContext.applicationId}/"
         destination4Win shouldBe tmpDirWin + s"\\date=$currentDate\\applicationId=${spark.sparkContext.applicationId}\\"
 
+        And("it should resolve perfgazer.runid with the run id/uuid")
+        val fixedUuid = "00000000-0000-0000-0000-000000000042"
+        val destinationWithRunId = tmpDirUnix.withRunId.resolveProperties(
+          spark.sparkContext.getConf,
+          () => java.util.UUID.fromString(fixedUuid)
+        )
+        destinationWithRunId shouldBe tmpDirUnix + s"/runId=$fixedUuid/"
+
+        And("it should generate a the same uuid for a given runtime")
+        val uuid1 = tmpDirUnix.withRunId.resolveProperties(spark.sparkContext.getConf)
+        val uuid2 = tmpDirUnix.withRunId.resolveProperties(spark.sparkContext.getConf)
+        uuid1 shouldEqual uuid2
+
         And("it should throw IllegalArgumentException if one of partition value cannot be resolved")
         val destination5 = tmpDirUnix
           .withPartition("customPartition", "myPartition")
