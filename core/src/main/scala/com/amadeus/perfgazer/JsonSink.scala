@@ -20,9 +20,7 @@ import java.util.UUID
 class JsonSink(
   val config: JsonSink.Config,
   sparkConf: SparkConf,
-  reportTypes: Set[ReportType] = ReportType.standardTypes,
-  uuidGen: () => UUID = () => PathBuilder.jvmRunId,
-  nowProvider: () => LocalDateTime = () => PathBuilder.jvmStartupTime
+  reportTypes: Set[ReportType] = ReportType.standardTypes
 ) extends Sink {
 
   def this(sparkConf: SparkConf) = {
@@ -42,7 +40,7 @@ class JsonSink(
 
   override def supportedReportTypes: Set[ReportType] = reportTypes
 
-  val destination: String = config.destination.resolveProperties(sparkConf, uuidGen, nowProvider)
+  val destination: String = config.destination.resolveProperties(sparkConf)
 
   val queues: Set[ReportWriter] = supportedReportTypes.map(
     new ReportWriter(config, _, destination)
