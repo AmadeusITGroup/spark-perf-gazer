@@ -16,18 +16,18 @@ jobs:
       fail-fast: true
       matrix:
         include:
-          - spark: "3.4.1"
-            scala: "2.12.17"
-            scala_binary: "2.12"
+          - spark: "3.4.1" # dbr 13.3
+            scala: "2.12.21"
             java: "8"
-          - spark: "3.5.2"
-            scala: "2.12.17"
-            scala_binary: "2.12"
+          - spark: "3.5.2" # dbr 16.4
+            scala: "2.12.21"
             java: "8"
-          - spark: "4.1.1"
-            scala: "2.13.17"
-            scala_binary: "2.13"
+          - spark: "3.5.2" # dbr 16.4
+            scala: "2.13.18"
             java: "17"
+          - spark: "4.1.0" # dbr 18.1
+            scala: "2.13.18"
+            java: "21"
     env:
       SPARK_VERSION: ${{ matrix.spark }}
       SCALA_VERSION: ${{ matrix.scala }}
