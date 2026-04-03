@@ -17,10 +17,10 @@ jobs:
       matrix:
         include:
           - spark: "3.4.1" # dbr 13.3
-            scala: "2.12.21"
+            scala: "2.12.20"
             java: "8"
           - spark: "3.5.2" # dbr 16.4
-            scala: "2.12.21"
+            scala: "2.12.20"
             java: "8"
           - spark: "3.5.2" # dbr 16.4
             scala: "2.13.18"
