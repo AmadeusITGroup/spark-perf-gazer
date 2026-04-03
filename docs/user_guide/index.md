@@ -38,6 +38,5 @@ PerfGazer registers a shutdown hook that ensures the listener is closed graceful
 Once your application has run, the collected reports can be analyzed in different ways depending on your environment and preference:
 
 - [Analyze using SQL](analyze_sql.md)
-- [Analyze using Scala](analyze_scala.md)
 
 > Note: at application shutdown, PerfGazer prints view creation snippets in the logs that match your configuration. These are a convenient starting point for SQL analysis.
