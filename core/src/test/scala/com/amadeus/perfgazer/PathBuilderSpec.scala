@@ -6,7 +6,7 @@ import com.amadeus.testfwk.SparkSupport.withSpark
 import org.scalatest.GivenWhenThen
 
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import java.util.UUID
 
 class PathBuilderSpec extends SimpleSpec with GivenWhenThen {
   describe("Path builder for JSON Sink") {
@@ -15,45 +15,43 @@ class PathBuilderSpec extends SimpleSpec with GivenWhenThen {
         Given("path templates and a Spark session")
         val tmpDirUnix: String = "/tmp/perfgazer/pathbuilder/spec"
         val tmpDirWin: String = "C:\\tmp\\perfgazer\\pathbuilder\\spec"
-        val currentDate = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE)
+        val fixedNow = LocalDateTime.of(2025, 4, 2, 10, 30)
+        val fixedDate = "2025-04-02"
+        val fixedNowProvider: () => LocalDateTime = () => fixedNow
+        val fixedUuid = "00000000-0000-0000-0000-000000000042"
+        val fixedUuidProvider: () => UUID = () => UUID.fromString(fixedUuid)
 
         Then("it should build reports destination (withDefaultPartitions)")
-        val destination2Unix = tmpDirUnix.withDate.withApplicationId.resolveProperties(spark.sparkContext.getConf)
-        val destination2Win = tmpDirWin.withDate.withApplicationId.resolveProperties(spark.sparkContext.getConf)
-        destination2Unix shouldBe tmpDirUnix + s"/date=$currentDate/applicationId=${spark.sparkContext.applicationId}/"
-        destination2Win shouldBe tmpDirWin + s"\\date=$currentDate\\applicationId=${spark.sparkContext.applicationId}\\"
+        val destination2Unix = tmpDirUnix.withDate.withApplicationId.resolveProperties(spark.sparkContext.getConf, fixedUuidProvider, fixedNowProvider)
+        val destination2Win = tmpDirWin.withDate.withApplicationId.resolveProperties(spark.sparkContext.getConf, fixedUuidProvider, fixedNowProvider)
+        destination2Unix shouldBe tmpDirUnix + s"/date=$fixedDate/applicationId=${spark.sparkContext.applicationId}/"
+        destination2Win shouldBe tmpDirWin + s"\\date=$fixedDate\\applicationId=${spark.sparkContext.applicationId}\\"
 
         And("it should build reports destination (withDate / withSparkConf)")
-        val destination3Unix = tmpDirUnix.withDate.withSparkConf("applicationId", "spark.app.id").resolveProperties(spark.sparkContext.getConf)
-        val destination3Win = tmpDirWin.withDate.withSparkConf("applicationId", "spark.app.id").resolveProperties(spark.sparkContext.getConf)
-        destination3Unix shouldBe tmpDirUnix + s"/date=$currentDate/applicationId=${spark.sparkContext.applicationId}/"
-        destination3Win shouldBe tmpDirWin + s"\\date=$currentDate\\applicationId=${spark.sparkContext.applicationId}\\"
+        val destination3Unix = tmpDirUnix.withDate.withSparkConf("applicationId", "spark.app.id").resolveProperties(spark.sparkContext.getConf, fixedUuidProvider, fixedNowProvider)
+        val destination3Win = tmpDirWin.withDate.withSparkConf("applicationId", "spark.app.id").resolveProperties(spark.sparkContext.getConf, fixedUuidProvider, fixedNowProvider)
+        destination3Unix shouldBe tmpDirUnix + s"/date=$fixedDate/applicationId=${spark.sparkContext.applicationId}/"
+        destination3Win shouldBe tmpDirWin + s"\\date=$fixedDate\\applicationId=${spark.sparkContext.applicationId}\\"
 
         And("it should build reports destination (withDate / withApplicationId)")
-        val destination4Unix = tmpDirUnix.withDate.withApplicationId.resolveProperties(spark.sparkContext.getConf)
-        val destination4Win = tmpDirWin.withDate.withApplicationId.resolveProperties(spark.sparkContext.getConf)
-        destination4Unix shouldBe tmpDirUnix + s"/date=$currentDate/applicationId=${spark.sparkContext.applicationId}/"
-        destination4Win shouldBe tmpDirWin + s"\\date=$currentDate\\applicationId=${spark.sparkContext.applicationId}\\"
+        val destination4Unix = tmpDirUnix.withDate.withApplicationId.resolveProperties(spark.sparkContext.getConf, fixedUuidProvider, fixedNowProvider)
+        val destination4Win = tmpDirWin.withDate.withApplicationId.resolveProperties(spark.sparkContext.getConf, fixedUuidProvider, fixedNowProvider)
+        destination4Unix shouldBe tmpDirUnix + s"/date=$fixedDate/applicationId=${spark.sparkContext.applicationId}/"
+        destination4Win shouldBe tmpDirWin + s"\\date=$fixedDate\\applicationId=${spark.sparkContext.applicationId}\\"
 
         And("it should resolve perfgazer.runid with the run id/uuid")
-        val fixedUuid = "00000000-0000-0000-0000-000000000042"
-        val destinationWithRunId = tmpDirUnix.withRunId.resolveProperties(
-          spark.sparkContext.getConf,
-          () => java.util.UUID.fromString(fixedUuid)
+        val fixedUuid2 = "11111111-0000-0000-0000-000000000042"
+        val destinationWithRunId = tmpDirUnix.withRunId.resolveProperties(spark.sparkContext.getConf,
+          () => java.util.UUID.fromString(fixedUuid2), () => fixedNow
         )
-        destinationWithRunId shouldBe tmpDirUnix + s"/runId=$fixedUuid/"
-
-        And("it should generate a the same uuid for a given runtime")
-        val uuid1 = tmpDirUnix.withRunId.resolveProperties(spark.sparkContext.getConf)
-        val uuid2 = tmpDirUnix.withRunId.resolveProperties(spark.sparkContext.getConf)
-        uuid1 shouldEqual uuid2
+        destinationWithRunId shouldBe tmpDirUnix + s"/runId=$fixedUuid2/"
 
         And("it should throw IllegalArgumentException if one of partition value cannot be resolved")
         val destination5 = tmpDirUnix
           .withPartition("customPartition", "myPartition")
           .withDatabricksTag("clusterName", "clusterName")
         an[IllegalArgumentException] should be thrownBy {
-          destination5.resolveProperties(spark.sparkContext.getConf)
+          destination5.resolveProperties(spark.sparkContext.getConf, fixedUuidProvider, fixedNowProvider)
         }
       }
     }

@@ -1,7 +1,7 @@
 package com.amadeus.integration
 
 import com.amadeus.perfgazer.{JsonSink, PerfGazer}
-import com.amadeus.perfgazer.PathBuilder.PathOps
+import com.amadeus.perfgazer.PathBuilder._
 import com.amadeus.testfwk.ConfigSupport._
 import com.amadeus.testfwk.SimpleSpec
 import com.amadeus.testfwk.SparkSupport.withSpark
@@ -22,7 +22,7 @@ class SampleSkewDetectionSpec
       withTmpDir { tmpDir =>
         withSpark(appName = this.getClass.getName) { spark =>
           Given("a JsonSink configured to write and switch files for every report")
-          val destination = s"$tmpDir".withDate.withApplicationId.resolveProperties(spark.sparkContext.getConf)
+          val destination = s"$tmpDir".withDate.withApplicationId.resolveProperties(spark.sparkContext.getConf, () => jvmRunId, () => jvmStartupTime)
           val writeBatchSize = 1
           val fileSizeLimit = 1L*100
           val sparkConf = new SparkConf(false)

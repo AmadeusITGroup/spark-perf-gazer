@@ -6,6 +6,9 @@ import com.amadeus.perfgazer.PathBuilder._
 import org.apache.spark.SparkConf
 import org.slf4j.{Logger, LoggerFactory}
 
+import java.time.LocalDateTime
+import java.util.UUID
+
 /** Sink of a collection of reports to JSON files.
   *
   * This sink uses POSIX interface on the driver to write the JSON files.
@@ -17,7 +20,9 @@ import org.slf4j.{Logger, LoggerFactory}
 class JsonSink(
   val config: JsonSink.Config,
   sparkConf: SparkConf,
-  reportTypes: Set[ReportType] = ReportType.standardTypes
+  reportTypes: Set[ReportType] = ReportType.standardTypes,
+  uuidGen: () => UUID = () => PathBuilder.jvmRunId,
+  nowProvider: () => LocalDateTime = () => PathBuilder.jvmStartupTime
 ) extends Sink {
 
   def this(sparkConf: SparkConf) = {
@@ -37,7 +42,7 @@ class JsonSink(
 
   override def supportedReportTypes: Set[ReportType] = reportTypes
 
-  val destination: String = config.destination.resolveProperties(sparkConf)
+  val destination: String = config.destination.resolveProperties(sparkConf, uuidGen, nowProvider)
 
   val queues: Set[ReportWriter] = supportedReportTypes.map(
     new ReportWriter(config, _, destination)
