@@ -8,7 +8,8 @@ import scala.util.matching.Regex
 
 object PathBuilder {
 
-  private val jvmRunId: UUID = UUID.randomUUID()
+  val jvmRunId: UUID = UUID.randomUUID()
+  val jvmStartupTime: LocalDateTime = LocalDateTime.now()
 
   private val SeparatorPattern: Regex = """([/\\]+)""".r
   private val PartitionsPattern: Regex = """([/\\]+[^=/\\]+=[^/\\]+)+[/\\]*$""".r
@@ -85,9 +86,10 @@ object PathBuilder {
       */
     def resolveProperties(
       sparkConf: SparkConf,
-      uuidGen: () => UUID = () => jvmRunId
+      uuidGen: () => UUID,
+      nowProvider: () => LocalDateTime
     ): String = {
-      val now = LocalDateTime.now()
+      val now = nowProvider()
       val extraProps = new Properties()
       extraProps.setProperty("perfgazer.now.year", now.getYear.toString)
       extraProps.setProperty("perfgazer.now.month", f"${now.getMonthValue}%02d")

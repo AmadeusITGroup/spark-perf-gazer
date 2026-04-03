@@ -1,13 +1,14 @@
 package com.amadeus.integration
 
 import com.amadeus.perfgazer.{JsonSink, PerfGazer}
-import com.amadeus.perfgazer.PathBuilder.PathOps
+import com.amadeus.perfgazer.PathBuilder._
 import com.amadeus.testfwk.ConfigSupport._
 import com.amadeus.testfwk.{OptdSupport, SimpleSpec}
 import com.amadeus.testfwk.SparkSupport.withSpark
 import com.amadeus.testfwk.TempDirSupport.withTmpDir
 import org.apache.spark.SparkConf
 import org.scalatest.GivenWhenThen
+import com.amadeus.perfgazer.PathBuilder
 
 class JsonSinkIntegrationSpec
   extends SimpleSpec with GivenWhenThen {
@@ -17,7 +18,7 @@ class JsonSinkIntegrationSpec
       withSpark(appName = this.getClass.getName) { spark =>
         withTmpDir { tmpDir =>
           Given("a JsonSink configured with flush thresholds")
-          val destination = s"$tmpDir".withDate.withApplicationId.resolveProperties(spark.sparkContext.getConf)
+          val destination = s"$tmpDir".withDate.withApplicationId.resolveProperties(spark.sparkContext.getConf, () => PathBuilder.jvmRunId, () => PathBuilder.jvmStartupTime)
           val writeBatchSize = 200
           val fileSizeLimit = 200L*1024*1024
           val sparkConf = new SparkConf(false)
