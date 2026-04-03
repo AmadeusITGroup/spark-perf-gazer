@@ -40,7 +40,15 @@ class JsonSink(
 
   override def supportedReportTypes: Set[ReportType] = reportTypes
 
-  val destination: String = config.destination.resolveProperties(sparkConf)
+  val destination: String = {
+    if (!config.destination.contains("{{perfgazer.runid}}")) {
+      logger.warn(
+        "Destination path does not contain a runId partition ({{perfgazer.runid}}). " +
+          "Multiple runs may overwrite each other's output."
+      )
+    }
+    config.destination.resolveProperties(sparkConf)
+  }
 
   val queues: Set[ReportWriter] = supportedReportTypes.map(
     new ReportWriter(config, _, destination)
