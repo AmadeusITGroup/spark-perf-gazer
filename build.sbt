@@ -129,6 +129,15 @@ lazy val core = (project in file("core"))
     coverageMinimumBranchTotal := 95.0
   )
 
+lazy val docGenerator = (project in file("doc-generator"))
+  .settings(
+    name := "perfgazer-doc-generator",
+    scalaVersion := "2.13.16",
+    publish / skip := true,
+    libraryDependencies += "org.scalameta" %% "scalameta" % "4.9.9",
+    Compile / mainClass := Some("com.amadeus.perfgazer.docgen.SchemaDocGenerator")
+  )
+
 lazy val root = (project in file("."))
   // Aggregate all subprojects (like core) so their tasks are triggered from the root.
   .aggregate(core)
@@ -136,3 +145,5 @@ lazy val root = (project in file("."))
     name := "perfgazer-root",
     publish / skip := true, // Do not publish artifacts from the root project (empty jars anyway)
   )
+
+addCommandAlias("generateDocs", "docGenerator/run")

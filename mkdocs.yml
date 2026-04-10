@@ -7,6 +7,7 @@ repo_url: https://github.com/AmadeusITGroup/spark-perf-gazer
 
 theme:
   name: material
+  custom_dir: docs/overrides
   features:
     - navigation.instant
     - navigation.indexes
@@ -22,6 +23,7 @@ nav:
       - Databricks: user_guide/databricks.md
       - Analyze with SQL: user_guide/analyze_sql.md
       - Analyze with Scala: user_guide/analyze_scala.md
+      - Data Model Reference: user_guide/data_model.md
   - Contributor Guide: contributor_guide.md
 
 markdown_extensions:

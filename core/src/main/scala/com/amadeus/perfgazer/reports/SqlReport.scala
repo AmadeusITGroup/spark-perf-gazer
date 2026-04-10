@@ -1,15 +1,21 @@
 package com.amadeus.perfgazer.reports
 
 import com.amadeus.perfgazer.events.SqlEvent
+import com.amadeus.perfgazer.schema.{SchemaDoc, SchemaReport}
 import org.apache.spark.sql.execution.{ExtendedMode, QueryExecution, SparkPlan}
 import org.apache.spark.sql.execution.adaptive.{AdaptiveSparkPlanExec, ShuffleQueryStageExec}
 import org.apache.spark.sql.execution.metric.SQLMetric
 import org.apache.spark.sql.execution.ui.{SparkInternal, SparkListenerSQLExecutionEnd}
 
+@SchemaReport("sql", "SQL query execution report with physical plan node metrics. One row per completed SQL execution.")
 case class SqlReport(
+  @SchemaDoc("Unique SQL execution identifier")
   sqlId: Long,
+  @SchemaDoc("SQL query description")
   description: String,
+  @SchemaDoc("Extended query execution plan")
   details: String,
+  @SchemaDoc("Physical plan nodes with execution metrics")
   nodes: Seq[SqlNode]
 ) extends Report {
   override def reportType: ReportType = SqlReportType

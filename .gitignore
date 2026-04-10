@@ -66,3 +66,9 @@ metals.sbt
 
 # MkDocs
 site/
+
+# Generated docs (produced by doc-generator)
+docs/user_guide/data_model.md
+docs/schema/
+docs/llms.txt
+docs/llms-full.txt
