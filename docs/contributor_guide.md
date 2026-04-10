@@ -52,12 +52,24 @@ Settings -> Editor -> Code Style -> Scala -> Formatter: ScalaFMT
 You can run a local `spark-shell` with the listener as follows:
 
 ```bash
-# (optional) clean previous local publishes and publish, for example
-find ~/.ivy2 -type f -name *perfgazer* | xargs rm
 # publish a local snapshot version
-sbt publishLocal
+export VERSION=0.0.0-$RANDOM-$RANDOM
+sbt "set ThisBuild / version := \"$VERSION\"" publishLocal
 # run spark shell with the listener (change the version accordingly) using the snippet provided above
-spark-shell --packages io.github.amadeusitgroup:perfgazer_spark_3.5.2_2.12:0.0.2-SNAPSHOT ...
+spark-shell \
+  --packages io.github.amadeusitgroup:perfgazer_spark_3-5-2_2.12:$VERSION \
+  --conf spark.extraListeners=com.amadeus.perfgazer.PerfGazer \
+  --conf spark.perfgazer.sink.class=com.amadeus.perfgazer.JsonSink \
+  --conf spark.perfgazer.sink.json.destination=/tmp/perfgazer/applicationId={{spark.app.id}}/ \
+  --conf "spark.driver.bindAddress=127.0.0.1" --conf "spark.driver.host=127.0.0.1"
+```
+
+Then you can run something like this in the shell to see logs from the listener:
+
+```scala
+sc.setLogLevel("INFO") // to change the log level
+spark.sql("select 1").show()
+:quit
 ```
 
 ## Documentation
