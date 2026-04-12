@@ -34,10 +34,27 @@ spark-shell \
 
 | Property | Default | Description |
 |---|---|---|
-| `spark.perfgazer.sink.json.destination` | — | Destination path for JSON output |
+| `spark.perfgazer.sink.json.destination` | — | Destination path for JSON output. Should include a partition that uniquely identifies the run (e.g. `applicationId` or `runId`) so that data from different runs does not get mixed. |
 | `spark.perfgazer.sink.json.writeBatchSize` | `100` | Number of records to accumulate before writing to disk |
 | `spark.perfgazer.sink.json.fileSizeLimit` | `209715200` (200 MB) | File size threshold before rolling to a new file |
 | `spark.perfgazer.sink.json.asyncFlushTimeoutMillisecsKey` | — | Max time between periodic flushes (ms) |
 | `spark.perfgazer.sink.json.waitForCloseTimeoutMillisecsKey` | — | Max time to wait for graceful sink close (ms) |
+
+### Destination placeholders
+
+The destination path supports `{{key}}` placeholders resolved at runtime:
+
+| Placeholder | Description |
+|---|---|
+| `{{perfgazer.now.year}}` | Current year (4 digits) |
+| `{{perfgazer.now.month}}` | Current month (2 digits) |
+| `{{perfgazer.now.day}}` | Current day (2 digits) |
+| `{{perfgazer.now.hour}}` | Current hour (2 digits) |
+| `{{perfgazer.now.minute}}` | Current minute (2 digits) |
+| `{{perfgazer.now.second}}` | Current second (2 digits) |
+| `{{perfgazer.runid}}` | JVM-stable UUID, unique per application run |
+| `{{spark.*}}` | Any Spark configuration property, e.g. `{{spark.app.id}}` |
+
+Date, time, and runId values are captured once at JVM startup and remain stable across multiple resolutions.
 
 > Note: `JsonSink` uses the POSIX interface on the driver to write JSON files.

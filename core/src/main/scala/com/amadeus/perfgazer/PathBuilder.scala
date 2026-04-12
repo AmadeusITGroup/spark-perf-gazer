@@ -3,7 +3,7 @@ package com.amadeus.perfgazer
 import org.apache.spark.SparkConf
 
 import java.time.LocalDateTime
-import java.util.Properties
+import java.util.{Properties, UUID}
 import scala.util.matching.Regex
 
 object PathBuilder {
@@ -12,6 +12,9 @@ object PathBuilder {
   private val PartitionsPattern: Regex = """([/\\]+[^=/\\]+=[^/\\]+)+[/\\]*$""".r
   private val PlaceholderPattern: Regex = """\{\{([^}]+)\}\}""".r
   private val ValuePattern: Regex = """=([^/\\]+)""".r
+
+  private val jvmRunId: UUID = UUID.randomUUID()
+  private val jvmStartupTime: LocalDateTime = LocalDateTime.now()
 
   /** Implicit class that adds path-building methods to String using ad-hoc polymorphism with implicits.
     * Allows fluent API for building filesystem paths with common patterns.
@@ -39,6 +42,10 @@ object PathBuilder {
       appendPartition("date", "{{perfgazer.now.year}}-{{perfgazer.now.month}}-{{perfgazer.now.day}}")
     }
 
+    def withTime: String = {
+      appendPartition("time", "{{perfgazer.now.hour}}-{{perfgazer.now.minute}}-{{perfgazer.now.second}}")
+    }
+
     def withPartition(partitionName: String, value: String): String = {
       appendPartition(partitionName, value)
     }
@@ -57,6 +64,10 @@ object PathBuilder {
 
     def withDefaultPartitions: String = {
       path.withDate.withApplicationId
+    }
+
+    def withRunId: String = {
+      appendPartition("runId", "{{perfgazer.runid}}")
     }
 
     /**
@@ -79,20 +90,30 @@ object PathBuilder {
     /**
       * The resolveProperties method replaces property placeholders in a string path.
       * Placeholders are in the format {{key}}.
-      * Placeholders are replaced with their corresponding values from a provided map (SparkConf) or internal dateProps map.
+      * Placeholders are replaced with their corresponding values from a provided map (SparkConf) or internal extraProps map.
+      *
+      * @param sparkConf     SparkConf to resolve Spark property placeholders.
+      * @param uuidGen       UUID generator, defaults to a JVM-stable random UUID.
+      * @param nowProvider   DateTime provider, defaults to JVM startup time.
       */
-    def resolveProperties(sparkConf: SparkConf): String = {
-      val now = LocalDateTime.now()
-      val dateProps = new Properties()
-      dateProps.setProperty("perfgazer.now.year", now.getYear.toString)
-      dateProps.setProperty("perfgazer.now.month", f"${now.getMonthValue}%02d")
-      dateProps.setProperty("perfgazer.now.day", f"${now.getDayOfMonth}%02d")
-      dateProps.setProperty("perfgazer.now.hour", f"${now.getHour}%02d")
-      dateProps.setProperty("perfgazer.now.minute", f"${now.getMinute}%02d")
+    def resolveProperties(
+      sparkConf: SparkConf,
+      uuidGen: () => UUID = () => jvmRunId,
+      nowProvider: () => LocalDateTime = () => jvmStartupTime
+    ): String = {
+      val now = nowProvider()
+      val extraProps = new Properties()
+      extraProps.setProperty("perfgazer.runid", uuidGen().toString)
+      extraProps.setProperty("perfgazer.now.year", now.getYear.toString)
+      extraProps.setProperty("perfgazer.now.month", f"${now.getMonthValue}%02d")
+      extraProps.setProperty("perfgazer.now.day", f"${now.getDayOfMonth}%02d")
+      extraProps.setProperty("perfgazer.now.hour", f"${now.getHour}%02d")
+      extraProps.setProperty("perfgazer.now.minute", f"${now.getMinute}%02d")
+      extraProps.setProperty("perfgazer.now.second", f"${now.getSecond}%02d")
 
       val resolved = PlaceholderPattern.replaceAllIn(
         path,
-        m => Option(dateProps.getProperty(m.group(1)))
+        m => Option(extraProps.getProperty(m.group(1)))
           .orElse(sparkConf.getOption(m.group(1)))
           .getOrElse(throw new IllegalArgumentException(m.group(1) + " is not set"))
       )
