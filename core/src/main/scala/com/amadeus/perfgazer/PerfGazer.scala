@@ -155,8 +155,8 @@ class PerfGazer(val c: PerfGazerConfig, val sink: Sink) extends SparkListener {
   /**
     * Expose sink and snippets for external usage (e.g., Databricks Notebooks).
     */
-  def getSnippets: String = {
-    sink.generateAllViewSnippets().mkString("\n")
+  def getSnippets: Set[String] = {
+    sink.generateAllViewSnippets()
   }
 }
 
