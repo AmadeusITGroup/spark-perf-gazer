@@ -27,6 +27,21 @@ CREATE OR REPLACE TEMPORARY VIEW task ...
 
 ```
 
+## Query across all runs
+
+The snippets above point to the current run. To create a view spanning all runs in the warehouse, use `**` with a `basePath`:
+
+```sql
+CREATE OR REPLACE TEMPORARY VIEW [sql|job|stage|...]
+USING json
+OPTIONS (
+  path "<base_path>/**/[sql|job|stage|...]-reports-*.json",
+  basePath "<base_path>/"
+);
+```
+
+Replace `<base_path>` with your actual base destination. The `basePath` option indicates Spark from which point start performing auto-discover of partition columns (e.g. `applicationId`).
+
 ## Analyze PerfGazer data
 
 Example: deep dive into all tasks and display info of their corresponding parent stage + job
