@@ -56,45 +56,31 @@ class PathBuilderSpec extends SimpleSpec with GivenWhenThen {
         "/tmp/perfgazer/pathbuilder/spec".withPartition("customPartition", "my=Partition")
       }
     }
+  }
 
-    it("should handle a simple path with no ending /") {
-      val path = "/tmp"
-      path.extractBasePath shouldBe "/tmp/"
-      path.extractPartitions shouldBe ""
+  describe("normalizePath") {
+    it("should ensure a Unix path ends with a separator") {
+      "/tmp/a/b".normalizePath shouldBe "/tmp/a/b/"
     }
 
-    it("should handle a simple path with intermediate / and no partitions") {
-      val path = "/tmp/listener"
-      path.extractBasePath shouldBe "/tmp/listener/"
-      path.extractPartitions shouldBe ""
+    it("should not duplicate trailing separator") {
+      "/tmp/a/b/".normalizePath shouldBe "/tmp/a/b/"
     }
 
-    it("should handle a path with one partition segment") {
-      val path = "/tmp/listener/date=2025-09-10"
-      path.extractPartitions.globPathValues shouldBe "/date=*/"
-      path.extractBasePath shouldBe "/tmp/listener/"
-      path.extractPartitions shouldBe "/date=2025-09-10/"
+    it("should collapse multiple forward slashes") {
+      "/tmp//a///b".normalizePath shouldBe "/tmp/a/b/"
     }
 
-    it("should handle a path with multiple partition segments") {
-      val path = "/tmp/listener/date=2025-09-10/cluster=111/id=ffff/level=ggg"
-      path.extractPartitions.globPathValues shouldBe "/date=*/cluster=*/id=*/level=*/"
-      path.extractBasePath shouldBe "/tmp/listener/"
-      path.extractPartitions shouldBe "/date=2025-09-10/cluster=111/id=ffff/level=ggg/"
+    it("should normalize a Windows path using backslash") {
+      "C:\\tmp\\a\\b".normalizePath shouldBe "C:\\tmp\\a\\b\\"
     }
 
-    it("should handle a path with only partition segments after base") {
-      val path = "/base/a=10/b=20/c=30/"
-      path.extractPartitions.globPathValues shouldBe "/a=*/b=*/c=*/"
-      path.extractBasePath shouldBe "/base/"
-      path.extractPartitions shouldBe "/a=10/b=20/c=30/"
+    it("should collapse multiple backslashes") {
+      "C:\\\\tmp\\\\a".normalizePath shouldBe "C:\\tmp\\a\\"
     }
 
-    it("should handle a path with non-partition segments between partitions") {
-      val path = "/base/a=10/something/b=10/c=30"
-      path.extractPartitions.globPathValues shouldBe "/b=*/c=*/"
-      path.extractBasePath shouldBe "/base/a=10/something/"
-      path.extractPartitions shouldBe "/b=10/c=30/"
+    it("should return the input unchanged when no separators are present") {
+      "noseparator".normalizePath shouldBe "noseparator"
     }
   }
 }

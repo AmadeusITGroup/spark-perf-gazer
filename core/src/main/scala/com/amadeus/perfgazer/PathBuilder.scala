@@ -9,9 +9,7 @@ import scala.util.matching.Regex
 object PathBuilder {
 
   private val SeparatorPattern: Regex = """([/\\]+)""".r
-  private val PartitionsPattern: Regex = """([/\\]+[^=/\\]+=[^/\\]+)+[/\\]*$""".r
   private val PlaceholderPattern: Regex = """\{\{([^}]+)\}\}""".r
-  private val ValuePattern: Regex = """=([^/\\]+)""".r
 
   /** Implicit class that adds path-building methods to String using ad-hoc polymorphism with implicits.
     * Allows fluent API for building filesystem paths with common patterns.
@@ -99,41 +97,6 @@ object PathBuilder {
       resolved.normalizePath
     }
 
-    /**
-      * The globPathValues method is used to replace all partition values in a file system path with a wildcard (*).
-      * This is useful for creating a glob pattern to match multiple paths with varying partition values.
-      */
-    def globPathValues: String = {
-      val resolved = ValuePattern.replaceAllIn(path, m => "=*")
-      resolved.normalizePath
-    }
 
-    /**
-      * The extractBasePath method is used to retrieve the base path of a file system path by removing any partition information.
-      * Partition information typically follows the format key=value.
-      */
-    def extractBasePath: String = {
-      val resolved: String = PartitionsPattern.findFirstMatchIn(path) match {
-        case Some(m) =>
-          path.substring(0, m.start)
-        case None =>
-          path
-      }
-      resolved.normalizePath
-    }
-
-    /**
-      * The extractPartitions method is used to retrieve the partition information from a file system path.
-      * Partition information typically follows the format key=value.
-      */
-    def extractPartitions: String = {
-      val resolved: String = PartitionsPattern.findFirstMatchIn(path) match {
-        case Some(m) =>
-          path.substring(m.start)
-        case None =>
-          ""
-      }
-      resolved.normalizePath
-    }
   }
 }

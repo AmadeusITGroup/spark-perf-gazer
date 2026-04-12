@@ -98,37 +98,25 @@ object JsonSink {
       sys.env.contains("DATABRICKS_RUNTIME_VERSION")
     }
 
-    /** Generate the CREATE OR REPLACE TEMPORARY VIEW DDL for a partitioned JSON file path.
+    /** Generate the CREATE OR REPLACE TEMPORARY VIEW DDL pointing directly to the destination path.
       *
-      * Example of a partitioned path:
-      *
-      * /tmp/listener/date=2025-09-10/cluster=my-cluster/customer=my-customer/sql-reports-1234.json
-      *
-      * Rule: the view basePath must be up to (but not including) the first partition-style segment
-      * (e.g., date=2025-09-10) starting from which there are ONLY partition style segments.
-      * The path should have as many /\* as there are partition segments after the basePath.
-      *
-      * If the /dbfs mount point is detected (Databricks), it is stripped out.
+      * If the /dbfs mount point is detected (Databricks), it is replaced with dbfs:.
       *
       * @param destination  The Sink destination directory path where JSON files are written.
       * @param reportName  The report name, that is used as view name too (e.g. "job", "sql", ...).
       */
     def generateViewDDL(destination: String, reportName: String): String = {
-      var basePath = destination.extractBasePath
-      val starPathPart = destination.extractPartitions.globPathValues
+      var resolvedDestination = destination.normalizePath
       val fileNameWithWildcard = s"$reportName-reports-*.json"
-      if (runningOnDatabricks && basePath.startsWith("/dbfs/")) {
-        basePath = basePath.replaceFirst("/dbfs/", "dbfs:/")
+      if (runningOnDatabricks && resolvedDestination.startsWith("/dbfs/")) {
+        resolvedDestination = resolvedDestination.replaceFirst("/dbfs/", "dbfs:/")
       }
-      val globPath = s"$basePath$starPathPart".normalizePath + s"$fileNameWithWildcard"
-      val ddl =
-        s"""|CREATE OR REPLACE TEMPORARY VIEW $reportName
-            |USING json
-            |OPTIONS (
-            |  path \"$globPath\",
-            |  basePath \"$basePath\"
-            |);""".stripMargin
-      ddl
+      val fullPath = s"$resolvedDestination$fileNameWithWildcard"
+      s"""|CREATE OR REPLACE TEMPORARY VIEW $reportName
+          |USING json
+          |OPTIONS (
+          |  path \"$fullPath\"
+          |);""".stripMargin
     }
   }
 
