@@ -4,7 +4,9 @@ Follow these steps to get PerfGazer up and running.
 
 ## Step 1 — Annotate your Spark code
 
-To make the listener data easier to analyze, add job descriptions to your Spark code using `setJobDescription` or `setLocalProperty`:
+This step is optional but strongly encouraged as it will make the listener data much easier to analyze, specially with Spark applications with several jobs.
+
+Add job descriptions to your Spark code using `setJobDescription` or `setLocalProperty`:
 
 ```scala
 spark.sparkContext.setJobDescription("my-etl-job: loading customer data")
