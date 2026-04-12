@@ -78,7 +78,9 @@ object JsonSink {
 
   /** Configuration object for JsonSink
     *
-    * @param destination Base directory path where JSON files will be written, e.g., "/dbfs/logs/appid=my-app-id/"
+    * @param destination Base directory path where JSON files will be written, e.g., "/dbfs/logs/appid=my-app-id/".
+    *                    The destination should include a partition that uniquely identifies the application run
+    *                    (e.g. applicationId or runId) so that data from different runs does not get mixed.
     * @param writeBatchSize Number of reports to accumulate before writing to disk
     * @param fileSizeLimit file size to reach before switching to a new file (in bytes)
     * @param asyncFlushTimeoutMillisecs Maximum time to wait regularly before flushing reports to disk (in milliseconds)
