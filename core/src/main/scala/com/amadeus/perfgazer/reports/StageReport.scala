@@ -3,33 +3,33 @@ package com.amadeus.perfgazer.reports
 import com.amadeus.perfgazer.events.StageEvent
 import com.amadeus.perfgazer.schema.{SchemaDoc, SchemaReport}
 
-@SchemaReport("stage", "Stage-level execution report. One row per completed Spark stage.")
+@SchemaReport(value = "stage", description = "Stage-level execution report. One row per completed Spark stage.")
 case class StageReport(
-  @SchemaDoc("Unique stage identifier")
+  @SchemaDoc(value = "Unique stage identifier")
   stageId: Int,
-  @SchemaDoc("Epoch timestamp when the stage was submitted", unit = "ms")
+  @SchemaDoc(value = "Epoch timestamp when the stage was submitted", unit = "ms")
   stageSubmissionTime: Option[Long],
-  @SchemaDoc("Epoch timestamp when the stage completed", unit = "ms")
+  @SchemaDoc(value = "Epoch timestamp when the stage completed", unit = "ms")
   stageCompletionTime: Option[Long],
-  @SchemaDoc("Total input bytes read", unit = "bytes")
+  @SchemaDoc(value = "Total input bytes read", unit = "bytes")
   readBytes: Long,
-  @SchemaDoc("Total output bytes written", unit = "bytes")
+  @SchemaDoc(value = "Total output bytes written", unit = "bytes")
   writeBytes: Long,
-  @SchemaDoc("Total shuffle bytes read", unit = "bytes")
+  @SchemaDoc(value = "Total shuffle bytes read", unit = "bytes")
   shuffleReadBytes: Long,
-  @SchemaDoc("Total shuffle bytes written", unit = "bytes")
+  @SchemaDoc(value = "Total shuffle bytes written", unit = "bytes")
   shuffleWriteBytes: Long,
-  @SchemaDoc("Executor CPU time", unit = "ns")
+  @SchemaDoc(value = "Executor CPU time", unit = "ns")
   execCpuNs: Long,
-  @SchemaDoc("Executor run time", unit = "ns")
+  @SchemaDoc(value = "Executor run time", unit = "ns")
   execRunNs: Long,
-  @SchemaDoc("Executor JVM garbage collection time", unit = "ns")
+  @SchemaDoc(value = "Executor JVM garbage collection time", unit = "ns")
   execJvmGcNs: Long,
-  @SchemaDoc("Stage attempt number")
+  @SchemaDoc(value = "Stage attempt number")
   attempt: Int,
-  @SchemaDoc("Bytes spilled to memory", unit = "bytes")
+  @SchemaDoc(value = "Bytes spilled to memory", unit = "bytes")
   memoryBytesSpilled: Long,
-  @SchemaDoc("Bytes spilled to disk", unit = "bytes")
+  @SchemaDoc(value = "Bytes spilled to disk", unit = "bytes")
   diskBytesSpilled: Long
 ) extends Report {
   override def reportType: ReportType = StageReportType

@@ -86,7 +86,7 @@ def testGroups(tests: Seq[TestDefinition], baseDir: File): Seq[Group] = {
 }
 
 val commonSettings = Seq(
-  Compile / javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
+  Compile / javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-parameters"),
   scalacOptions ++= {
     val base = Seq(
       "-deprecation",
@@ -130,11 +130,15 @@ lazy val core = (project in file("core"))
   )
 
 lazy val docGenerator = (project in file("doc-generator"))
+  .dependsOn(core)
   .settings(
     name := "perfgazer-doc-generator",
-    scalaVersion := "2.13.16",
     publish / skip := true,
-    libraryDependencies += "org.scalameta" %% "scalameta" % "4.9.9",
+    libraryDependencies ++= Seq(
+      "org.apache.spark"  %% "spark-core"     % SparkVersion,
+      "org.apache.spark"  %% "spark-sql"      % SparkVersion,
+      "org.scala-lang"     % "scala-reflect"  % BuildScalaVersion
+    ),
     Compile / mainClass := Some("com.amadeus.perfgazer.docgen.SchemaDocGenerator")
   )
 

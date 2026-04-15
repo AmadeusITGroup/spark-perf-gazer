@@ -7,15 +7,15 @@ import org.apache.spark.sql.execution.adaptive.{AdaptiveSparkPlanExec, ShuffleQu
 import org.apache.spark.sql.execution.metric.SQLMetric
 import org.apache.spark.sql.execution.ui.{SparkInternal, SparkListenerSQLExecutionEnd}
 
-@SchemaReport("sql", "SQL query execution report with physical plan node metrics. One row per completed SQL execution.")
+@SchemaReport(value = "sql", description = "SQL query execution report with physical plan node metrics. One row per completed SQL execution.")
 case class SqlReport(
-  @SchemaDoc("Unique SQL execution identifier")
+  @SchemaDoc(value = "Unique SQL execution identifier")
   sqlId: Long,
-  @SchemaDoc("SQL query description")
+  @SchemaDoc(value = "SQL query description")
   description: String,
-  @SchemaDoc("Extended query execution plan")
+  @SchemaDoc(value = "Extended query execution plan")
   details: String,
-  @SchemaDoc("Physical plan nodes with execution metrics")
+  @SchemaDoc(value = "Physical plan nodes with execution metrics")
   nodes: Seq[SqlNode]
 ) extends Report {
   override def reportType: ReportType = SqlReportType

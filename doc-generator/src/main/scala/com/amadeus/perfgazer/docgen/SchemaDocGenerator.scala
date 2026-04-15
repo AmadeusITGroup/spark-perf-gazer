@@ -1,18 +1,21 @@
 package com.amadeus.perfgazer.docgen
 
-import scala.meta._
-import java.io.{File, PrintWriter}
+import com.amadeus.perfgazer.schema.{SchemaDoc, SchemaReport}
 
-/** Parses annotated case classes and generates data model documentation.
+import java.io.{File, PrintWriter}
+import scala.reflect.runtime.universe._
+
+/** Reflects on annotated case classes and generates data model documentation.
   *
-  * Reads Scala source files from the reports package, extracts @SchemaReport
-  * and @SchemaDoc annotations, and emits:
+  * Loads compiled report classes, reads @SchemaReport and @SchemaDoc annotations
+  * via Java reflection, and uses Scala reflection for accurate generic type info.
+  * Emits:
   *   - A Markdown file for human consumption (MkDocs)
   *   - A JSON file for agent/tool consumption
   */
 object SchemaDocGenerator {
 
-  /** A documented field extracted from a case class parameter. */
+  /** A documented field extracted from a case class constructor parameter. */
   case class FieldDoc(
     name: String,
     scalaType: String,
@@ -22,7 +25,7 @@ object SchemaDocGenerator {
     nestedFields: Seq[FieldDoc]
   )
 
-  /** A documented report/view extracted from an annotated case class. */
+  /** A documented report/view extracted from an annotated class. */
   case class ViewDoc(
     viewName: String,
     className: String,
@@ -30,7 +33,7 @@ object SchemaDocGenerator {
     fields: Seq[FieldDoc]
   )
 
-  // Scala type -> Spark SQL type mapping
+  // Scala type name -> Spark SQL type mapping
   private val primitiveTypeMap: Map[String, String] = Map(
     "Int"     -> "INT",
     "Long"    -> "BIGINT",
@@ -42,33 +45,24 @@ object SchemaDocGenerator {
     "Byte"    -> "TINYINT"
   )
 
+  private val mirror = runtimeMirror(getClass.getClassLoader)
+
+  /** All report classes to document. Add new report classes here. */
+  private val reportClasses: Seq[Class[_]] = Seq(
+    classOf[com.amadeus.perfgazer.reports.JobReport],
+    classOf[com.amadeus.perfgazer.reports.SqlReport],
+    classOf[com.amadeus.perfgazer.reports.StageReport],
+    classOf[com.amadeus.perfgazer.reports.TaskReport]
+  )
+
   def main(args: Array[String]): Unit = {
-    val reportsDir = args.headOption.getOrElse("core/src/main/scala/com/amadeus/perfgazer/reports")
-    val mdOutput = if (args.length > 1) args(1) else "docs/user_guide/data_model.md"
-    val jsonOutput = if (args.length > 2) args(2) else "docs/schema/perfgazer-schema.json"
+    val mdOutput = args.headOption.getOrElse("docs/user_guide/data_model.md")
+    val jsonOutput = if (args.length > 1) args(1) else "docs/schema/perfgazer-schema.json"
 
-    val sourceFiles = new File(reportsDir).listFiles().filter(_.getName.endsWith(".scala")).toSeq
-    val allTrees: Seq[(String, scala.meta.Source)] = sourceFiles.map { f =>
-      val content = scala.io.Source.fromFile(f, "UTF-8").mkString
-      val tree = dialects.Scala213(content).parse[scala.meta.Source].get
-      (f.getName, tree)
-    }
-
-    // First pass: collect all case classes (needed to resolve nested types)
-    val allCaseClasses: Map[String, Defn.Class] = allTrees.flatMap { case (_, tree) =>
-      tree.collect {
-        case c: Defn.Class if c.mods.exists(_.is[Mod.Case]) =>
-          c.name.value -> c
-      }
-    }.toMap
-
-    // Second pass: extract annotated views
-    val views: Seq[ViewDoc] = allTrees.flatMap { case (_, tree) =>
-      tree.collect {
-        case c: Defn.Class if c.mods.exists(_.is[Mod.Case]) && hasSchemaReport(c) =>
-          extractViewDoc(c, allCaseClasses)
-      }
-    }.sortBy(_.viewName)
+    val views: Seq[ViewDoc] = reportClasses
+      .filter(_.isAnnotationPresent(classOf[SchemaReport]))
+      .map(extractViewDoc)
+      .sortBy(_.viewName)
 
     // Emit outputs
     new File(new File(mdOutput).getParent).mkdirs()
@@ -80,139 +74,126 @@ object SchemaDocGenerator {
     println(s"Generated $jsonOutput")
   }
 
-  private def hasSchemaReport(c: Defn.Class): Boolean =
-    c.mods.exists {
-      case Mod.Annot(Init.After_4_6_0(Type.Name("SchemaReport"), _, _)) => true
-      case _ => false
-    }
-
-  /** Extract a positional string argument from annotation arg clauses. */
-  private def extractAnnotString(argClauses: Seq[Term.ArgClause], index: Int): String = {
-    val allArgs = argClauses.flatMap(_.values)
-    allArgs.lift(index) match {
-      case Some(Lit.String(s)) => s
-      case _ => ""
-    }
+  private def extractViewDoc(clazz: Class[_]): ViewDoc = {
+    val ann = clazz.getAnnotation(classOf[SchemaReport])
+    val fields = extractFieldDocs(clazz)
+    ViewDoc(ann.value(), clazz.getSimpleName, ann.description(), fields)
   }
 
-  /** Extract a named string argument from annotation arg clauses. */
-  private def extractNamedArg(argClauses: Seq[Term.ArgClause], name: String): String = {
-    val allArgs = argClauses.flatMap(_.values)
-    allArgs.collectFirst {
-      case Term.Assign(Term.Name(`name`), Lit.String(s)) => s
-    }.getOrElse("")
-  }
+  private def extractFieldDocs(clazz: Class[_]): Seq[FieldDoc] = {
+    // Use Java reflection for annotations (runtime-retained Java annotations)
+    val ctor = clazz.getDeclaredConstructors.head
+    val paramAnnotations = ctor.getParameterAnnotations
 
-  private def extractSchemaReportArgs(c: Defn.Class): (String, String) = {
-    c.mods.collectFirst {
-      case Mod.Annot(Init.After_4_6_0(Type.Name("SchemaReport"), _, argClauses)) =>
-        (extractAnnotString(argClauses, 0), extractAnnotString(argClauses, 1))
-    }.getOrElse(("", ""))
-  }
+    // Use Scala reflection for accurate type info (avoids primitive erasure)
+    val classSymbol = mirror.classSymbol(clazz)
+    val ctorSymbol = classSymbol.primaryConstructor.asMethod
+    val ctorParams = ctorSymbol.paramLists.flatten
 
-  private def extractSchemaDocArgs(mods: List[Mod]): (String, String) = {
-    mods.collectFirst {
-      case Mod.Annot(Init.After_4_6_0(Type.Name("SchemaDoc"), _, argClauses)) =>
-        val desc = extractAnnotString(argClauses, 0)
-        val unit = {
-          val positional = extractAnnotString(argClauses, 1)
-          if (positional.nonEmpty) positional else extractNamedArg(argClauses, "unit")
-        }
-        (desc, unit)
-    }.getOrElse(("", ""))
-  }
+    ctorParams.zipWithIndex.map { case (param, i) =>
+      val annotations = paramAnnotations(i)
+      val schemaDoc = annotations.collectFirst { case a: SchemaDoc => a }
+      val description = schemaDoc.map(_.value()).getOrElse("")
+      val unit = schemaDoc.map(_.unit()).getOrElse("")
 
-  private def scalaTypeToSql(scalaType: String, allCaseClasses: Map[String, Defn.Class]): String = {
-    scalaType match {
-      case t if primitiveTypeMap.contains(t) => primitiveTypeMap(t)
-      case s if s.startsWith("Option[") =>
-        val inner = s.stripPrefix("Option[").stripSuffix("]")
-        scalaTypeToSql(inner, allCaseClasses)
-      case s if s.startsWith("Seq[") || s.startsWith("List[") || s.startsWith("Array[") =>
-        val inner = s.substring(s.indexOf('[') + 1, s.lastIndexOf(']'))
-        if (allCaseClasses.contains(inner)) {
-          val nestedFields = extractFieldDocs(allCaseClasses(inner), allCaseClasses)
-          val structFields = nestedFields.map(f => s"${f.name}: ${f.sqlType}").mkString(", ")
-          s"ARRAY<STRUCT<$structFields>>"
-        } else {
-          s"ARRAY<${scalaTypeToSql(inner, allCaseClasses)}>"
-        }
-      case s if s.startsWith("Map[") =>
-        val inner = s.stripPrefix("Map[").stripSuffix("]")
-        val parts = splitTopLevelComma(inner)
-        if (parts.size == 2) {
-          s"MAP<${scalaTypeToSql(parts(0).trim, allCaseClasses)}, ${scalaTypeToSql(parts(1).trim, allCaseClasses)}>"
-        } else {
-          "MAP<STRING, STRING>"
-        }
-      case t if allCaseClasses.contains(t) =>
-        val nestedFields = extractFieldDocs(allCaseClasses(t), allCaseClasses)
-        val structFields = nestedFields.map(f => s"${f.name}: ${f.sqlType}").mkString(", ")
-        s"STRUCT<$structFields>"
-      case other => other.toUpperCase
-    }
-  }
+      val scalaType = param.typeSignature
+      val scalaTypeName = scalaTypeToName(scalaType)
+      val sqlType = scalaTypeToSql(scalaType)
 
-  /** Split a string by commas, respecting nested brackets. */
-  private def splitTopLevelComma(s: String): Seq[String] = {
-    var depth = 0
-    val parts = scala.collection.mutable.ArrayBuffer[String]()
-    val current = new StringBuilder
-    for (c <- s) {
-      c match {
-        case '[' | '<' | '(' => depth += 1; current += c
-        case ']' | '>' | ')' => depth -= 1; current += c
-        case ',' if depth == 0 =>
-          parts += current.toString
-          current.clear()
-        case _ => current += c
-      }
-    }
-    if (current.nonEmpty) parts += current.toString
-    parts.toSeq
-  }
-
-  private def typeToString(t: Type): String = t match {
-    case Type.Name(name) => name
-    case Type.Apply.After_4_6_0(tpe, argClause) =>
-      s"${typeToString(tpe)}[${argClause.values.map(typeToString).mkString(", ")}]"
-    case Type.Select(qual, name) => s"$qual.$name"
-    case _ => t.syntax
-  }
-
-  private def extractFieldDocs(c: Defn.Class, allCaseClasses: Map[String, Defn.Class]): Seq[FieldDoc] = {
-    c.ctor.paramClauses.flatMap(_.values).map { param =>
-      val (desc, unit) = extractSchemaDocArgs(param.mods)
-      val scalaType = param.decltpe.map(typeToString).getOrElse("Unknown")
-      val sqlType = scalaTypeToSql(scalaType, allCaseClasses)
-
-      // Extract nested fields for case class references
-      val innerTypeName = scalaType match {
-        case s if s.startsWith("Seq[") => s.stripPrefix("Seq[").stripSuffix("]")
-        case s if s.startsWith("List[") => s.stripPrefix("List[").stripSuffix("]")
-        case s => s
-      }
-      val nestedFields = allCaseClasses.get(innerTypeName) match {
-        case Some(nestedClass) if innerTypeName != c.name.value =>
-          extractFieldDocs(nestedClass, allCaseClasses)
+      // Extract nested fields for case class references in collections
+      val innerClass = extractInnerCaseClass(scalaType)
+      val nestedFields = innerClass match {
+        case Some(c) if c != clazz => extractFieldDocs(c)
         case _ => Seq.empty
       }
 
       FieldDoc(
-        name = param.name.value,
-        scalaType = scalaType,
+        name = param.name.toString,
+        scalaType = scalaTypeName,
         sqlType = sqlType,
         unit = unit,
-        description = desc,
+        description = description,
         nestedFields = nestedFields
       )
     }
   }
 
-  private def extractViewDoc(c: Defn.Class, allCaseClasses: Map[String, Defn.Class]): ViewDoc = {
-    val (viewName, viewDesc) = extractSchemaReportArgs(c)
-    val fields = extractFieldDocs(c, allCaseClasses)
-    ViewDoc(viewName, c.name.value, viewDesc, fields)
+  /** Convert a Scala reflect Type to a human-readable Scala type name. */
+  private def scalaTypeToName(t: Type): String = {
+    val dealiased = t.dealias
+    dealiased match {
+      case TypeRef(_, sym, args) if args.nonEmpty =>
+        s"${sym.name}[${args.map(scalaTypeToName).mkString(", ")}]"
+      case TypeRef(_, sym, Nil) =>
+        sym.name.toString
+      case _ =>
+        dealiased.typeSymbol.name.toString
+    }
+  }
+
+  /** Convert a Scala reflect Type to a Spark SQL type string. */
+  private def scalaTypeToSql(t: Type): String = {
+    val dealiased = t.dealias
+    val typeName = dealiased.typeSymbol.name.toString
+
+    if (primitiveTypeMap.contains(typeName)) {
+      primitiveTypeMap(typeName)
+    } else {
+      dealiased match {
+        case TypeRef(_, sym, List(inner)) if sym.fullName == "scala.Option" =>
+          scalaTypeToSql(inner)
+
+        case TypeRef(_, sym, List(inner))
+          if sym.fullName.startsWith("scala.collection") &&
+             (sym.name.toString == "Seq" || sym.name.toString == "List") =>
+          val innerTypeName = inner.typeSymbol.name.toString
+          if (isCaseClassType(inner)) {
+            val innerClass = mirror.runtimeClass(inner)
+            val nestedFields = extractFieldDocs(innerClass)
+            val structFields = nestedFields.map(f => s"${f.name}: ${f.sqlType}").mkString(", ")
+            s"ARRAY<STRUCT<$structFields>>"
+          } else {
+            s"ARRAY<${scalaTypeToSql(inner)}>"
+          }
+
+        case TypeRef(_, sym, List(keyType, valType))
+          if sym.fullName.startsWith("scala.collection") &&
+             sym.name.toString == "Map" =>
+          s"MAP<${scalaTypeToSql(keyType)}, ${scalaTypeToSql(valType)}>"
+
+        case _ if isCaseClassType(dealiased) =>
+          val innerClass = mirror.runtimeClass(dealiased)
+          val nestedFields = extractFieldDocs(innerClass)
+          val structFields = nestedFields.map(f => s"${f.name}: ${f.sqlType}").mkString(", ")
+          s"STRUCT<$structFields>"
+
+        case _ =>
+          typeName.toUpperCase
+      }
+    }
+  }
+
+  private def isCaseClassType(t: Type): Boolean =
+    t.typeSymbol.isClass && t.typeSymbol.asClass.isCaseClass
+
+  /** Extract the inner case class from a Scala type (e.g. Seq[SqlNode] -> SqlNode). */
+  private def extractInnerCaseClass(t: Type): Option[Class[_]] = {
+    val dealiased = t.dealias
+    dealiased match {
+      case TypeRef(_, sym, List(inner))
+        if sym.fullName.startsWith("scala.collection") &&
+           (sym.name.toString == "Seq" || sym.name.toString == "List") =>
+        if (isCaseClassType(inner)) Some(mirror.runtimeClass(inner)) else None
+
+      case TypeRef(_, sym, List(inner)) if sym.fullName == "scala.Option" =>
+        extractInnerCaseClass(inner)
+
+      case _ if isCaseClassType(dealiased) =>
+        val clazz = mirror.runtimeClass(dealiased)
+        Some(clazz)
+
+      case _ => None
+    }
   }
 
   // ── Markdown emitter ──────────────────────────────────────────────────
