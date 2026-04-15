@@ -16,6 +16,7 @@ theme:
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
+  - Available Artifacts: artifacts.md
   - User Guide:
       - user_guide/index.md
       - Setup via Spark Properties: user_guide/setup_spark_properties.md
@@ -30,6 +31,8 @@ markdown_extensions:
   - admonition
   - pymdownx.highlight
   - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
 
 extra:
   version:
