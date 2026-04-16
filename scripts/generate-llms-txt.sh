@@ -1,68 +1,78 @@
 #!/usr/bin/env bash
 # Generate llms.txt and llms-full.txt for agent consumption.
 # Files are placed in docs/ so MkDocs includes them in the built site.
+#
+# Page order is derived from mkdocs.yml nav — the single source of truth.
 # Usage: ./scripts/generate-llms-txt.sh
 
 set -euo pipefail
 
 DOCS_DIR="${1:-docs}"
+MKDOCS_YML="mkdocs.yml"
 SCHEMA_FILE="$DOCS_DIR/schema/perfgazer-schema.json"
 SITE_URL="https://amadeusitgroup.github.io/spark-perf-gazer"
 
+# ── Extract ordered markdown files from mkdocs.yml nav ───────────────────
+
+# Pull every .md path referenced in the nav section.
+nav_files=()
+while IFS= read -r md; do
+  nav_files+=("$DOCS_DIR/$md")
+done < <(grep -oE '[^ ]+\.md' "$MKDOCS_YML")
+
 # ── llms.txt (index) ────────────────────────────────────────────────────
 
-cat > "$DOCS_DIR/llms.txt" <<EOF
-# PerfGazer
-
-> Performance Gazer for Apache Spark — a configurable Spark Listener for post-mortem analysis.
-
-## Docs
-
-- [Getting Started]($SITE_URL/getting-started/)
-- [Setup via Spark Properties]($SITE_URL/user_guide/setup_spark_properties/)
-- [Setup via Code]($SITE_URL/user_guide/setup_code/)
-- [Databricks]($SITE_URL/user_guide/databricks/)
-- [Analyze with SQL]($SITE_URL/user_guide/analyze_sql/)
-- [Analyze with Scala]($SITE_URL/user_guide/analyze_scala/)
-- [Data Model Reference]($SITE_URL/user_guide/data_model/)
-- [Contributor Guide]($SITE_URL/contributor_guide/)
-
-## Data Model
-
-- [Schema (JSON)]($SITE_URL/schema/perfgazer-schema.json)
-EOF
+{
+  echo "# PerfGazer"
+  echo ""
+  echo "> Performance Gazer for Apache Spark — a configurable Spark Listener for post-mortem analysis."
+  echo ""
+  echo "## Docs"
+  echo ""
+  for f in "${nav_files[@]}"; do
+    # Derive URL path: strip docs dir, strip filename for index.md, strip .md
+    rel="${f#"$DOCS_DIR/"}"
+    url_path="${rel%.md}"
+    # index pages → parent directory
+    url_path="${url_path%/index}"
+    # top-level index → root
+    if [ "$url_path" = "index" ]; then
+      url_path=""
+    fi
+    # Build a readable title from the nav label (grep the YAML line)
+    title=$(grep -F "$rel" "$MKDOCS_YML" | head -1 | sed 's/.*- *//;s/: .*//')
+    # Fallback: derive title from filename
+    if [ -z "$title" ] || echo "$title" | grep -qE '\.md$'; then
+      title=$(basename "$rel" .md | sed 's/_/ /g;s/-/ /g;s/\b\(.\)/\u\1/g')
+    fi
+    echo "- [$title]($SITE_URL/$url_path/)"
+  done
+  echo ""
+  echo "## Data Model"
+  echo ""
+  echo "- [Schema (JSON)]($SITE_URL/schema/perfgazer-schema.json)"
+} > "$DOCS_DIR/llms.txt"
 
 # ── llms-full.txt (all docs concatenated) ────────────────────────────────
 
 FULL="$DOCS_DIR/llms-full.txt"
-echo "# PerfGazer — Full Documentation" > "$FULL"
-echo "" >> "$FULL"
-
-# Concatenate all markdown docs in nav order
-for f in \
-  "$DOCS_DIR/index.md" \
-  "$DOCS_DIR/getting-started.md" \
-  "$DOCS_DIR/user_guide/index.md" \
-  "$DOCS_DIR/user_guide/setup_spark_properties.md" \
-  "$DOCS_DIR/user_guide/setup_code.md" \
-  "$DOCS_DIR/user_guide/databricks.md" \
-  "$DOCS_DIR/user_guide/analyze_sql.md" \
-  "$DOCS_DIR/user_guide/analyze_scala.md" \
-  "$DOCS_DIR/user_guide/data_model.md" \
-  "$DOCS_DIR/contributor_guide.md"; do
-  if [ -f "$f" ]; then
-    cat "$f" >> "$FULL"
-    printf '\n\n---\n\n' >> "$FULL"
+{
+  echo "# PerfGazer — Full Documentation"
+  echo ""
+  for f in "${nav_files[@]}"; do
+    if [ -f "$f" ]; then
+      cat "$f"
+      printf '\n\n---\n\n'
+    fi
+  done
+  # Append the JSON schema
+  if [ -f "$SCHEMA_FILE" ]; then
+    echo "# Data Model Schema (JSON)"
+    echo ""
+    echo '```json'
+    cat "$SCHEMA_FILE"
+    echo '```'
   fi
-done
-
-# Append the JSON schema
-if [ -f "$SCHEMA_FILE" ]; then
-  echo "# Data Model Schema (JSON)" >> "$FULL"
-  echo "" >> "$FULL"
-  echo '```json' >> "$FULL"
-  cat "$SCHEMA_FILE" >> "$FULL"
-  echo '```' >> "$FULL"
-fi
+} > "$FULL"
 
 echo "Generated $DOCS_DIR/llms.txt and $FULL"
