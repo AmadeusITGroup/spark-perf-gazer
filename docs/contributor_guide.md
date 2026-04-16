@@ -129,6 +129,19 @@ Documentation is versioned using [mike](https://github.com/jimporter/mike) and d
 
 The doc site is available at [amadeusitgroup.github.io/spark-perf-gazer](https://amadeusitgroup.github.io/spark-perf-gazer/).
 
+#### Removing a published version
+
+Deleting a GitHub Release does **not** remove the version from the docs site — versioned docs live as static files on the `gh-pages` branch, independent of GitHub Releases.
+
+To remove a version from the docs site:
+
+```bash
+mike delete <version>   # e.g. mike delete v0.1.0
+git push origin gh-pages
+```
+
+If you also want to clean up the GitHub Release and its tag, do that separately via the GitHub UI or CLI.
+
 ### Scripts reference
 
 | Script | Purpose |
