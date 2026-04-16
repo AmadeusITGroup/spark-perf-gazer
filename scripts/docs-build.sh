@@ -10,11 +10,11 @@ SCRIPT_DIR="$(dirname "$0")"
 echo "==> Generating data model docs from annotations..."
 sbt "docGenerator/run"
 
-echo "==> Generating llms.txt and llms-full.txt..."
-"$SCRIPT_DIR/generate-llms-txt.sh"
-
 echo "==> Generating artifacts page from release matrix..."
 "$SCRIPT_DIR/generate-artifacts-md.sh"
+
+echo "==> Generating llms.txt and llms-full.txt..."
+"$SCRIPT_DIR/generate-llms-txt.sh"
 
 echo "==> Building MkDocs site..."
 mkdocs build
