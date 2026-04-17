@@ -42,6 +42,19 @@ class PathBuilderSpec extends SimpleSpec with GivenWhenThen {
         an[IllegalArgumentException] should be thrownBy {
           destination5.resolveProperties(spark.sparkContext.getConf)
         }
+
+        And("it should resolve to the same value when called multiple times (JVM-stable time and UUID)")
+        val conf = spark.sparkContext.getConf
+        val template = "/tmp/perfgazer".withDate.withTime.withRunId
+
+        val first = template.resolveProperties(conf)
+        Thread.sleep(2000)
+        val second = template.resolveProperties(conf)
+        first shouldBe second
+        first should include("runId=")
+        first should include("date=")
+        first should include("time=")
+
       }
     }
 
@@ -96,5 +109,6 @@ class PathBuilderSpec extends SimpleSpec with GivenWhenThen {
       path.extractBasePath shouldBe "/base/a=10/something/"
       path.extractPartitions shouldBe "/b=10/c=30/"
     }
+
   }
 }

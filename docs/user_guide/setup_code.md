@@ -36,4 +36,6 @@ spark.sparkContext.removeSparkListener(perfGazer)
 perfGazer.close()
 ```
 
+> Note: the destination should include a partition that uniquely identifies the application run (e.g. `applicationId={{spark.app.id}}` or `runId={{perfgazer.runid}}`) so that data from different runs does not get mixed. See [destination placeholders](setup_spark_properties.md#destination-placeholders) for available placeholders.
+
 > Note: a shutdown hook is registered automatically on construction, so the listener will be closed on JVM termination even if you omit the explicit `removeSparkListener`/`close()` calls. That said, calling them explicitly at the end of your application is still good practice to ensure a clean, predictable teardown.
