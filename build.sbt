@@ -137,7 +137,8 @@ lazy val docGenerator = (project in file("doc-generator"))
     libraryDependencies ++= Seq(
       "org.apache.spark"  %% "spark-core"     % SparkVersion,
       "org.apache.spark"  %% "spark-sql"      % SparkVersion,
-      "org.scala-lang"     % "scala-reflect"  % BuildScalaVersion
+      "org.scala-lang"     % "scala-reflect"  % BuildScalaVersion,
+      "org.scalatest"     %% "scalatest"      % "3.2.16"          % Test
     ),
     Compile / mainClass := Some("com.amadeus.perfgazer.docgen.SchemaDocGenerator")
   )
