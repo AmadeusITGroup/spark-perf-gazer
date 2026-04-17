@@ -9,25 +9,22 @@ permissions:
   contents: write # Required to upload dependency graph
 
 jobs:
+  load-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: set
+        run: echo "matrix=$(jq -c '{include:.}' .github/artifact-matrix.json)" >> "$GITHUB_OUTPUT"
+
   build-and-test:
+    needs: load-matrix
     runs-on: ubuntu-latest
     name: Build and Test (Spark ${{ matrix.spark }})
     strategy:
       fail-fast: true
-      matrix:
-        include:
-          - spark: "3.4.1" # dbr 13.3
-            scala: "2.12.20"
-            java: "8"
-          - spark: "3.5.2" # dbr 16.4
-            scala: "2.12.20"
-            java: "8"
-          - spark: "3.5.2" # dbr 16.4
-            scala: "2.13.18"
-            java: "17"
-          - spark: "4.1.0" # dbr 18.1
-            scala: "2.13.18"
-            java: "21"
+      matrix: ${{ fromJson(needs.load-matrix.outputs.matrix) }}
     env:
       SPARK_VERSION: ${{ matrix.spark }}
       SCALA_VERSION: ${{ matrix.scala }}

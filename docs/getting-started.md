@@ -15,6 +15,9 @@ spark-shell \
 !!! note
     Change the version to the latest release: ![GitHub Release](https://img.shields.io/github/v/release/AmadeusITGroup/spark-perf-gazer)
 
+!!! tip
+    See [Available Artifacts](https://AmadeusITGroup.github.io/spark-perf-gazer/artifacts/) for all Spark / Scala combinations and dependency coordinates.
+
 Run some Spark actions:
 
 ```scala
