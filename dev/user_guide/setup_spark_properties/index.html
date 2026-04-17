@@ -449,6 +449,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#destination-placeholders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Destination placeholders
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -669,6 +680,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#destination-placeholders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Destination placeholders
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -765,7 +787,7 @@ Use the latest release version: <img alt="GitHub Release" src="https://img.shiel
 <tr>
 <td><code>spark.perfgazer.sink.json.destination</code></td>
 <td>—</td>
-<td>Destination path for JSON output</td>
+<td>Destination path for JSON output. Should include a partition that uniquely identifies the run (e.g. <code>applicationId</code> or <code>runId</code>) so that data from different runs does not get mixed.</td>
 </tr>
 <tr>
 <td><code>spark.perfgazer.sink.json.writeBatchSize</code></td>
@@ -789,6 +811,51 @@ Use the latest release version: <img alt="GitHub Release" src="https://img.shiel
 </tr>
 </tbody>
 </table>
+<h3 id="destination-placeholders">Destination placeholders</h3>
+<p>The destination path supports <code>{{key}}</code> placeholders resolved at runtime:</p>
+<table>
+<thead>
+<tr>
+<th>Placeholder</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>{{perfgazer.now.year}}</code></td>
+<td>Current year (4 digits)</td>
+</tr>
+<tr>
+<td><code>{{perfgazer.now.month}}</code></td>
+<td>Current month (2 digits)</td>
+</tr>
+<tr>
+<td><code>{{perfgazer.now.day}}</code></td>
+<td>Current day (2 digits)</td>
+</tr>
+<tr>
+<td><code>{{perfgazer.now.hour}}</code></td>
+<td>Current hour (2 digits)</td>
+</tr>
+<tr>
+<td><code>{{perfgazer.now.minute}}</code></td>
+<td>Current minute (2 digits)</td>
+</tr>
+<tr>
+<td><code>{{perfgazer.now.second}}</code></td>
+<td>Current second (2 digits)</td>
+</tr>
+<tr>
+<td><code>{{perfgazer.runid}}</code></td>
+<td>JVM-stable UUID, unique per application run</td>
+</tr>
+<tr>
+<td><code>{{spark.*}}</code></td>
+<td>Any Spark configuration property, e.g. <code>{{spark.app.id}}</code></td>
+</tr>
+</tbody>
+</table>
+<p>Date, time, and runId values are captured once at JVM startup and remain stable across multiple resolutions.</p>
 <blockquote>
 <p>Note: <code>JsonSink</code> uses the POSIX interface on the driver to write JSON files.</p>
 </blockquote>

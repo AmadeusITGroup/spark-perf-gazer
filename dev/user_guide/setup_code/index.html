@@ -605,6 +605,7 @@
 <span class="n">perfGazer</span><span class="p">.</span><span class="n">close</span><span class="p">()</span>
 </code></pre></div>
 <blockquote>
+<p>Note: the destination should include a partition that uniquely identifies the application run (e.g. <code>applicationId={{spark.app.id}}</code> or <code>runId={{perfgazer.runid}}</code>) so that data from different runs does not get mixed. See <a href="../setup_spark_properties/#destination-placeholders">destination placeholders</a> for available placeholders.</p>
 <p>Note: a shutdown hook is registered automatically on construction, so the listener will be closed on JVM termination even if you omit the explicit <code>removeSparkListener</code>/<code>close()</code> calls. That said, calling them explicitly at the end of your application is still good practice to ensure a clean, predictable teardown.</p>
 </blockquote>
 
