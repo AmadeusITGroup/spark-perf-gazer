@@ -1,21 +1,21 @@
 package com.amadeus.perfgazer.reports
 
 import com.amadeus.perfgazer.events.SqlEvent
-import com.amadeus.perfgazer.schema.{SchemaDoc, SchemaReport}
+import com.amadeus.perfgazer.schema.{ColumnDoc, TableDoc}
 import org.apache.spark.sql.execution.{ExtendedMode, QueryExecution, SparkPlan}
 import org.apache.spark.sql.execution.adaptive.{AdaptiveSparkPlanExec, ShuffleQueryStageExec}
 import org.apache.spark.sql.execution.metric.SQLMetric
 import org.apache.spark.sql.execution.ui.{SparkInternal, SparkListenerSQLExecutionEnd}
 
-@SchemaReport(value = "sql", description = "SQL query execution report with physical plan node metrics. One row per completed SQL execution.")
+@TableDoc(name = "sql", description = "SQL query execution report with SQL plans (logical, physical, ...) and their node metrics. One row per completed SQL execution.")
 case class SqlReport(
-  @SchemaDoc(value = "Unique SQL execution identifier")
+  @ColumnDoc(description = "Unique SQL execution identifier")
   sqlId: Long,
-  @SchemaDoc(value = "SQL query description")
+  @ColumnDoc(description = "SQL query description")
   description: String,
-  @SchemaDoc(value = "Extended query execution plan")
+  @ColumnDoc(description = "Extended query execution plan")
   details: String,
-  @SchemaDoc(value = "Physical plan nodes with execution metrics")
+  @ColumnDoc(description = "Physical plan nodes with execution metrics")
   nodes: Seq[SqlNode]
 ) extends Report {
   override def reportType: ReportType = SqlReportType

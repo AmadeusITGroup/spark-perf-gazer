@@ -1,13 +1,13 @@
 package com.amadeus.perfgazer.docgen
 
-import com.amadeus.perfgazer.schema.{SchemaDoc, SchemaReport}
+import com.amadeus.perfgazer.schema.{ColumnDoc, TableDoc}
 
 import java.io.{File, PrintWriter}
 import scala.reflect.runtime.universe._
 
 /** Reflects on annotated case classes and generates data model documentation.
   *
-  * Loads compiled report classes, reads @SchemaReport and @SchemaDoc annotations
+  * Loads compiled report classes, reads @TableDoc and @ColumnDoc annotations
   * via Java reflection, and uses Scala reflection for accurate generic type info.
   * Emits:
   *   - A Markdown file for human consumption (MkDocs)
@@ -60,7 +60,7 @@ object SchemaDocGenerator {
     val jsonOutput = if (args.length > 1) args(1) else "docs/schema/perfgazer-schema.json"
 
     val views: Seq[ViewDoc] = reportClasses
-      .filter(_.isAnnotationPresent(classOf[SchemaReport]))
+      .filter(_.isAnnotationPresent(classOf[TableDoc]))
       .map(extractViewDoc)
       .sortBy(_.viewName)
 
@@ -75,9 +75,9 @@ object SchemaDocGenerator {
   }
 
   private def extractViewDoc(clazz: Class[_]): ViewDoc = {
-    val ann = clazz.getAnnotation(classOf[SchemaReport])
+    val ann = clazz.getAnnotation(classOf[TableDoc])
     val fields = extractFieldDocs(clazz)
-    ViewDoc(ann.value(), clazz.getSimpleName, ann.description(), fields)
+    ViewDoc(ann.name(), clazz.getSimpleName, ann.description(), fields)
   }
 
   private def extractFieldDocs(clazz: Class[_]): Seq[FieldDoc] = {
@@ -92,8 +92,8 @@ object SchemaDocGenerator {
 
     ctorParams.zipWithIndex.map { case (param, i) =>
       val annotations = paramAnnotations(i)
-      val schemaDoc = annotations.collectFirst { case a: SchemaDoc => a }
-      val description = schemaDoc.map(_.value()).getOrElse("")
+      val schemaDoc = annotations.collectFirst { case a: ColumnDoc => a }
+      val description = schemaDoc.map(_.description()).getOrElse("")
       val unit = schemaDoc.map(_.unit()).getOrElse("")
 
       val scalaType = param.typeSignature

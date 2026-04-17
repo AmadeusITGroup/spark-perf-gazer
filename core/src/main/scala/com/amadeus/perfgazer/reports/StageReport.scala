@@ -1,35 +1,35 @@
 package com.amadeus.perfgazer.reports
 
 import com.amadeus.perfgazer.events.StageEvent
-import com.amadeus.perfgazer.schema.{SchemaDoc, SchemaReport}
+import com.amadeus.perfgazer.schema.{ColumnDoc, TableDoc}
 
-@SchemaReport(value = "stage", description = "Stage-level execution report. One row per completed Spark stage.")
+@TableDoc(name = "stage", description = "Stage-level execution report. One row per completed Spark stage.")
 case class StageReport(
-  @SchemaDoc(value = "Unique stage identifier")
+  @ColumnDoc(description = "Unique stage identifier")
   stageId: Int,
-  @SchemaDoc(value = "Epoch timestamp when the stage was submitted", unit = "ms")
+  @ColumnDoc(description = "Epoch timestamp when the stage was submitted", unit = "ms")
   stageSubmissionTime: Option[Long],
-  @SchemaDoc(value = "Epoch timestamp when the stage completed", unit = "ms")
+  @ColumnDoc(description = "Epoch timestamp when the stage completed", unit = "ms")
   stageCompletionTime: Option[Long],
-  @SchemaDoc(value = "Total input bytes read", unit = "bytes")
+  @ColumnDoc(description = "Total input bytes read", unit = "bytes")
   readBytes: Long,
-  @SchemaDoc(value = "Total output bytes written", unit = "bytes")
+  @ColumnDoc(description = "Total output bytes written", unit = "bytes")
   writeBytes: Long,
-  @SchemaDoc(value = "Total shuffle bytes read", unit = "bytes")
+  @ColumnDoc(description = "Total shuffle bytes read", unit = "bytes")
   shuffleReadBytes: Long,
-  @SchemaDoc(value = "Total shuffle bytes written", unit = "bytes")
+  @ColumnDoc(description = "Total shuffle bytes written", unit = "bytes")
   shuffleWriteBytes: Long,
-  @SchemaDoc(value = "Executor CPU time", unit = "ns")
+  @ColumnDoc(description = "Executor CPU time", unit = "ns")
   execCpuNs: Long,
-  @SchemaDoc(value = "Executor run time", unit = "ns")
+  @ColumnDoc(description = "Executor run time", unit = "ns")
   execRunNs: Long,
-  @SchemaDoc(value = "Executor JVM garbage collection time", unit = "ns")
+  @ColumnDoc(description = "Executor JVM garbage collection time", unit = "ns")
   execJvmGcNs: Long,
-  @SchemaDoc(value = "Stage attempt number")
+  @ColumnDoc(description = "Stage attempt number")
   attempt: Int,
-  @SchemaDoc(value = "Bytes spilled to memory", unit = "bytes")
+  @ColumnDoc(description = "Bytes spilled to memory", unit = "bytes")
   memoryBytesSpilled: Long,
-  @SchemaDoc(value = "Bytes spilled to disk", unit = "bytes")
+  @ColumnDoc(description = "Bytes spilled to disk", unit = "bytes")
   diskBytesSpilled: Long
 ) extends Report {
   override def reportType: ReportType = StageReportType

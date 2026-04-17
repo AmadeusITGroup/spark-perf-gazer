@@ -20,7 +20,7 @@ of the query/job/stage execution enriched with some extra information only avail
 to the type of `Event`.
 
 A `Report` is a type that represents the report unit shared with the end-user.
-Report case classes are annotated with `@SchemaReport` and `@SchemaDoc` to serve as the single source of truth
+Report case classes are annotated with `@TableDoc` and `@ColumnDoc` to serve as the single source of truth
 for the data model documentation (see [Data model documentation](#data-model-documentation) below).
 
 A `Filter` is a filter that operates on `Report`s, so that the end-user can have some control to focus specific aspects of
@@ -74,17 +74,17 @@ A build-time generator (`doc-generator/`) reads these annotations and produces:
 - `docs/user_guide/data_model.md` — human-friendly Markdown tables with SQL types
 - `docs/schema/perfgazer-schema.json` — agent-friendly structured JSON
 
-When adding or modifying fields in a report case class, annotate them with `@SchemaDoc`:
+When adding or modifying fields in a report case class, annotate them with `@ColumnDoc`:
 
 ```scala
-@SchemaDoc("Wall-clock duration of the task", unit = "ms")
+@ColumnDoc(description = "Wall-clock duration of the task", unit = "ms")
 taskDuration: Long,
 ```
 
-When adding a new report case class, annotate the class with `@SchemaReport`:
+When adding a new report case class, annotate the class with `@TableDoc`:
 
 ```scala
-@SchemaReport("task", "Task-level execution metrics. One row per completed Spark task.")
+@TableDoc(name = "task", description = "Task-level execution metrics. One row per completed Spark task.")
 case class TaskReport(
   ...
 ```

@@ -12,9 +12,9 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface SchemaReport {
+public @interface TableDoc {
     /** The SQL temporary view name (e.g. "job", "sql", "stage", "task") */
-    String value();
+    String name();
 
     /** Human-readable description of the report/view */
     String description();

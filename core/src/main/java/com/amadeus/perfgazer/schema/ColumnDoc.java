@@ -12,9 +12,9 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
-public @interface SchemaDoc {
+public @interface ColumnDoc {
     /** Human-readable description of the field */
-    String value();
+    String description();
 
     /** Optional unit of measure (e.g. "ms", "ns", "bytes") */
     String unit() default "";

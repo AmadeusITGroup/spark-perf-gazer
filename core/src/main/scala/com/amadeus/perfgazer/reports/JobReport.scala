@@ -1,23 +1,23 @@
 package com.amadeus.perfgazer.reports
 
 import com.amadeus.perfgazer.events.JobEvent
-import com.amadeus.perfgazer.schema.{SchemaDoc, SchemaReport}
+import com.amadeus.perfgazer.schema.{ColumnDoc, TableDoc}
 
-@SchemaReport(value = "job", description = "Job-level execution report. One row per completed Spark job.")
+@TableDoc(name = "job", description = "Job-level execution report. One row per completed Spark job.")
 case class JobReport(
-  @SchemaDoc(value = "Unique job identifier")
+  @ColumnDoc(description = "Unique job identifier")
   jobId: Long,
-  @SchemaDoc(value = "Job group identifier")
+  @ColumnDoc(description = "Job group identifier")
   groupId: String,
-  @SchemaDoc(value = "Name of the job")
+  @ColumnDoc(description = "Name of the job")
   jobName: String,
-  @SchemaDoc(value = "Epoch timestamp when the job started", unit = "ms")
+  @ColumnDoc(description = "Epoch timestamp when the job started", unit = "ms")
   jobStartTime: Long,
-  @SchemaDoc(value = "Epoch timestamp when the job ended", unit = "ms")
+  @ColumnDoc(description = "Epoch timestamp when the job ended", unit = "ms")
   jobEndTime: Long,
-  @SchemaDoc(value = "Associated SQL execution identifier")
+  @ColumnDoc(description = "Associated SQL execution identifier")
   sqlId: String,
-  @SchemaDoc(value = "List of stage IDs in this job")
+  @ColumnDoc(description = "List of stage IDs in this job")
   stages: Seq[Int]
 ) extends Report {
   override def reportType: ReportType = JobReportType
