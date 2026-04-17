@@ -122,10 +122,10 @@ This runs schema generation, `mkdocs build`, and `generate-llms-txt.sh`. Output 
 
 ### Deployment
 
-Documentation is versioned using [mike](https://github.com/jimporter/mike) and deployed to GitHub Pages automatically:
+Documentation is versioned using [mike](https://github.com/jimporter/mike) and deployed to GitHub Pages automatically under the following conditions:
 
-- Push to `main` (changes in `docs/`, `mkdocs.yml`, report classes, or `doc-generator/`) → deploys the `dev` version
-- Publishing a GitHub Release → deploys a versioned copy (e.g. `v0.1.0`) and updates the `latest` alias
+- When pushing to `main` with changes in `docs/`, `mkdocs.yml`, report classes, or `doc-generator/`, the `dev` version is deployed.
+- When publishing a GitHub Release, a versioned copy (e.g. `v0.1.0`) is deployed and the `latest` alias is updated.
 
 The doc site is available at [amadeusitgroup.github.io/spark-perf-gazer](https://amadeusitgroup.github.io/spark-perf-gazer/).
 
