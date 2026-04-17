@@ -10,28 +10,28 @@
       
       
       
-        <link rel="canonical" href="https://AmadeusITGroup.github.io/spark-perf-gazer/dev/user_guide/">
+        <link rel="canonical" href="https://AmadeusITGroup.github.io/spark-perf-gazer/dev/user_guide/data_model/">
       
       
-        <link rel="prev" href="../getting-started/">
+        <link rel="prev" href="../analyze_scala/">
       
       
-        <link rel="next" href="setup_spark_properties/">
+        <link rel="next" href="../../contributor_guide/">
       
       
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>User Guide - PerfGazer</title>
+        <title>Data Model Reference - PerfGazer</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
       
 
@@ -50,7 +50,7 @@
       
     
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -71,7 +71,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#user-guide" class="md-skip">
+        <a href="#data-model-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -91,7 +91,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="PerfGazer" class="md-header__button md-logo" aria-label="PerfGazer" data-md-component="logo">
+    <a href="../.." title="PerfGazer" class="md-header__button md-logo" aria-label="PerfGazer" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -111,7 +111,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              User Guide
+              Data Model Reference
             
           </span>
         </div>
@@ -201,7 +201,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="PerfGazer" class="md-nav__button md-logo" aria-label="PerfGazer" data-md-component="logo">
+    <a href="../.." title="PerfGazer" class="md-nav__button md-logo" aria-label="PerfGazer" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -231,7 +231,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -258,7 +258,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/" class="md-nav__link">
+      <a href="../../getting-started/" class="md-nav__link">
         
   
   
@@ -317,7 +317,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="./" class="md-nav__link md-nav__link--active">
+            <a href="../" class="md-nav__link ">
               
   
   
@@ -335,7 +335,7 @@
             </a>
             
               
-              <label class="md-nav__link md-nav__link--active" for="__nav_3" id="__nav_3_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
@@ -361,7 +361,7 @@
   
   
     <li class="md-nav__item">
-      <a href="setup_spark_properties/" class="md-nav__link">
+      <a href="../setup_spark_properties/" class="md-nav__link">
         
   
   
@@ -389,7 +389,7 @@
   
   
     <li class="md-nav__item">
-      <a href="setup_code/" class="md-nav__link">
+      <a href="../setup_code/" class="md-nav__link">
         
   
   
@@ -417,7 +417,7 @@
   
   
     <li class="md-nav__item">
-      <a href="databricks/" class="md-nav__link">
+      <a href="../databricks/" class="md-nav__link">
         
   
   
@@ -445,7 +445,7 @@
   
   
     <li class="md-nav__item">
-      <a href="analyze_sql/" class="md-nav__link">
+      <a href="../analyze_sql/" class="md-nav__link">
         
   
   
@@ -473,7 +473,7 @@
   
   
     <li class="md-nav__item">
-      <a href="analyze_scala/" class="md-nav__link">
+      <a href="../analyze_scala/" class="md-nav__link">
         
   
   
@@ -498,10 +498,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="data_model/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Model Reference
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -517,6 +544,87 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#job-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        job view
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sql-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sql view
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="sql view">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sqlnode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SqlNode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stage-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        stage view
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#task-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        task view
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -536,7 +644,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributor_guide/" class="md-nav__link">
+      <a href="../../contributor_guide/" class="md-nav__link">
         
   
   
@@ -583,10 +691,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#step-1-annotate-your-spark-code" class="md-nav__link">
+  <a href="#job-view" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 1 — Annotate your Spark code
+        job view
       
     </span>
   </a>
@@ -594,10 +702,38 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-2-set-up-the-listener" class="md-nav__link">
+  <a href="#sql-view" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 2 — Set up the listener
+        sql view
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="sql view">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sqlnode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SqlNode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stage-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        stage view
       
     </span>
   </a>
@@ -605,21 +741,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-3-run-your-spark-application" class="md-nav__link">
+  <a href="#task-view" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 3 — Run your Spark application
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-4-analyze-the-listener-data" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 4 — Analyze the listener data
+        task view
       
     </span>
   </a>
@@ -646,36 +771,444 @@
   
 
 
-<h1 id="user-guide">User Guide</h1>
-<p>Follow these steps to get PerfGazer up and running.</p>
-<h2 id="step-1-annotate-your-spark-code">Step 1 — Annotate your Spark code</h2>
-<p>This step is optional but strongly encouraged as it will make the listener data much easier to analyze, specially with Spark applications with several jobs.</p>
-<p>Add job descriptions to your Spark code using <code>setJobDescription</code> or <code>setLocalProperty</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="n">spark</span><span class="p">.</span><span class="n">sparkContext</span><span class="p">.</span><span class="n">setJobDescription</span><span class="p">(</span><span class="s">&quot;my-etl-job: loading customer data&quot;</span><span class="p">)</span>
-</code></pre></div>
-<p>or with a job group:</p>
-<div class="highlight"><pre><span></span><code><span class="n">spark</span><span class="p">.</span><span class="n">sparkContext</span><span class="p">.</span><span class="n">setJobGroup</span><span class="p">(</span><span class="s">&quot;my-etl-job&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;loading customer data&quot;</span><span class="p">)</span>
-</code></pre></div>
-<p>These labels will appear in the collected reports and help you correlate metrics back to specific parts of your application.</p>
-<h2 id="step-2-set-up-the-listener">Step 2 — Set up the listener</h2>
-<p>The listener can be configured in two ways. The default and recommended approach is via Spark properties, which requires no code changes.</p>
-<ul>
-<li><a href="setup_spark_properties/">Configuration via Spark properties</a> ← start here</li>
-<li><a href="setup_code/">Configuration via code change</a></li>
-</ul>
-<p>For Databricks-specific setup, see <a href="databricks/">Databricks</a>.</p>
-<h2 id="step-3-run-your-spark-application">Step 3 — Run your Spark application</h2>
-<p>Run your application as usual. PerfGazer will collect metrics in the background and flush them to the configured sink.</p>
-<p>PerfGazer registers a shutdown hook that ensures the listener is closed gracefully when the driver JVM exits, regardless of which setup method you used.</p>
-<h2 id="step-4-analyze-the-listener-data">Step 4 — Analyze the listener data</h2>
-<p>Once your application has run, the collected reports can be analyzed in different ways depending on your environment and preference:</p>
-<ul>
-<li><a href="analyze_sql/">Analyze using SQL</a></li>
-<li><a href="analyze_scala/">Analyze using Scala</a></li>
-</ul>
-<blockquote>
-<p>Note: at application shutdown, PerfGazer prints view creation snippets in the logs that match your configuration. These are a convenient starting point for SQL analysis.</p>
-</blockquote>
+<h1 id="data-model-reference">Data Model Reference</h1>
+<p>PerfGazer writes reports as JSON files. Each report type maps to a SQL temporary view.
+The schemas below describe the structure of each view.</p>
+<h2 id="job-view"><code>job</code> view</h2>
+<p>Job-level execution report. One row per completed Spark job.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>SQL Type</th>
+<th>Unit</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>jobId</td>
+<td><code>BIGINT</code></td>
+<td></td>
+<td>Unique job identifier</td>
+</tr>
+<tr>
+<td>groupId</td>
+<td><code>STRING</code></td>
+<td></td>
+<td>Job group identifier</td>
+</tr>
+<tr>
+<td>jobName</td>
+<td><code>STRING</code></td>
+<td></td>
+<td>Name of the job</td>
+</tr>
+<tr>
+<td>jobStartTime</td>
+<td><code>BIGINT</code></td>
+<td>ms</td>
+<td>Epoch timestamp when the job started</td>
+</tr>
+<tr>
+<td>jobEndTime</td>
+<td><code>BIGINT</code></td>
+<td>ms</td>
+<td>Epoch timestamp when the job ended</td>
+</tr>
+<tr>
+<td>sqlId</td>
+<td><code>STRING</code></td>
+<td></td>
+<td>Associated SQL execution identifier</td>
+</tr>
+<tr>
+<td>stages</td>
+<td><code>ARRAY&lt;INT&gt;</code></td>
+<td></td>
+<td>List of stage IDs in this job</td>
+</tr>
+</tbody>
+</table>
+<h2 id="sql-view"><code>sql</code> view</h2>
+<p>SQL query execution report with SQL plans (logical, physical, ...) and their node metrics. One row per completed SQL execution.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>SQL Type</th>
+<th>Unit</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>sqlId</td>
+<td><code>BIGINT</code></td>
+<td></td>
+<td>Unique SQL execution identifier</td>
+</tr>
+<tr>
+<td>description</td>
+<td><code>STRING</code></td>
+<td></td>
+<td>SQL query description</td>
+</tr>
+<tr>
+<td>details</td>
+<td><code>STRING</code></td>
+<td></td>
+<td>Extended query execution plan</td>
+</tr>
+<tr>
+<td>nodes</td>
+<td><code>ARRAY&lt;STRUCT&lt;sqlId: BIGINT, jobName: STRING, nodeName: STRING, coordinates: STRING, metrics: MAP&lt;STRING, STRING&gt;, isLeaf: BOOLEAN, parentNodeName: STRING&gt;&gt;</code></td>
+<td></td>
+<td>Physical plan nodes with execution metrics</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sqlnode"><code>SqlNode</code></h3>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>SQL Type</th>
+<th>Unit</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>sqlId</td>
+<td><code>BIGINT</code></td>
+<td></td>
+<td>SQL execution this node belongs to</td>
+</tr>
+<tr>
+<td>jobName</td>
+<td><code>STRING</code></td>
+<td></td>
+<td>Name of the job that triggered this SQL</td>
+</tr>
+<tr>
+<td>nodeName</td>
+<td><code>STRING</code></td>
+<td></td>
+<td>Spark physical plan operator name</td>
+</tr>
+<tr>
+<td>coordinates</td>
+<td><code>STRING</code></td>
+<td></td>
+<td>Dot-separated position in the plan tree, e.g. '0.1.2'</td>
+</tr>
+<tr>
+<td>metrics</td>
+<td><code>MAP&lt;STRING, STRING&gt;</code></td>
+<td></td>
+<td>Operator metrics as key-value pairs</td>
+</tr>
+<tr>
+<td>isLeaf</td>
+<td><code>BOOLEAN</code></td>
+<td></td>
+<td>True if this node has no children in the plan tree</td>
+</tr>
+<tr>
+<td>parentNodeName</td>
+<td><code>STRING</code></td>
+<td></td>
+<td>Name of the parent operator in the plan tree</td>
+</tr>
+</tbody>
+</table>
+<h2 id="stage-view"><code>stage</code> view</h2>
+<p>Stage-level execution report. One row per completed Spark stage.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>SQL Type</th>
+<th>Unit</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>stageId</td>
+<td><code>INT</code></td>
+<td></td>
+<td>Unique stage identifier</td>
+</tr>
+<tr>
+<td>stageSubmissionTime</td>
+<td><code>BIGINT</code></td>
+<td>ms</td>
+<td>Epoch timestamp when the stage was submitted</td>
+</tr>
+<tr>
+<td>stageCompletionTime</td>
+<td><code>BIGINT</code></td>
+<td>ms</td>
+<td>Epoch timestamp when the stage completed</td>
+</tr>
+<tr>
+<td>readBytes</td>
+<td><code>BIGINT</code></td>
+<td>bytes</td>
+<td>Total input bytes read</td>
+</tr>
+<tr>
+<td>writeBytes</td>
+<td><code>BIGINT</code></td>
+<td>bytes</td>
+<td>Total output bytes written</td>
+</tr>
+<tr>
+<td>shuffleReadBytes</td>
+<td><code>BIGINT</code></td>
+<td>bytes</td>
+<td>Total shuffle bytes read</td>
+</tr>
+<tr>
+<td>shuffleWriteBytes</td>
+<td><code>BIGINT</code></td>
+<td>bytes</td>
+<td>Total shuffle bytes written</td>
+</tr>
+<tr>
+<td>execCpuNs</td>
+<td><code>BIGINT</code></td>
+<td>ns</td>
+<td>Executor CPU time</td>
+</tr>
+<tr>
+<td>execRunNs</td>
+<td><code>BIGINT</code></td>
+<td>ns</td>
+<td>Executor run time</td>
+</tr>
+<tr>
+<td>execJvmGcNs</td>
+<td><code>BIGINT</code></td>
+<td>ns</td>
+<td>Executor JVM garbage collection time</td>
+</tr>
+<tr>
+<td>attempt</td>
+<td><code>INT</code></td>
+<td></td>
+<td>Stage attempt number</td>
+</tr>
+<tr>
+<td>memoryBytesSpilled</td>
+<td><code>BIGINT</code></td>
+<td>bytes</td>
+<td>Bytes spilled to memory</td>
+</tr>
+<tr>
+<td>diskBytesSpilled</td>
+<td><code>BIGINT</code></td>
+<td>bytes</td>
+<td>Bytes spilled to disk</td>
+</tr>
+</tbody>
+</table>
+<h2 id="task-view"><code>task</code> view</h2>
+<p>Task-level execution metrics. One row per completed Spark task.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>SQL Type</th>
+<th>Unit</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>stageId</td>
+<td><code>INT</code></td>
+<td></td>
+<td>Stage this task belongs to</td>
+</tr>
+<tr>
+<td>taskId</td>
+<td><code>BIGINT</code></td>
+<td></td>
+<td>Unique task identifier</td>
+</tr>
+<tr>
+<td>taskDuration</td>
+<td><code>BIGINT</code></td>
+<td>ms</td>
+<td>Wall-clock duration of the task</td>
+</tr>
+<tr>
+<td>taskLaunchTime</td>
+<td><code>BIGINT</code></td>
+<td>ms</td>
+<td>Epoch timestamp when the task was launched</td>
+</tr>
+<tr>
+<td>taskFinishTime</td>
+<td><code>BIGINT</code></td>
+<td>ms</td>
+<td>Epoch timestamp when the task finished</td>
+</tr>
+<tr>
+<td>executorRunTime</td>
+<td><code>BIGINT</code></td>
+<td>ms</td>
+<td>Time spent running the task on the executor</td>
+</tr>
+<tr>
+<td>executorCpuTime</td>
+<td><code>BIGINT</code></td>
+<td>ns</td>
+<td>CPU time consumed by the executor</td>
+</tr>
+<tr>
+<td>executorDeserializeTime</td>
+<td><code>BIGINT</code></td>
+<td>ms</td>
+<td>Time to deserialize the task on the executor</td>
+</tr>
+<tr>
+<td>executorDeserializeCpuTime</td>
+<td><code>BIGINT</code></td>
+<td>ns</td>
+<td>CPU time spent deserializing the task</td>
+</tr>
+<tr>
+<td>resultSize</td>
+<td><code>BIGINT</code></td>
+<td>bytes</td>
+<td>Size of the serialized task result</td>
+</tr>
+<tr>
+<td>diskBytesSpilled</td>
+<td><code>BIGINT</code></td>
+<td>bytes</td>
+<td>Bytes spilled to disk</td>
+</tr>
+<tr>
+<td>memoryBytesSpilled</td>
+<td><code>BIGINT</code></td>
+<td>bytes</td>
+<td>Bytes spilled to memory</td>
+</tr>
+<tr>
+<td>bytesRead</td>
+<td><code>BIGINT</code></td>
+<td>bytes</td>
+<td>Input bytes read</td>
+</tr>
+<tr>
+<td>recordsRead</td>
+<td><code>BIGINT</code></td>
+<td></td>
+<td>Input records read</td>
+</tr>
+<tr>
+<td>jvmGCTime</td>
+<td><code>BIGINT</code></td>
+<td>ms</td>
+<td>Time spent in JVM garbage collection</td>
+</tr>
+<tr>
+<td>bytesWritten</td>
+<td><code>BIGINT</code></td>
+<td>bytes</td>
+<td>Output bytes written</td>
+</tr>
+<tr>
+<td>recordsWritten</td>
+<td><code>BIGINT</code></td>
+<td></td>
+<td>Output records written</td>
+</tr>
+<tr>
+<td>peakExecutionMemory</td>
+<td><code>BIGINT</code></td>
+<td>bytes</td>
+<td>Peak execution memory used</td>
+</tr>
+<tr>
+<td>resultSerializationTime</td>
+<td><code>BIGINT</code></td>
+<td>ms</td>
+<td>Time spent serializing the result</td>
+</tr>
+<tr>
+<td>fetchWaitTime</td>
+<td><code>BIGINT</code></td>
+<td>ms</td>
+<td>Time spent waiting for shuffle fetch</td>
+</tr>
+<tr>
+<td>localBlocksFetched</td>
+<td><code>BIGINT</code></td>
+<td></td>
+<td>Number of local blocks fetched during shuffle</td>
+</tr>
+<tr>
+<td>localBytesRead</td>
+<td><code>BIGINT</code></td>
+<td>bytes</td>
+<td>Bytes read from local shuffle blocks</td>
+</tr>
+<tr>
+<td>remoteBlocksFetched</td>
+<td><code>BIGINT</code></td>
+<td></td>
+<td>Number of remote blocks fetched during shuffle</td>
+</tr>
+<tr>
+<td>remoteBytesRead</td>
+<td><code>BIGINT</code></td>
+<td>bytes</td>
+<td>Bytes read from remote shuffle blocks</td>
+</tr>
+<tr>
+<td>remoteBytesReadToDisk</td>
+<td><code>BIGINT</code></td>
+<td>bytes</td>
+<td>Remote shuffle bytes read to disk</td>
+</tr>
+<tr>
+<td>totalRecordsRead</td>
+<td><code>BIGINT</code></td>
+<td></td>
+<td>Total records read including shuffle</td>
+</tr>
+<tr>
+<td>remoteRequestsDuration</td>
+<td><code>BIGINT</code></td>
+<td>ms</td>
+<td>Time spent on remote shuffle requests</td>
+</tr>
+<tr>
+<td>shuffleBytesWritten</td>
+<td><code>BIGINT</code></td>
+<td>bytes</td>
+<td>Shuffle bytes written</td>
+</tr>
+<tr>
+<td>shuffleRecordsWritten</td>
+<td><code>BIGINT</code></td>
+<td></td>
+<td>Shuffle records written</td>
+</tr>
+<tr>
+<td>shuffleWriteTime</td>
+<td><code>BIGINT</code></td>
+<td>ns</td>
+<td>Time spent writing shuffle data</td>
+</tr>
+</tbody>
+</table>
 
 
 
@@ -725,10 +1258,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.indexes", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.indexes", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

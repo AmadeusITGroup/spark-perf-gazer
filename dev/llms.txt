@@ -1,0 +1,20 @@
+# PerfGazer
+
+> Performance Gazer for Apache Spark — a configurable Spark Listener for post-mortem analysis.
+
+## Docs
+
+- [Home](https://amadeusitgroup.github.io/spark-perf-gazer//)
+- [Getting Started](https://amadeusitgroup.github.io/spark-perf-gazer/getting-started/)
+- [Index](https://amadeusitgroup.github.io/spark-perf-gazer/user_guide/)
+- [Setup via Spark Properties](https://amadeusitgroup.github.io/spark-perf-gazer/user_guide/setup_spark_properties/)
+- [Setup via Code](https://amadeusitgroup.github.io/spark-perf-gazer/user_guide/setup_code/)
+- [Databricks](https://amadeusitgroup.github.io/spark-perf-gazer/user_guide/databricks/)
+- [Analyze with SQL](https://amadeusitgroup.github.io/spark-perf-gazer/user_guide/analyze_sql/)
+- [Analyze with Scala](https://amadeusitgroup.github.io/spark-perf-gazer/user_guide/analyze_scala/)
+- [Data Model Reference](https://amadeusitgroup.github.io/spark-perf-gazer/user_guide/data_model/)
+- [Contributor Guide](https://amadeusitgroup.github.io/spark-perf-gazer/contributor_guide/)
+
+## Data Model
+
+- [Schema (JSON)](https://amadeusitgroup.github.io/spark-perf-gazer/schema/perfgazer-schema.json)

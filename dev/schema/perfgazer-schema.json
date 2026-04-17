@@ -1,0 +1,97 @@
+{
+  "project": "PerfGazer",
+  "description": "Schema reference for PerfGazer report views. Each view corresponds to a SQL temporary view created by JsonSink.",
+  "views": [
+    {
+      "name": "job",
+      "description": "Job-level execution report. One row per completed Spark job.",
+      "fields": [
+        { "name": "jobId", "type": "BIGINT", "description": "Unique job identifier" },
+        { "name": "groupId", "type": "STRING", "description": "Job group identifier" },
+        { "name": "jobName", "type": "STRING", "description": "Name of the job" },
+        { "name": "jobStartTime", "type": "BIGINT", "unit": "ms", "description": "Epoch timestamp when the job started" },
+        { "name": "jobEndTime", "type": "BIGINT", "unit": "ms", "description": "Epoch timestamp when the job ended" },
+        { "name": "sqlId", "type": "STRING", "description": "Associated SQL execution identifier" },
+        { "name": "stages", "type": "ARRAY<INT>", "description": "List of stage IDs in this job" }
+      ]
+    },
+    {
+      "name": "sql",
+      "description": "SQL query execution report with SQL plans (logical, physical, ...) and their node metrics. One row per completed SQL execution.",
+      "fields": [
+        { "name": "sqlId", "type": "BIGINT", "description": "Unique SQL execution identifier" },
+        { "name": "description", "type": "STRING", "description": "SQL query description" },
+        { "name": "details", "type": "STRING", "description": "Extended query execution plan" },
+        { "name": "nodes", "type": "ARRAY<STRUCT<sqlId: BIGINT, jobName: STRING, nodeName: STRING, coordinates: STRING, metrics: MAP<STRING, STRING>, isLeaf: BOOLEAN, parentNodeName: STRING>>", "description": "Physical plan nodes with execution metrics",
+          "nestedSchema": {
+            "name": "SqlNode",
+            "fields": [
+              { "name": "sqlId", "type": "BIGINT", "description": "SQL execution this node belongs to" },
+              { "name": "jobName", "type": "STRING", "description": "Name of the job that triggered this SQL" },
+              { "name": "nodeName", "type": "STRING", "description": "Spark physical plan operator name" },
+              { "name": "coordinates", "type": "STRING", "description": "Dot-separated position in the plan tree, e.g. '0.1.2'" },
+              { "name": "metrics", "type": "MAP<STRING, STRING>", "description": "Operator metrics as key-value pairs" },
+              { "name": "isLeaf", "type": "BOOLEAN", "description": "True if this node has no children in the plan tree" },
+              { "name": "parentNodeName", "type": "STRING", "description": "Name of the parent operator in the plan tree" }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "stage",
+      "description": "Stage-level execution report. One row per completed Spark stage.",
+      "fields": [
+        { "name": "stageId", "type": "INT", "description": "Unique stage identifier" },
+        { "name": "stageSubmissionTime", "type": "BIGINT", "unit": "ms", "description": "Epoch timestamp when the stage was submitted" },
+        { "name": "stageCompletionTime", "type": "BIGINT", "unit": "ms", "description": "Epoch timestamp when the stage completed" },
+        { "name": "readBytes", "type": "BIGINT", "unit": "bytes", "description": "Total input bytes read" },
+        { "name": "writeBytes", "type": "BIGINT", "unit": "bytes", "description": "Total output bytes written" },
+        { "name": "shuffleReadBytes", "type": "BIGINT", "unit": "bytes", "description": "Total shuffle bytes read" },
+        { "name": "shuffleWriteBytes", "type": "BIGINT", "unit": "bytes", "description": "Total shuffle bytes written" },
+        { "name": "execCpuNs", "type": "BIGINT", "unit": "ns", "description": "Executor CPU time" },
+        { "name": "execRunNs", "type": "BIGINT", "unit": "ns", "description": "Executor run time" },
+        { "name": "execJvmGcNs", "type": "BIGINT", "unit": "ns", "description": "Executor JVM garbage collection time" },
+        { "name": "attempt", "type": "INT", "description": "Stage attempt number" },
+        { "name": "memoryBytesSpilled", "type": "BIGINT", "unit": "bytes", "description": "Bytes spilled to memory" },
+        { "name": "diskBytesSpilled", "type": "BIGINT", "unit": "bytes", "description": "Bytes spilled to disk" }
+      ]
+    },
+    {
+      "name": "task",
+      "description": "Task-level execution metrics. One row per completed Spark task.",
+      "fields": [
+        { "name": "stageId", "type": "INT", "description": "Stage this task belongs to" },
+        { "name": "taskId", "type": "BIGINT", "description": "Unique task identifier" },
+        { "name": "taskDuration", "type": "BIGINT", "unit": "ms", "description": "Wall-clock duration of the task" },
+        { "name": "taskLaunchTime", "type": "BIGINT", "unit": "ms", "description": "Epoch timestamp when the task was launched" },
+        { "name": "taskFinishTime", "type": "BIGINT", "unit": "ms", "description": "Epoch timestamp when the task finished" },
+        { "name": "executorRunTime", "type": "BIGINT", "unit": "ms", "description": "Time spent running the task on the executor" },
+        { "name": "executorCpuTime", "type": "BIGINT", "unit": "ns", "description": "CPU time consumed by the executor" },
+        { "name": "executorDeserializeTime", "type": "BIGINT", "unit": "ms", "description": "Time to deserialize the task on the executor" },
+        { "name": "executorDeserializeCpuTime", "type": "BIGINT", "unit": "ns", "description": "CPU time spent deserializing the task" },
+        { "name": "resultSize", "type": "BIGINT", "unit": "bytes", "description": "Size of the serialized task result" },
+        { "name": "diskBytesSpilled", "type": "BIGINT", "unit": "bytes", "description": "Bytes spilled to disk" },
+        { "name": "memoryBytesSpilled", "type": "BIGINT", "unit": "bytes", "description": "Bytes spilled to memory" },
+        { "name": "bytesRead", "type": "BIGINT", "unit": "bytes", "description": "Input bytes read" },
+        { "name": "recordsRead", "type": "BIGINT", "description": "Input records read" },
+        { "name": "jvmGCTime", "type": "BIGINT", "unit": "ms", "description": "Time spent in JVM garbage collection" },
+        { "name": "bytesWritten", "type": "BIGINT", "unit": "bytes", "description": "Output bytes written" },
+        { "name": "recordsWritten", "type": "BIGINT", "description": "Output records written" },
+        { "name": "peakExecutionMemory", "type": "BIGINT", "unit": "bytes", "description": "Peak execution memory used" },
+        { "name": "resultSerializationTime", "type": "BIGINT", "unit": "ms", "description": "Time spent serializing the result" },
+        { "name": "fetchWaitTime", "type": "BIGINT", "unit": "ms", "description": "Time spent waiting for shuffle fetch" },
+        { "name": "localBlocksFetched", "type": "BIGINT", "description": "Number of local blocks fetched during shuffle" },
+        { "name": "localBytesRead", "type": "BIGINT", "unit": "bytes", "description": "Bytes read from local shuffle blocks" },
+        { "name": "remoteBlocksFetched", "type": "BIGINT", "description": "Number of remote blocks fetched during shuffle" },
+        { "name": "remoteBytesRead", "type": "BIGINT", "unit": "bytes", "description": "Bytes read from remote shuffle blocks" },
+        { "name": "remoteBytesReadToDisk", "type": "BIGINT", "unit": "bytes", "description": "Remote shuffle bytes read to disk" },
+        { "name": "totalRecordsRead", "type": "BIGINT", "description": "Total records read including shuffle" },
+        { "name": "remoteRequestsDuration", "type": "BIGINT", "unit": "ms", "description": "Time spent on remote shuffle requests" },
+        { "name": "shuffleBytesWritten", "type": "BIGINT", "unit": "bytes", "description": "Shuffle bytes written" },
+        { "name": "shuffleRecordsWritten", "type": "BIGINT", "description": "Shuffle records written" },
+        { "name": "shuffleWriteTime", "type": "BIGINT", "unit": "ns", "description": "Time spent writing shuffle data" }
+      ]
+    }
+  ]
+}

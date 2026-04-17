@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://AmadeusITGroup.github.io/spark-perf-gazer/dev/contributor_guide/">
       
       
-        <link rel="prev" href="../user_guide/analyze_scala/">
+        <link rel="prev" href="../user_guide/data_model/">
       
       
       
@@ -54,6 +54,9 @@
 
     
     
+  <link rel="alternate" type="text/plain" href="https://AmadeusITGroup.github.io/spark-perf-gazer/devllms.txt" title="LLM-friendly documentation index" />
+  <link rel="alternate" type="text/plain" href="https://AmadeusITGroup.github.io/spark-perf-gazer/devllms-full.txt" title="LLM-friendly full documentation" />
+
   </head>
   
   
@@ -296,6 +299,8 @@
       
         
       
+        
+      
     
     
     
@@ -485,6 +490,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user_guide/data_model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Model Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -615,6 +648,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#data-model-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data model documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#local-preview" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -626,10 +670,49 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#full-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full build
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#deployment" class="md-nav__link">
     <span class="md-ellipsis">
       
         Deployment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#removing-a-published-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removing a published version
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scripts-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scripts reference
       
     </span>
   </a>
@@ -754,6 +837,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#data-model-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data model documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#local-preview" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -765,10 +859,49 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#full-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full build
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#deployment" class="md-nav__link">
     <span class="md-ellipsis">
       
         Deployment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#removing-a-published-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removing a published version
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scripts-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scripts reference
       
     </span>
   </a>
@@ -838,7 +971,9 @@ The Spark events wrapped are related to classes like: </p>
 <p>When the inputs are requested to <code>PerfGazer</code>, all collected <code>Event</code>s are inspected and transformed into <code>Report</code>s at the end
 of the query/job/stage execution enriched with some extra information only available then, according
 to the type of <code>Event</code>.</p>
-<p>A <code>Report</code> is a type that represents the report unit shared with the end-user.</p>
+<p>A <code>Report</code> is a type that represents the report unit shared with the end-user.
+Report case classes are annotated with <code>@TableDoc</code> and <code>@ColumnDoc</code> to serve as the single source of truth
+for the data model documentation (see <a href="#data-model-documentation">Data model documentation</a> below).</p>
 <p>A <code>Filter</code> is a filter that operates on <code>Report</code>s, so that the end-user can have some control to focus specific aspects of
 their Spark ETL (like <em>file pruning</em> for instance).</p>
 <h2 id="build">Build</h2>
@@ -873,18 +1008,75 @@ spark-shell<span class="w"> </span><span class="se">\</span>
 </code></pre></div>
 <h2 id="documentation">Documentation</h2>
 <p>The project uses <a href="https://www.mkdocs.org/">MkDocs</a> with the <a href="https://squidfunk.github.io/mkdocs-material/">Material theme</a>.</p>
+<h3 id="data-model-documentation">Data model documentation</h3>
+<p>The data model (SQL view schemas) is documented via custom annotations on the report case classes in <code>core/.../reports/</code>.
+A build-time generator (<code>doc-generator/</code>) reads these annotations and produces:</p>
+<ul>
+<li><code>docs/user_guide/data_model.md</code> — human-friendly Markdown tables with SQL types</li>
+<li><code>docs/schema/perfgazer-schema.json</code> — agent-friendly structured JSON</li>
+</ul>
+<p>When adding or modifying fields in a report case class, annotate them with <code>@ColumnDoc</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@ColumnDoc</span><span class="p">(</span><span class="n">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Wall-clock duration of the task&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">unit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;ms&quot;</span><span class="p">)</span>
+<span class="n">taskDuration</span><span class="p">:</span><span class="w"> </span><span class="nc">Long</span><span class="p">,</span>
+</code></pre></div>
+<p>When adding a new report case class, annotate the class with <code>@TableDoc</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@TableDoc</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;task&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Task-level execution metrics. One row per completed Spark task.&quot;</span><span class="p">)</span>
+<span class="k">case</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">TaskReport</span><span class="p">(</span>
+<span class="w">  </span><span class="p">...</span>
+</code></pre></div>
+<p>Both generated files are gitignored — they are produced by CI and by the local preview script.</p>
 <h3 id="local-preview">Local preview</h3>
+<p>First, generate the data model schemas from the annotated case classes:</p>
+<div class="highlight"><pre><span></span><code>sbt<span class="w"> </span>docGenerator/run
+</code></pre></div>
+<p>Then serve the site locally:</p>
 <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>mkdocs<span class="w"> </span>mkdocs-material
 mkdocs<span class="w"> </span>serve
 </code></pre></div>
-<p>Then open http://127.0.0.1:8000 in your browser.</p>
+<p>Open http://127.0.0.1:8000 in your browser.</p>
+<p>Alternatively, <code>./scripts/docs-serve-local.sh</code> runs both steps in sequence.</p>
+<h3 id="full-build">Full build</h3>
+<p>To reproduce the full CI documentation build (including <code>llms.txt</code> for AI agents):</p>
+<div class="highlight"><pre><span></span><code>./scripts/docs-build.sh
+</code></pre></div>
+<p>This runs schema generation, <code>mkdocs build</code>, and <code>generate-llms-txt.sh</code>. Output goes to <code>site/</code>.</p>
 <h3 id="deployment">Deployment</h3>
-<p>Documentation is versioned using <a href="https://github.com/jimporter/mike">mike</a> and deployed to GitHub Pages automatically:</p>
+<p>Documentation is versioned using <a href="https://github.com/jimporter/mike">mike</a> and deployed to GitHub Pages automatically under the following conditions:</p>
 <ul>
-<li>Push to <code>main</code> (changes in <code>docs/</code> or <code>mkdocs.yml</code>) → deploys the <code>dev</code> version</li>
-<li>Publishing a GitHub Release → deploys a versioned copy (e.g. <code>v0.1.0</code>) and updates the <code>latest</code> alias</li>
+<li>When pushing to <code>main</code> with changes in <code>docs/</code>, <code>mkdocs.yml</code>, report classes, or <code>doc-generator/</code>, the <code>dev</code> version is deployed.</li>
+<li>When publishing a GitHub Release, a versioned copy (e.g. <code>v0.1.0</code>) is deployed and the <code>latest</code> alias is updated.</li>
 </ul>
 <p>The doc site is available at <a href="https://amadeusitgroup.github.io/spark-perf-gazer/">amadeusitgroup.github.io/spark-perf-gazer</a>.</p>
+<h4 id="removing-a-published-version">Removing a published version</h4>
+<p>Deleting a GitHub Release does <strong>not</strong> remove the version from the docs site — versioned docs live as static files on the <code>gh-pages</code> branch, independent of GitHub Releases.</p>
+<p>To remove a version from the docs site:</p>
+<div class="highlight"><pre><span></span><code>mike<span class="w"> </span>delete<span class="w"> </span>&lt;version&gt;<span class="w">   </span><span class="c1"># e.g. mike delete v0.1.0</span>
+git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>gh-pages
+</code></pre></div>
+<p>If you also want to clean up the GitHub Release and its tag, do that separately via the GitHub UI or CLI.</p>
+<h3 id="scripts-reference">Scripts reference</h3>
+<table>
+<thead>
+<tr>
+<th>Script</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>scripts/docs-serve-local.sh</code></td>
+<td>Full local docs build + live preview server (<code>mkdocs serve</code>)</td>
+</tr>
+<tr>
+<td><code>scripts/docs-build.sh</code></td>
+<td>Full docs build (schemas + MkDocs + llms.txt), same as CI</td>
+</tr>
+<tr>
+<td><code>scripts/generate-llms-txt.sh</code></td>
+<td>Generate <code>llms.txt</code> and <code>llms-full.txt</code> in <code>docs/</code> for agent consumption</td>
+</tr>
+</tbody>
+</table>
 <h2 id="contributing">Contributing</h2>
 <p>To contribute to this project, see <a href="https://github.com/AmadeusITGroup/spark-perf-gazer/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</p>
 <h2 id="releasing">Releasing</h2>
