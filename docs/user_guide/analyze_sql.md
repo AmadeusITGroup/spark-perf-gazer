@@ -29,7 +29,8 @@ CREATE OR REPLACE TEMPORARY VIEW task ...
 
 ## Query across all runs
 
-The snippets above point to the current run. To create a view spanning all runs in the warehouse, use `**` with a `basePath`:
+The snippets above point to the current run. To create a view spanning all runs available, you can use `**` with a `basePath`. 
+For example:
 
 ```sql
 CREATE OR REPLACE TEMPORARY VIEW [sql|job|stage|...]
@@ -40,7 +41,11 @@ OPTIONS (
 );
 ```
 
-Replace `<base_path>` with your actual base destination. The `basePath` option indicates Spark from which point start performing auto-discover of partition columns (e.g. `applicationId`).
+Replace `<base_path>` with your actual base destination. 
+
+The `basePath` option indicates Spark from which point start performing auto-discover of partition columns (e.g. `applicationId`).
+
+Mind that if you use `basePath` and new partitions are discovered, the joins between the views will have to take into account partition columns if meaningful to associate correctly jobs/stages/... from different runs.
 
 ## Analyze PerfGazer data
 
