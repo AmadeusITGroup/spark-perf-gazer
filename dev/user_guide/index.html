@@ -616,7 +616,8 @@
 <h1 id="user-guide">User Guide</h1>
 <p>Follow these steps to get PerfGazer up and running.</p>
 <h2 id="step-1-annotate-your-spark-code">Step 1 — Annotate your Spark code</h2>
-<p>To make the listener data easier to analyze, add job descriptions to your Spark code using <code>setJobDescription</code> or <code>setLocalProperty</code>:</p>
+<p>This step is optional but strongly encouraged as it will make the listener data much easier to analyze, specially with Spark applications with several jobs.</p>
+<p>Add job descriptions to your Spark code using <code>setJobDescription</code> or <code>setLocalProperty</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="n">spark</span><span class="p">.</span><span class="n">sparkContext</span><span class="p">.</span><span class="n">setJobDescription</span><span class="p">(</span><span class="s">&quot;my-etl-job: loading customer data&quot;</span><span class="p">)</span>
 </code></pre></div>
 <p>or with a job group:</p>
