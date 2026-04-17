@@ -855,12 +855,21 @@ sbt<span class="w"> </span>coverageOn<span class="w"> </span><span class="nb">te
 </code></pre></div>
 <h2 id="run">Run</h2>
 <p>You can run a local <code>spark-shell</code> with the listener as follows:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># (optional) clean previous local publishes and publish, for example</span>
-find<span class="w"> </span>~/.ivy2<span class="w"> </span>-type<span class="w"> </span>f<span class="w"> </span>-name<span class="w"> </span>*perfgazer*<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span>rm
-<span class="c1"># publish a local snapshot version</span>
-sbt<span class="w"> </span>publishLocal
+<div class="highlight"><pre><span></span><code><span class="c1"># publish a local snapshot version</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">VERSION</span><span class="o">=</span><span class="m">0</span>.0.0-<span class="nv">$RANDOM</span>-<span class="nv">$RANDOM</span>
+sbt<span class="w"> </span><span class="s2">&quot;set ThisBuild / version := \&quot;</span><span class="nv">$VERSION</span><span class="s2">\&quot;&quot;</span><span class="w"> </span>publishLocal
 <span class="c1"># run spark shell with the listener (change the version accordingly) using the snippet provided above</span>
-spark-shell<span class="w"> </span>--packages<span class="w"> </span>io.github.amadeusitgroup:perfgazer_spark_3.5.2_2.12:0.0.2-SNAPSHOT<span class="w"> </span>...
+spark-shell<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--packages<span class="w"> </span>io.github.amadeusitgroup:perfgazer_spark_3-5-2_2.12:<span class="nv">$VERSION</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--conf<span class="w"> </span>spark.extraListeners<span class="o">=</span>com.amadeus.perfgazer.PerfGazer<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--conf<span class="w"> </span>spark.perfgazer.sink.class<span class="o">=</span>com.amadeus.perfgazer.JsonSink<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--conf<span class="w"> </span>spark.perfgazer.sink.json.destination<span class="o">=</span>/tmp/perfgazer/applicationId<span class="o">={{</span>spark.app.id<span class="o">}}</span>/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--conf<span class="w"> </span><span class="s2">&quot;spark.driver.bindAddress=127.0.0.1&quot;</span><span class="w"> </span>--conf<span class="w"> </span><span class="s2">&quot;spark.driver.host=127.0.0.1&quot;</span>
+</code></pre></div>
+<p>Then you can run something like this in the shell to see logs from the listener:</p>
+<div class="highlight"><pre><span></span><code><span class="n">sc</span><span class="p">.</span><span class="n">setLogLevel</span><span class="p">(</span><span class="s">&quot;INFO&quot;</span><span class="p">)</span><span class="w"> </span><span class="c1">// to change the log level</span>
+<span class="n">spark</span><span class="p">.</span><span class="n">sql</span><span class="p">(</span><span class="s">&quot;select 1&quot;</span><span class="p">).</span><span class="n">show</span><span class="p">()</span>
+<span class="p">:</span><span class="n">quit</span>
 </code></pre></div>
 <h2 id="documentation">Documentation</h2>
 <p>The project uses <a href="https://www.mkdocs.org/">MkDocs</a> with the <a href="https://squidfunk.github.io/mkdocs-material/">Material theme</a>.</p>
