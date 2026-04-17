@@ -86,7 +86,7 @@ def testGroups(tests: Seq[TestDefinition], baseDir: File): Seq[Group] = {
 }
 
 val commonSettings = Seq(
-  Compile / javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
+  Compile / javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-parameters"),
   scalacOptions ++= {
     val base = Seq(
       "-deprecation",
@@ -129,6 +129,20 @@ lazy val core = (project in file("core"))
     coverageMinimumBranchTotal := 95.0
   )
 
+lazy val docGenerator = (project in file("doc-generator"))
+  .dependsOn(core)
+  .settings(
+    name := "perfgazer-doc-generator",
+    publish / skip := true,
+    libraryDependencies ++= Seq(
+      "org.apache.spark"  %% "spark-core"     % SparkVersion,
+      "org.apache.spark"  %% "spark-sql"      % SparkVersion,
+      "org.scala-lang"     % "scala-reflect"  % BuildScalaVersion,
+      "org.scalatest"     %% "scalatest"      % "3.2.16"          % Test
+    ),
+    Compile / mainClass := Some("com.amadeus.perfgazer.docgen.SchemaDocGenerator")
+  )
+
 lazy val root = (project in file("."))
   // Aggregate all subprojects (like core) so their tasks are triggered from the root.
   .aggregate(core)
@@ -136,3 +150,5 @@ lazy val root = (project in file("."))
     name := "perfgazer-root",
     publish / skip := true, // Do not publish artifacts from the root project (empty jars anyway)
   )
+
+addCommandAlias("generateDocs", "docGenerator/run")
