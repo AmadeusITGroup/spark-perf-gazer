@@ -449,6 +449,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze with SQL
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -465,6 +483,58 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#create-perfgazer-views" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create PerfGazer views
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#query-across-all-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query across all runs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#analyze-perfgazer-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analyze PerfGazer data
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -553,6 +623,47 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#create-perfgazer-views" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create PerfGazer views
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#query-across-all-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query across all runs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#analyze-perfgazer-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analyze PerfGazer data
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -572,18 +683,43 @@
 
 
 <h1 id="analyze-using-sql">Analyze using SQL</h1>
-<p>At application shutdown, PerfGazer prints view creation snippets in the logs that match your configuration. Run those snippets to create temporary views, then query them.</p>
-<div class="highlight"><pre><span></span><code><span class="c1">-- Run the generated snippets to create the views</span>
+<h2 id="create-perfgazer-views">Create PerfGazer views</h2>
+<p>PerfGazer exposes SQL queries (called <code>snippets</code>) to create temporary views to access the PerfGazer data produced by the Spark application. 
+You can run those snippets to perform analytics on the SQL queries, jobs, etc.</p>
+<p>Within the Spark application, you can access such snippets by doing: </p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nn">com</span><span class="p">.</span><span class="nn">amadeus</span><span class="p">.</span><span class="nn">perfgazer</span><span class="p">.</span><span class="nc">PerfGazer</span>
+<span class="kd">val</span><span class="w"> </span><span class="n">perfGazer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">PerfGazer</span><span class="p">.</span><span class="n">instance</span><span class="p">.</span><span class="n">getOrElse</span><span class="p">(</span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="nc">RuntimeException</span><span class="p">(</span><span class="s">&quot;Oups&quot;</span><span class="p">))</span>
+
+<span class="kd">val</span><span class="w"> </span><span class="n">snippets</span><span class="p">:</span><span class="w"> </span><span class="nc">Set</span><span class="p">[</span><span class="nc">String</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perfGazer</span><span class="p">.</span><span class="n">getSnippets</span>
+<span class="c1">// snippets.foreach(println) // print them</span>
+<span class="c1">// snippets.foreach(spark.sql) // launch them</span>
+</code></pre></div>
+<p>Additionally, at Spark application shutdown, PerfGazer will display those snippets in the logs (info log level). You can copy and paste them in a notebook to start performing investigations. </p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Copy and paste the snippets shown in the logs by Perfgazer during shutdown (info level)</span>
 <span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">TEMPORARY</span><span class="w"> </span><span class="k">VIEW</span><span class="w"> </span><span class="k">sql</span><span class="w"> </span><span class="p">...</span>
 <span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">TEMPORARY</span><span class="w"> </span><span class="k">VIEW</span><span class="w"> </span><span class="n">job</span><span class="w"> </span><span class="p">...</span>
 <span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">TEMPORARY</span><span class="w"> </span><span class="k">VIEW</span><span class="w"> </span><span class="n">stage</span><span class="w"> </span><span class="p">...</span>
 <span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">TEMPORARY</span><span class="w"> </span><span class="k">VIEW</span><span class="w"> </span><span class="n">task</span><span class="w"> </span><span class="p">...</span>
-
-<span class="c1">-- Example: join jobs, stages, and tasks</span>
-<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span>
+</code></pre></div>
+<h2 id="query-across-all-runs">Query across all runs</h2>
+<p>The snippets above point to the current run. To create a view spanning all runs available, you can use <code>**</code> with a <code>basePath</code>. 
+For example:</p>
+<div class="highlight"><pre><span></span><code><span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">TEMPORARY</span><span class="w"> </span><span class="k">VIEW</span><span class="w"> </span><span class="p">[</span><span class="k">sql</span><span class="o">|</span><span class="n">job</span><span class="o">|</span><span class="n">stage</span><span class="o">|</span><span class="p">...]</span>
+<span class="k">USING</span><span class="w"> </span><span class="n">json</span>
+<span class="k">OPTIONS</span><span class="w"> </span><span class="p">(</span>
+<span class="w">  </span><span class="n">path</span><span class="w"> </span><span class="ss">&quot;&lt;base_path&gt;/**/[sql|job|stage|...]-reports-*.json&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="n">basePath</span><span class="w"> </span><span class="ss">&quot;&lt;base_path&gt;/&quot;</span>
+<span class="p">);</span>
+</code></pre></div>
+<p>Replace <code>&lt;base_path&gt;</code> with your actual base destination. </p>
+<p>The <code>basePath</code> option indicates Spark from which point start performing auto-discover of partition columns (e.g. <code>applicationId</code>).</p>
+<p>Mind that if you use <code>basePath</code> and new partitions are discovered, the joins between the views will have to take into account partition columns if meaningful to associate correctly jobs/stages/... from different runs.</p>
+<h2 id="analyze-perfgazer-data">Analyze PerfGazer data</h2>
+<p>Example: deep dive into all tasks and display info of their corresponding parent stage + job</p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span>
 <span class="w">  </span><span class="k">FROM</span><span class="w"> </span><span class="n">job</span><span class="w"> </span><span class="n">j</span>
-<span class="w">  </span><span class="k">JOIN</span><span class="w"> </span><span class="n">stage</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">applicationId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">applicationId</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">ARRAY_CONTAINS</span><span class="p">(</span><span class="n">j</span><span class="p">.</span><span class="n">stages</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">stageId</span><span class="p">)</span>
-<span class="w">  </span><span class="k">JOIN</span><span class="w"> </span><span class="n">task</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">applicationId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">applicationId</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">stageId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">stageId</span><span class="p">;</span>
+<span class="w">  </span><span class="k">JOIN</span><span class="w"> </span><span class="n">stage</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">ARRAY_CONTAINS</span><span class="p">(</span><span class="n">j</span><span class="p">.</span><span class="n">stages</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">stageId</span><span class="p">)</span>
+<span class="w">  </span><span class="k">JOIN</span><span class="w"> </span><span class="n">task</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">stageId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">stageId</span><span class="p">;</span>
 </code></pre></div>
 
 
