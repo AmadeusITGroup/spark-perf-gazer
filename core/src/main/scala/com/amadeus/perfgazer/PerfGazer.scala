@@ -149,7 +149,7 @@ class PerfGazer(val c: PerfGazerConfig, val sink: Sink) extends SparkListener {
 
   private def logSnippets(): Unit = {
     val ddl = getSnippets
-    logger.info(s"To create temporary views for all the reports, run the following SQL:\n${ddl}")
+    logger.info(s"To create temporary views for all the reports, run the following SQL:\n${ddl.mkString("\n")}")
   }
 
   /**
