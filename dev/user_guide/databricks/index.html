@@ -330,8 +330,6 @@
       
         
       
-        
-      
     
     
     
@@ -510,34 +508,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../analyze_scala/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Analyze with Scala
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../data_model/" class="md-nav__link">
         
   
@@ -632,33 +602,11 @@
 
 
 <h1 id="databricks-job-cluster-setup">Databricks job cluster setup</h1>
-<p>You will need to install the library according to the Databricks runtime being used.</p>
-<table>
-<thead>
-<tr>
-<th>Runtime version</th>
-<th>Spark version</th>
-<th>Installation method</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>13.3</td>
-<td>Spark 3.4.1</td>
-<td>Upload and install from DBFS</td>
-</tr>
-<tr>
-<td>16.4</td>
-<td>Spark 3.5.2</td>
-<td>Upload and install from Workspace</td>
-</tr>
-</tbody>
-</table>
 <p>To install the library on job clusters you can follow these steps:</p>
 <ul>
 <li>
 <ol>
-<li>Upload the PerfGazer JAR to a location accessible by the job cluster (e.g., DBFS).  </li>
+<li>Upload the spark-perf-gazer JAR to a location accessible by the job cluster (e.g., DBFS).</li>
 </ol>
 </li>
 <li>
@@ -667,11 +615,7 @@
 </ol>
 </li>
 </ul>
-<div class="highlight"><pre><span></span><code><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;/databricks/jars/perfgazer_spark_3-5-2_2_12_0_0_29_SNAPSHOT.jar&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
-<span class="w">  </span>rm<span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;/databricks/jars/perfgazer_spark_3-5-2_2_12_0_0_29_SNAPSHOT.jar&quot;</span>
-<span class="k">fi</span>
-
-cp<span class="w"> </span>-f<span class="w"> </span>/dbfs/FileStore/jars/perfgazer_spark_3-5-2_2_12_0_0_29_SNAPSHOT.jar<span class="w"> </span>/databricks/jars
+<div class="highlight"><pre><span></span><code>cp<span class="w"> </span>-f<span class="w"> </span>/dbfs/&lt;some_path&gt;/perfgazer_spark_&lt;some_version&gt;.jar<span class="w"> </span>/databricks/jars
 </code></pre></div>
 
 

@@ -12,7 +12,6 @@
 - [Setup via Code](https://amadeusitgroup.github.io/spark-perf-gazer/user_guide/setup_code/)
 - [Databricks](https://amadeusitgroup.github.io/spark-perf-gazer/user_guide/databricks/)
 - [Analyze with SQL](https://amadeusitgroup.github.io/spark-perf-gazer/user_guide/analyze_sql/)
-- [Analyze with Scala](https://amadeusitgroup.github.io/spark-perf-gazer/user_guide/analyze_scala/)
 - [Data Model Reference](https://amadeusitgroup.github.io/spark-perf-gazer/user_guide/data_model/)
 - [Contributor Guide](https://amadeusitgroup.github.io/spark-perf-gazer/contributor_guide/)
 

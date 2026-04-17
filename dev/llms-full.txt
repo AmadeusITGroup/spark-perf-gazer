@@ -282,7 +282,6 @@ PerfGazer registers a shutdown hook that ensures the listener is closed graceful
 Once your application has run, the collected reports can be analyzed in different ways depending on your environment and preference:
 
 - [Analyze using SQL](analyze_sql.md)
-- [Analyze using Scala](analyze_scala.md)
 
 > Note: at application shutdown, PerfGazer prints view creation snippets in the logs that match your configuration. These are a convenient starting point for SQL analysis.
 
@@ -400,25 +399,15 @@ perfGazer.close()
 
 # Databricks job cluster setup
 
-You will need to install the library according to the Databricks runtime being used.
-
-| Runtime version | Spark version | Installation method                |
-|-----------------|---------------|------------------------------------|
-| 13.3            | Spark 3.4.1   | Upload and install from DBFS       |
-| 16.4            | Spark 3.5.2   | Upload and install from Workspace  |
-
 To install the library on job clusters you can follow these steps:
 
-- 1. Upload the PerfGazer JAR to a location accessible by the job cluster (e.g., DBFS).  
+- 1. Upload the spark-perf-gazer JAR to a location accessible by the job cluster (e.g., DBFS).
 - 2. You can use an init script to install the PerfGazer library on the job cluster, for example:
 
 ```shell
-if [ -f "/databricks/jars/perfgazer_spark_3-5-2_2_12_0_0_29_SNAPSHOT.jar" ]; then
-  rm -f "/databricks/jars/perfgazer_spark_3-5-2_2_12_0_0_29_SNAPSHOT.jar"
-fi
-
-cp -f /dbfs/FileStore/jars/perfgazer_spark_3-5-2_2_12_0_0_29_SNAPSHOT.jar /databricks/jars
+cp -f /dbfs/<some_path>/perfgazer_spark_<some_version>.jar /databricks/jars
 ```
+
 
 
 ---
@@ -474,7 +463,7 @@ Mind that if you use `basePath` and new partitions are discovered, the joins bet
 
 ## Analyze PerfGazer data
 
-Example: deep dive into all tasks and display info of their corresponding parent stage + job
+You can start deep diving into all tasks with their parent stage and job with a query like the following:
 
 ```sql
 SELECT *
@@ -483,30 +472,97 @@ SELECT *
   JOIN task t ON t.stageId = s.stageId;
 ```
 
+Below we provide a collection of queries you can run to explore various performance aspects of your Spark application.
 
----
+### Jobs by CPU usage
 
-# Analyze using Scala
+Aggregates executor CPU time across all stages of each job, converted from nanoseconds to seconds.
 
-Read the JSON files produced by `JsonSink` directly into Spark DataFrames.
+```sql
+SELECT j.jobId,
+       j.jobName,
+       ROUND(SUM(s.execCpuNs) / 1e9, 2) AS cpuTimeSec
+  FROM job j
+  JOIN stage s ON ARRAY_CONTAINS(j.stages, s.stageId)
+ GROUP BY j.jobId, j.jobName
+ ORDER BY cpuTimeSec DESC;
+```
 
-```scala
-import org.apache.spark.sql.functions._
+### Jobs by I/O volumes
 
-val sparkPath = "dbfs:/perfgazer/jsonsink/"
+Shows input, output, shuffle read/write and total I/O per job, all in MB.
 
-val dfJobsReports   = spark.read.option("basePath", sparkPath).json(sparkPath + "clusterName=*/date=*/applicationId=*/job-reports-*.json")
-val dfStagesReports = spark.read.option("basePath", sparkPath).json(sparkPath + "clusterName=*/date=*/applicationId=*/stage-reports-*.json")
-val dfTasksReports  = spark.read.option("basePath", sparkPath).json(sparkPath + "clusterName=*/date=*/applicationId=*/task-reports-*.json")
+```sql
+SELECT j.jobId,
+       j.jobName,
+       ROUND(SUM(s.readBytes)         / 1048576, 2) AS inputMb,
+       ROUND(SUM(s.writeBytes)        / 1048576, 2) AS outputMb,
+       ROUND(SUM(s.shuffleReadBytes)  / 1048576, 2) AS shuffleReadMb,
+       ROUND(SUM(s.shuffleWriteBytes) / 1048576, 2) AS shuffleWriteMb,
+       ROUND(SUM(s.readBytes + s.writeBytes
+               + s.shuffleReadBytes + s.shuffleWriteBytes) / 1048576, 2) AS totalIoMb
+  FROM job j
+  JOIN stage s ON ARRAY_CONTAINS(j.stages, s.stageId)
+ GROUP BY j.jobId, j.jobName
+ ORDER BY totalIoMb DESC;
+```
 
-// Reconcile reports across jobs, stages, and tasks
-val dfTasks = dfJobsReports
-  .withColumn("stageId", explode(col("stages")))
-  .drop("stages")
-  .join(dfStagesReports, Seq("date", "applicationId", "stageId"))
-  .join(dfTasksReports,  Seq("date", "applicationId", "stageId"))
+### Jobs with spill
 
-display(dfTasks)
+Lists only jobs where memory or disk spill occurred, in MB.
+
+```sql
+SELECT j.jobId,
+       j.jobName,
+       ROUND(SUM(s.memoryBytesSpilled) / 1048576, 2) AS memorySpillMb,
+       ROUND(SUM(s.diskBytesSpilled)   / 1048576, 2) AS diskSpillMb
+  FROM job j
+  JOIN stage s ON ARRAY_CONTAINS(j.stages, s.stageId)
+ GROUP BY j.jobId, j.jobName
+HAVING SUM(s.memoryBytesSpilled) > 0
+    OR SUM(s.diskBytesSpilled)   > 0
+ ORDER BY diskSpillMb DESC;
+```
+
+### All joins with CPU and I/O from their job
+
+Explodes the SQL plan nodes to find join operators, then enriches them with the aggregated CPU time and I/O volumes of the parent job.
+
+```sql
+WITH job_stats AS (
+  SELECT j.jobId,
+         j.jobName,
+         j.sqlId,
+         ROUND(SUM(s.execCpuNs) / 1e9, 2) AS cpuTimeSec,
+         ROUND(SUM(s.readBytes + s.writeBytes
+                 + s.shuffleReadBytes + s.shuffleWriteBytes) / 1048576, 2) AS totalIoMb
+    FROM job j
+    JOIN stage s ON ARRAY_CONTAINS(j.stages, s.stageId)
+   GROUP BY j.jobId, j.jobName, j.sqlId
+)
+SELECT sq.sqlId,
+       sq.description,
+       n.nodeName   AS joinNode,
+       js.jobId,
+       js.cpuTimeSec,
+       js.totalIoMb
+  FROM sql sq
+  JOIN job_stats js ON js.sqlId = CAST(sq.sqlId AS STRING)
+       LATERAL VIEW EXPLODE(sq.nodes) AS n
+ WHERE n.nodeName LIKE '%Join%'
+ ORDER BY js.cpuTimeSec DESC;
+```
+
+### Wall clock duration of jobs
+
+Computes the elapsed wall-clock time of each job in seconds.
+
+```sql
+SELECT j.jobId,
+       j.jobName,
+       ROUND((j.jobEndTime - j.jobStartTime) / 1000, 2) AS wallClockSec
+  FROM job j
+ ORDER BY wallClockSec DESC;
 ```
 
 
