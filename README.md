@@ -42,6 +42,8 @@ For setup instructions, usage guides, and more, visit the [documentation site](h
 - [`llms-full.txt`](https://amadeusitgroup.github.io/spark-perf-gazer/latest/llms-full.txt) — full documentation as a single Markdown file
 - [`perfgazer-schema.json`](https://amadeusitgroup.github.io/spark-perf-gazer/latest/schema/perfgazer-schema.json) — data model schema (SQL view definitions) as structured JSON
 
+The documentation site is versioned. Replace `latest` in the URLs above with `dev` for the development version or a specific release tag (e.g. `v0.1.0`) to access that version's docs. Available versions can be found on the [Releases](https://github.com/AmadeusITGroup/spark-perf-gazer/releases) page.
+
 ## Authors
 
 - Mauricio JOST
