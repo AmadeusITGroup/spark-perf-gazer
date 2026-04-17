@@ -49,11 +49,104 @@ Mind that if you use `basePath` and new partitions are discovered, the joins bet
 
 ## Analyze PerfGazer data
 
-Example: deep dive into all tasks and display info of their corresponding parent stage + job
+You can start deep diving into all tasks with their parent stage and job with a query like the following:
 
 ```sql
 SELECT *
   FROM job j
   JOIN stage s ON ARRAY_CONTAINS(j.stages, s.stageId)
   JOIN task t ON t.stageId = s.stageId;
+```
+
+Below we provide a collection of queries you can run to explore various performance aspects of your Spark application.
+
+### Jobs by CPU usage
+
+Aggregates executor CPU time across all stages of each job, converted from nanoseconds to seconds.
+
+```sql
+SELECT j.jobId,
+       j.jobName,
+       ROUND(SUM(s.execCpuNs) / 1e9, 2) AS cpuTimeSec
+  FROM job j
+  JOIN stage s ON ARRAY_CONTAINS(j.stages, s.stageId)
+ GROUP BY j.jobId, j.jobName
+ ORDER BY cpuTimeSec DESC;
+```
+
+### Jobs by I/O volumes
+
+Shows input, output, shuffle read/write and total I/O per job, all in MB.
+
+```sql
+SELECT j.jobId,
+       j.jobName,
+       ROUND(SUM(s.readBytes)         / 1048576, 2) AS inputMb,
+       ROUND(SUM(s.writeBytes)        / 1048576, 2) AS outputMb,
+       ROUND(SUM(s.shuffleReadBytes)  / 1048576, 2) AS shuffleReadMb,
+       ROUND(SUM(s.shuffleWriteBytes) / 1048576, 2) AS shuffleWriteMb,
+       ROUND(SUM(s.readBytes + s.writeBytes
+               + s.shuffleReadBytes + s.shuffleWriteBytes) / 1048576, 2) AS totalIoMb
+  FROM job j
+  JOIN stage s ON ARRAY_CONTAINS(j.stages, s.stageId)
+ GROUP BY j.jobId, j.jobName
+ ORDER BY totalIoMb DESC;
+```
+
+### Jobs with spill
+
+Lists only jobs where memory or disk spill occurred, in MB.
+
+```sql
+SELECT j.jobId,
+       j.jobName,
+       ROUND(SUM(s.memoryBytesSpilled) / 1048576, 2) AS memorySpillMb,
+       ROUND(SUM(s.diskBytesSpilled)   / 1048576, 2) AS diskSpillMb
+  FROM job j
+  JOIN stage s ON ARRAY_CONTAINS(j.stages, s.stageId)
+ GROUP BY j.jobId, j.jobName
+HAVING SUM(s.memoryBytesSpilled) > 0
+    OR SUM(s.diskBytesSpilled)   > 0
+ ORDER BY diskSpillMb DESC;
+```
+
+### All joins with CPU and I/O from their job
+
+Explodes the SQL plan nodes to find join operators, then enriches them with the aggregated CPU time and I/O volumes of the parent job.
+
+```sql
+WITH job_stats AS (
+  SELECT j.jobId,
+         j.jobName,
+         j.sqlId,
+         ROUND(SUM(s.execCpuNs) / 1e9, 2) AS cpuTimeSec,
+         ROUND(SUM(s.readBytes + s.writeBytes
+                 + s.shuffleReadBytes + s.shuffleWriteBytes) / 1048576, 2) AS totalIoMb
+    FROM job j
+    JOIN stage s ON ARRAY_CONTAINS(j.stages, s.stageId)
+   GROUP BY j.jobId, j.jobName, j.sqlId
+)
+SELECT sq.sqlId,
+       sq.description,
+       n.nodeName   AS joinNode,
+       js.jobId,
+       js.cpuTimeSec,
+       js.totalIoMb
+  FROM sql sq
+  JOIN job_stats js ON js.sqlId = CAST(sq.sqlId AS STRING)
+       LATERAL VIEW EXPLODE(sq.nodes) AS n
+ WHERE n.nodeName LIKE '%Join%'
+ ORDER BY js.cpuTimeSec DESC;
+```
+
+### Wall clock duration of jobs
+
+Computes the elapsed wall-clock time of each job in seconds.
+
+```sql
+SELECT j.jobId,
+       j.jobName,
+       ROUND((j.jobEndTime - j.jobStartTime) / 1000, 2) AS wallClockSec
+  FROM job j
+ ORDER BY wallClockSec DESC;
 ```

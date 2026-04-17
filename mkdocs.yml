@@ -23,7 +23,6 @@ nav:
       - Setup via Code: user_guide/setup_code.md
       - Databricks: user_guide/databricks.md
       - Analyze with SQL: user_guide/analyze_sql.md
-      - Analyze with Scala: user_guide/analyze_scala.md
       - Data Model Reference: user_guide/data_model.md
   - Contributor Guide: contributor_guide.md
 
