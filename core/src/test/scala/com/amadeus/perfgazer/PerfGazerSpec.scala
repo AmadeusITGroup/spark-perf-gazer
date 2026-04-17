@@ -3,9 +3,12 @@ package com.amadeus.perfgazer
 import com.amadeus.perfgazer.fixtures.Fixtures
 import com.amadeus.testfwk.ConfigSupport._
 import com.amadeus.testfwk.SimpleSpec
+import com.amadeus.testfwk.SinkSupport.TestableSink
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.execution.ui.{SparkListenerSQLAdaptiveExecutionUpdate, SparkListenerSQLExecutionEnd}
 import org.apache.spark.scheduler.{JobSucceeded, SparkListenerJobEnd}
+
+import java.util.concurrent.atomic.AtomicInteger
 
 class PerfGazerSpec extends SimpleSpec {
   describe(s"The listener") {
@@ -66,6 +69,20 @@ class PerfGazerSpec extends SimpleSpec {
       val c = defaultTestConfig
       new PerfGazer(c, new LogSink())
       PerfGazer.instance shouldBe defined
+    }
+
+    it("should only close the sink once when close() is called multiple times") {
+      val closeCount = new AtomicInteger(0)
+      val sink = new TestableSink() {
+        override def close(): Unit = closeCount.incrementAndGet()
+      }
+      val l = new PerfGazer(defaultTestConfig, sink)
+
+      l.close()
+      l.close()
+      l.close()
+
+      closeCount.get() shouldBe 1
     }
   }
 }
