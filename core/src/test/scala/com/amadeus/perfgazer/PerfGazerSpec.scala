@@ -61,5 +61,11 @@ class PerfGazerSpec extends SimpleSpec {
         new PerfGazer(c)
       }
     }
+
+    it("should have an instance registered after creation") {
+      val c = defaultTestConfig
+      new PerfGazer(c, new LogSink())
+      PerfGazer.instance shouldBe defined
+    }
   }
 }

@@ -28,6 +28,9 @@ class PerfGazer(val c: PerfGazerConfig, val sink: Sink) extends SparkListener {
   // Provide details on sink associated with listener during construction
   logger.info(s"Listener instantiated with sink:\n${sink.description}")
 
+  // Register this instance in the companion object for easy retrieval
+  PerfGazer.register(this)
+
   // Register shutdown hook to ensure listener is closed on JVM termination
   Runtime.getRuntime.addShutdownHook(new Thread() {
     override def run(): Unit = {
@@ -152,8 +155,8 @@ class PerfGazer(val c: PerfGazerConfig, val sink: Sink) extends SparkListener {
   /**
     * Expose sink and snippets for external usage (e.g., Databricks Notebooks).
     */
-  def getSnippets: String = {
-    sink.generateAllViewSnippets().mkString("\n")
+  def getSnippets: Set[String] = {
+    sink.generateAllViewSnippets()
   }
 }
 
@@ -161,6 +164,20 @@ object PerfGazer {
   val logger: Logger = LoggerFactory.getLogger(getClass.getName)
 
   val SinkClassKey = "spark.perfgazer.sink.class"
+
+  @volatile private var vInstance: Option[PerfGazer] = None
+
+  private[perfgazer] def register(instance: PerfGazer): Unit = {
+    vInstance = Some(instance)
+  }
+
+  /** Returns the active PerfGazer instance, if one has been created.
+    *
+    * Note: if multiple PerfGazer instances are created, this will
+    * return the most recently created one. There is no tracking of
+    * previous instances.
+    */
+  def instance: Option[PerfGazer] = vInstance
 
   def sinkFrom(sparkConf: SparkConf): Sink = {
     val sinkClassNameOption = sparkConf.getOption(SinkClassKey)
