@@ -53,6 +53,9 @@ spark-shell \
 !!! note
     Change the version to the latest release: ![GitHub Release](https://img.shields.io/github/v/release/AmadeusITGroup/spark-perf-gazer)
 
+!!! tip
+    See [Available Artifacts](https://AmadeusITGroup.github.io/spark-perf-gazer/artifacts/) for all Spark / Scala combinations and dependency coordinates.
+
 Run some Spark actions:
 
 ```scala
@@ -80,6 +83,160 @@ SELECT * FROM job;
 
 - [User Guide](user_guide/index.md) - Full setup, configuration options, and data analysis
 - [Contributor Guide](contributor_guide.md) - Build instructions and development setup
+
+---
+
+# Available Artifacts
+
+<!-- Auto-generated from .github/artifact-matrix.json — do not edit by hand. -->
+
+PerfGazer publishes a separate artifact for every supported Spark / Scala
+combination. Pick the row that matches your cluster and use the coordinates
+below.
+
+## Compatibility Matrix
+
+| Spark | Scala | Java | Databricks Runtime |
+|-------|-------|------|--------------------|
+| 3.4.1 | 2.12 | 8 | 13.3 |
+| 3.5.2 | 2.12 | 8 | 16.4 |
+| 3.5.2 | 2.13 | 17 | 16.4 |
+| 4.1.0 | 2.13 | 21 | 18.1 |
+
+## Dependency Coordinates
+
+Replace **`VERSION`** with the latest release:
+![GitHub Release](https://img.shields.io/github/v/release/AmadeusITGroup/spark-perf-gazer)
+
+### Spark 3.4.1 — Scala 2.12
+
+Databricks Runtime **13.3** · Java 8
+
+=== "spark-shell / spark-submit"
+
+    ```bash
+    --packages io.github.amadeusitgroup:perfgazer_spark_3-4-1_2.12:VERSION
+    ```
+
+=== "sbt"
+
+    ```scala
+    libraryDependencies += "io.github.amadeusitgroup" %% "perfgazer_spark_3-4-1_2.12" % "VERSION"
+    ```
+
+=== "Maven"
+
+    ```xml
+    <dependency>
+        <groupId>io.github.amadeusitgroup</groupId>
+        <artifactId>perfgazer_spark_3-4-1_2.12</artifactId>
+        <version>VERSION</version>
+    </dependency>
+    ```
+
+=== "Gradle"
+
+    ```groovy
+    implementation 'io.github.amadeusitgroup:perfgazer_spark_3-4-1_2.12:VERSION'
+    ```
+
+### Spark 3.5.2 — Scala 2.12
+
+Databricks Runtime **16.4** · Java 8
+
+=== "spark-shell / spark-submit"
+
+    ```bash
+    --packages io.github.amadeusitgroup:perfgazer_spark_3-5-2_2.12:VERSION
+    ```
+
+=== "sbt"
+
+    ```scala
+    libraryDependencies += "io.github.amadeusitgroup" %% "perfgazer_spark_3-5-2_2.12" % "VERSION"
+    ```
+
+=== "Maven"
+
+    ```xml
+    <dependency>
+        <groupId>io.github.amadeusitgroup</groupId>
+        <artifactId>perfgazer_spark_3-5-2_2.12</artifactId>
+        <version>VERSION</version>
+    </dependency>
+    ```
+
+=== "Gradle"
+
+    ```groovy
+    implementation 'io.github.amadeusitgroup:perfgazer_spark_3-5-2_2.12:VERSION'
+    ```
+
+### Spark 3.5.2 — Scala 2.13
+
+Databricks Runtime **16.4** · Java 17
+
+=== "spark-shell / spark-submit"
+
+    ```bash
+    --packages io.github.amadeusitgroup:perfgazer_spark_3-5-2_2.13:VERSION
+    ```
+
+=== "sbt"
+
+    ```scala
+    libraryDependencies += "io.github.amadeusitgroup" %% "perfgazer_spark_3-5-2_2.13" % "VERSION"
+    ```
+
+=== "Maven"
+
+    ```xml
+    <dependency>
+        <groupId>io.github.amadeusitgroup</groupId>
+        <artifactId>perfgazer_spark_3-5-2_2.13</artifactId>
+        <version>VERSION</version>
+    </dependency>
+    ```
+
+=== "Gradle"
+
+    ```groovy
+    implementation 'io.github.amadeusitgroup:perfgazer_spark_3-5-2_2.13:VERSION'
+    ```
+
+### Spark 4.1.0 — Scala 2.13
+
+Databricks Runtime **18.1** · Java 21
+
+=== "spark-shell / spark-submit"
+
+    ```bash
+    --packages io.github.amadeusitgroup:perfgazer_spark_4-1-0_2.13:VERSION
+    ```
+
+=== "sbt"
+
+    ```scala
+    libraryDependencies += "io.github.amadeusitgroup" %% "perfgazer_spark_4-1-0_2.13" % "VERSION"
+    ```
+
+=== "Maven"
+
+    ```xml
+    <dependency>
+        <groupId>io.github.amadeusitgroup</groupId>
+        <artifactId>perfgazer_spark_4-1-0_2.13</artifactId>
+        <version>VERSION</version>
+    </dependency>
+    ```
+
+=== "Gradle"
+
+    ```groovy
+    implementation 'io.github.amadeusitgroup:perfgazer_spark_4-1-0_2.13:VERSION'
+    ```
+
+
 
 ---
 

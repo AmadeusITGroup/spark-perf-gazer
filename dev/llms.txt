@@ -6,6 +6,7 @@
 
 - [Home](https://amadeusitgroup.github.io/spark-perf-gazer//)
 - [Getting Started](https://amadeusitgroup.github.io/spark-perf-gazer/getting-started/)
+- [Available Artifacts](https://amadeusitgroup.github.io/spark-perf-gazer/artifacts/)
 - [Index](https://amadeusitgroup.github.io/spark-perf-gazer/user_guide/)
 - [Setup via Spark Properties](https://amadeusitgroup.github.io/spark-perf-gazer/user_guide/setup_spark_properties/)
 - [Setup via Code](https://amadeusitgroup.github.io/spark-perf-gazer/user_guide/setup_code/)
