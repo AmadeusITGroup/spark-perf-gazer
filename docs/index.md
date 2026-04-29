@@ -27,6 +27,5 @@ PerfGazer solves these problems by providing programmatic access to execution st
 
 ## Next Steps
 
-- [Getting Started](getting-started.md) - Quick start guide
 - [User Guide](user_guide/index.md) - Full setup and configuration
 - [Contributor Guide](contributor_guide.md) - Build and development

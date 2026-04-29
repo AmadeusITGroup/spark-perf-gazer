@@ -15,7 +15,6 @@ theme:
 
 nav:
   - Home: index.md
-  - Getting Started: getting-started.md
   - Available Artifacts: artifacts.md
   - User Guide:
       - user_guide/index.md
