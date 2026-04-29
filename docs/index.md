@@ -23,14 +23,16 @@ PerfGazer solves these problems by providing programmatic access to execution st
 
 ## Features
 
-- Post-mortem analysis of Spark SQL queries, jobs, stages, and tasks
-- Measure accumulated in-executor durations
-- Identify jobs with the longest cumulated execution time
-- Detect Spark jobs that have spill
-- Monitor SQL metrics (files read, pruned, etc.)
-- Investigate predicate pushdowns and their effectiveness
+- Reports at every level: SQL queries, jobs, stages, and tasks
+- Full physical plan extraction with per-operator metrics
+- Stage-level I/O, shuffle, CPU time, and spill tracking
+- Task-level granularity: detect skew, GC pressure, and shuffle bottlenecks
+- JSON output queryable directly with Spark SQL (views auto-generated)
+- Configurable: enable or disable each report level independently
+- Pluggable sink architecture via the `Sink` trait
+- Zero-code setup through `spark.extraListeners` configuration
 
 ## Next Steps
 
-- [User Guide](user_guide/index.md) - Full setup and configuration
+- [User Guide](user_guide/index.md) - Setup, configuration, and data analysis examples
 - [Contributor Guide](contributor_guide.md) - Build and development
