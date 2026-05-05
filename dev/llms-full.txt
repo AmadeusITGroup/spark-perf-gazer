@@ -6,15 +6,11 @@ Performance Gazer for Apache Spark.
 
 PerfGazer is a configurable Spark Listener that allows you to retrieve important stats about Spark SQL queries, jobs, and stages in a post-mortem way.
 
-## Features
+## Architecture
 
-- Post-mortem analysis of Spark SQL queries, jobs, and stages
-- Measure accumulated in-executor durations
-- Identify jobs with the longest cumulated execution time
-- Detect Spark jobs that have spill
-- Monitor SQL metrics (files read, pruned, etc.)
-- Investigate predicate pushdowns and their effectiveness
-- Connect to any monitoring system
+![PerfGazer Architecture](sparklear-archi.drawio.svg)
+
+PerfGazer plugs into the Spark Driver as a **SparkListener**, alongside built-in listeners like `JobProgressListener` or `AppStatusListener`. The Spark **ListenerBus** dispatches execution events to all registered listeners. While the standard listeners feed the Spark UI, PerfGazer captures the same events and routes them through a configurable **Sink** to produce structured reports (SQL, Jobs, Stages, Tasks) that can be queried and analyzed programmatically — no UI navigation required.
 
 ## Why PerfGazer?
 
@@ -27,62 +23,22 @@ The Spark UI has limitations:
 
 PerfGazer solves these problems by providing programmatic access to execution statistics.
 
+## Features
+
+- Reports at every level: SQL queries, jobs, stages, and tasks
+- Full physical plan extraction with per-operator metrics
+- Stage-level I/O, shuffle, CPU time, and spill tracking
+- Task-level granularity: detect skew, GC pressure, and shuffle bottlenecks
+- JSON output queryable directly with Spark SQL (views auto-generated)
+- Configurable: enable or disable each report level independently
+- Pluggable sink architecture via the `Sink` trait
+- Zero-code setup through `spark.extraListeners` configuration
+
 ## Next Steps
 
-- [Getting Started](getting-started.md) - Quick start guide
-- [User Guide](user_guide/index.md) - Full setup and configuration
+- [User Guide](user_guide/index.md) - Setup, configuration, and data analysis examples
 - [Contributor Guide](contributor_guide.md) - Build and development
 
-
----
-
-# Getting Started
-
-## Quick Start
-
-The fastest way to try PerfGazer is via `spark-shell`:
-
-```bash
-spark-shell \
-  --packages io.github.amadeusitgroup:perfgazer_spark_3-5-2_2.12:0.0.1 \
-  --conf spark.extraListeners=com.amadeus.perfgazer.PerfGazer \
-  --conf spark.perfgazer.sink.class=com.amadeus.perfgazer.JsonSink \
-  --conf spark.perfgazer.sink.json.destination=/tmp/perfgazer/output
-```
-
-!!! note
-    Change the version to the latest release: ![GitHub Release](https://img.shields.io/github/v/release/AmadeusITGroup/spark-perf-gazer)
-
-!!! tip
-    See [Available Artifacts](https://AmadeusITGroup.github.io/spark-perf-gazer/latest/artifacts/) for all Spark / Scala combinations and dependency coordinates.
-
-Run some Spark actions:
-
-```scala
-spark.range(1000000).groupBy("id").count().collect()
-```
-
-Then explore the generated reports:
-
-```bash
-ls /tmp/perfgazer/output/
-# job-reports-*.json, stage-reports-*.json, sql-reports-*.json
-```
-
-You can now query them directly in Spark (example for job reports):
-
-```sql
-CREATE OR REPLACE TEMPORARY VIEW job
-USING json
-OPTIONS (path '/tmp/perfgazer/output/job-reports-*.json');
-
-SELECT * FROM job;
-```
-
-## Next Steps
-
-- [User Guide](user_guide/index.md) - Full setup, configuration options, and data analysis
-- [Contributor Guide](contributor_guide.md) - Build instructions and development setup
 
 ---
 
@@ -401,12 +357,11 @@ perfGazer.close()
 
 To install the library on job clusters you can follow these steps:
 
-- 1. Upload the spark-perf-gazer JAR to a location accessible by the job cluster (e.g., DBFS).
-- 2. You can use an init script to install the PerfGazer library on the job cluster, for example:
-
-```shell
-cp -f /dbfs/<some_path>/perfgazer_spark_<some_version>.jar /databricks/jars
-```
+1. Upload the spark-perf-gazer JAR to a location accessible by the job cluster (e.g., DBFS).
+2. Use an init script to install the PerfGazer library on the job cluster, for example:
+    ```shell
+    cp -f /dbfs/<some_path>/perfgazer_spark_<some_version>.jar /databricks/jars
+    ```
 
 
 

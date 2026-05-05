@@ -14,7 +14,7 @@
       
       
       
-        <link rel="next" href="getting-started/">
+        <link rel="next" href="artifacts/">
       
       
         
@@ -289,10 +289,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#features" class="md-nav__link">
+  <a href="#architecture" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Features
+        Architecture
       
     </span>
   </a>
@@ -304,6 +304,17 @@
     <span class="md-ellipsis">
       
         Why PerfGazer?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
       
     </span>
   </a>
@@ -325,33 +336,6 @@
   
 </nav>
       
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="getting-started/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Getting Started
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -414,7 +398,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -436,14 +420,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -656,10 +640,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#features" class="md-nav__link">
+  <a href="#architecture" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Features
+        Architecture
       
     </span>
   </a>
@@ -671,6 +655,17 @@
     <span class="md-ellipsis">
       
         Why PerfGazer?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
       
     </span>
   </a>
@@ -711,16 +706,9 @@
 <h1 id="perfgazer">PerfGazer</h1>
 <p>Performance Gazer for Apache Spark.</p>
 <p>PerfGazer is a configurable Spark Listener that allows you to retrieve important stats about Spark SQL queries, jobs, and stages in a post-mortem way.</p>
-<h2 id="features">Features</h2>
-<ul>
-<li>Post-mortem analysis of Spark SQL queries, jobs, and stages</li>
-<li>Measure accumulated in-executor durations</li>
-<li>Identify jobs with the longest cumulated execution time</li>
-<li>Detect Spark jobs that have spill</li>
-<li>Monitor SQL metrics (files read, pruned, etc.)</li>
-<li>Investigate predicate pushdowns and their effectiveness</li>
-<li>Connect to any monitoring system</li>
-</ul>
+<h2 id="architecture">Architecture</h2>
+<p><img alt="PerfGazer Architecture" src="sparklear-archi.drawio.svg" /></p>
+<p>PerfGazer plugs into the Spark Driver as a <strong>SparkListener</strong>, alongside built-in listeners like <code>JobProgressListener</code> or <code>AppStatusListener</code>. The Spark <strong>ListenerBus</strong> dispatches execution events to all registered listeners. While the standard listeners feed the Spark UI, PerfGazer captures the same events and routes them through a configurable <strong>Sink</strong> to produce structured reports (SQL, Jobs, Stages, Tasks) that can be queried and analyzed programmatically — no UI navigation required.</p>
 <h2 id="why-perfgazer">Why PerfGazer?</h2>
 <p>The Spark UI has limitations:</p>
 <ul>
@@ -730,10 +718,20 @@
 <li>Not made for analytics</li>
 </ul>
 <p>PerfGazer solves these problems by providing programmatic access to execution statistics.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li>Reports at every level: SQL queries, jobs, stages, and tasks</li>
+<li>Full physical plan extraction with per-operator metrics</li>
+<li>Stage-level I/O, shuffle, CPU time, and spill tracking</li>
+<li>Task-level granularity: detect skew, GC pressure, and shuffle bottlenecks</li>
+<li>JSON output queryable directly with Spark SQL (views auto-generated)</li>
+<li>Configurable: enable or disable each report level independently</li>
+<li>Pluggable sink architecture via the <code>Sink</code> trait</li>
+<li>Zero-code setup through <code>spark.extraListeners</code> configuration</li>
+</ul>
 <h2 id="next-steps">Next Steps</h2>
 <ul>
-<li><a href="getting-started/">Getting Started</a> - Quick start guide</li>
-<li><a href="user_guide/">User Guide</a> - Full setup and configuration</li>
+<li><a href="user_guide/">User Guide</a> - Setup, configuration, and data analysis examples</li>
 <li><a href="contributor_guide/">Contributor Guide</a> - Build and development</li>
 </ul>
 
