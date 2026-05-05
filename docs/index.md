@@ -4,15 +4,11 @@ Performance Gazer for Apache Spark.
 
 PerfGazer is a configurable Spark Listener that allows you to retrieve important stats about Spark SQL queries, jobs, and stages in a post-mortem way.
 
-## Features
+## Architecture
 
-- Post-mortem analysis of Spark SQL queries, jobs, and stages
-- Measure accumulated in-executor durations
-- Identify jobs with the longest cumulated execution time
-- Detect Spark jobs that have spill
-- Monitor SQL metrics (files read, pruned, etc.)
-- Investigate predicate pushdowns and their effectiveness
-- Connect to any monitoring system
+![PerfGazer Architecture](sparklear-archi.drawio.svg)
+
+PerfGazer plugs into the Spark Driver as a **SparkListener**, alongside built-in listeners like `JobProgressListener` or `AppStatusListener`. The Spark **ListenerBus** dispatches execution events to all registered listeners. While the standard listeners feed the Spark UI, PerfGazer captures the same events and routes them through a configurable **Sink** to produce structured reports (SQL, Jobs, Stages, Tasks) that can be queried and analyzed programmatically — no UI navigation required.
 
 ## Why PerfGazer?
 
@@ -25,8 +21,18 @@ The Spark UI has limitations:
 
 PerfGazer solves these problems by providing programmatic access to execution statistics.
 
+## Features
+
+- Reports at every level: SQL queries, jobs, stages, and tasks
+- Full physical plan extraction with per-operator metrics
+- Stage-level I/O, shuffle, CPU time, and spill tracking
+- Task-level granularity: detect skew, GC pressure, and shuffle bottlenecks
+- JSON output queryable directly with Spark SQL (views auto-generated)
+- Configurable: enable or disable each report level independently
+- Pluggable sink architecture via the `Sink` trait
+- Zero-code setup through `spark.extraListeners` configuration
+
 ## Next Steps
 
-- [Getting Started](getting-started.md) - Quick start guide
-- [User Guide](user_guide/index.md) - Full setup and configuration
+- [User Guide](user_guide/index.md) - Setup, configuration, and data analysis examples
 - [Contributor Guide](contributor_guide.md) - Build and development
