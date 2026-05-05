@@ -13,7 +13,7 @@ val jsonSink = new JsonSink(
     writeBatchSize = 100,
     fileSizeLimit = 10L * 1024
   ),
-  spark.conf
+  spark.sparkContext.getConf
 )
 
 val perfGazerConfig = PerfGazerConfig(
