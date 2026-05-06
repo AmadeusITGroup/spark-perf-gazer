@@ -3,7 +3,7 @@ package com.amadeus.perfgazer
 import com.amadeus.perfgazer.JsonSink._
 import com.amadeus.perfgazer.reports._
 import com.amadeus.perfgazer.PathBuilder._
-import org.apache.spark.SparkConf
+import org.apache.spark.{SparkConf, SparkContext}
 import org.slf4j.{Logger, LoggerFactory}
 
 /** Sink of a collection of reports to JSON files.
@@ -38,9 +38,22 @@ class JsonSink(
   override def supportedReportTypes: Set[ReportType] = reportTypes
 
   val destination: String = config.destination.resolveProperties(sparkConf)
+  val mode: DestinationMode = DestinationMode.detect(destination)
+
+  private val (writeDir, filePromoter): (String, FilePromoter) = mode match {
+    case DestinationMode.Posix =>
+      (destination, new NoOpFilePromoter())
+    case DestinationMode.Hdfs =>
+      val stagingDir = sparkConf.getOption(StagingDirKey)
+        .getOrElse(s"/tmp/perfgazer/${sparkConf.getAppId}/")
+      val hadoopConf = SparkContext.getOrCreate(sparkConf).hadoopConfiguration
+      val stagingFolder = new java.io.File(stagingDir)
+      if (!stagingFolder.exists()) stagingFolder.mkdirs()
+      (stagingDir, new HadoopFilePromoter(destination, hadoopConf))
+  }
 
   val queues: Set[ReportWriter] = supportedReportTypes.map(
-    new ReportWriter(config, _, destination)
+    new ReportWriter(config, _, writeDir, filePromoter)
   )
 
   override def write(r: Report): Unit =
@@ -70,6 +83,7 @@ object JsonSink {
   val FileSizeLimitKey = "spark.perfgazer.sink.json.fileSizeLimit"
   val AsyncFlushTimeoutMillisecsKey = "spark.perfgazer.sink.json.asyncFlushTimeoutMillisecsKey"
   val WaitForCloseTimeoutMillisecsKey = "spark.perfgazer.sink.json.waitForCloseTimeoutMillisecsKey"
+  val StagingDirKey = "spark.perfgazer.sink.json.stagingDir"
 
   val DefaultWriteBatchSize: Int = 100
   val DefaultFileSizeLimit: Long = 200L * 1024 * 1024 // 200 MB

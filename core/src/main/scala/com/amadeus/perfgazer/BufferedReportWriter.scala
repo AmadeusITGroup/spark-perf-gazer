@@ -19,7 +19,7 @@ object BufferedReportWriter {
 /**
  * This class is not thread-safe.
  */
-class BufferedReportWriter(config: Config, reportType: ReportType, dir: String) {
+class BufferedReportWriter(config: Config, reportType: ReportType, dir: String, filePromoter: FilePromoter) {
   val logger: Logger = LoggerFactory.getLogger(getClass.getName)
   private val formats: AnyRef with Formats = Serialization.formats(NoTypeHints)
 
@@ -53,6 +53,7 @@ class BufferedReportWriter(config: Config, reportType: ReportType, dir: String) 
   def close(): Unit = {
     flush()
     currentFile.writer.close()
+    filePromoter.promote(currentFile.file)
     logger.trace("Closed buffer '{}'", reportType)
   }
 
@@ -60,6 +61,7 @@ class BufferedReportWriter(config: Config, reportType: ReportType, dir: String) 
     logger.trace("Rolling file {} has reached the fileSizeLimit threshold ({} bytes)...",
       currentFile.file.getPath, currentFile.file.length())
     currentFile.writer.close()
+    filePromoter.promote(currentFile.file)
     currentFile = newFilePrintWriter()
     logger.trace("Switched to new rolling file {}.", currentFile.file.getPath)
   }

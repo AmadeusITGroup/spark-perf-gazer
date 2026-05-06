@@ -1,9 +1,9 @@
 package com.amadeus.perfgazer
 
-import org.scalatest.matchers.should.Matchers
 import com.amadeus.testfwk.SimpleSpec
+import com.amadeus.perfgazer.PathBuilder._
 
-class JsonSinkViewDDLGeneratorSpec extends SimpleSpec with Matchers {
+class JsonSinkViewDDLGeneratorSpec extends SimpleSpec {
 
   describe("JsonSink.JsonViewDDLGenerator.generateViewDDL") {
     it("generate a standard view") {
@@ -26,5 +26,12 @@ class JsonSinkViewDDLGeneratorSpec extends SimpleSpec with Matchers {
       ddl should include ("path \"dbfs:/tmp/listener/date=2025-09-10/sql-reports-*.json\"")
     }
 
+    it("should use the remote destination path in HDFS mode (not staging dir)") {
+      val remoteDestination = "s3a://my-bucket/reports/"
+      val ddl = JsonSink.JsonViewDDLGenerator.generateViewDDL(remoteDestination, "sql")
+
+      ddl should include(s"${remoteDestination.normalizePath}sql-reports-*.json")
+      ddl should not include "/tmp/perfgazer/"
+    }
   }
 }
