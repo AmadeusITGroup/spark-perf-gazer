@@ -10,24 +10,35 @@ import java.net.URI
  * FilePromoter for HDFS/cloud mode. Copies completed local staging files
  * to the remote destination via Hadoop FileSystem API.
  *
- * @param destinationDir  The remote destination directory URI (e.g., "s3a://bucket/path/")
- * @param hadoopConf      Hadoop Configuration from SparkContext
+ * The Hadoop FileSystem is initialized lazily on the first promote() call,
+ * allowing safe construction during spark.extraListeners initialization
+ * (before SparkContext is fully available).
+ *
+ * @param destinationDir    The remote destination directory URI (e.g., "s3a://bucket/path/")
+ * @param hadoopConfProvider  Thunk that provides the Hadoop Configuration (evaluated lazily)
  */
-class HadoopFilePromoter(destinationDir: String, hadoopConf: Configuration) extends FilePromoter {
+class HadoopFilePromoter(destinationDir: String, hadoopConfProvider: () => Configuration) extends FilePromoter {
   private val logger: Logger = LoggerFactory.getLogger(getClass.getName)
 
-  private val remoteDestPath = new Path(destinationDir)
-  private val fs: FileSystem = try {
-    FileSystem.get(new URI(destinationDir), hadoopConf)
-  } catch {
-    case e: Exception =>
-      throw new IllegalStateException(
-        s"Failed to obtain Hadoop FileSystem for destination: $destinationDir", e)
+  /** Secondary constructor for direct Configuration (used in tests and code-based setup) */
+  def this(destinationDir: String, hadoopConf: Configuration) = {
+    this(destinationDir, () => hadoopConf)
   }
 
-  // Ensure remote directory exists
-  if (!fs.exists(remoteDestPath)) {
-    fs.mkdirs(remoteDestPath)
+  private lazy val (fs, remoteDestPath): (FileSystem, Path) = {
+    val path = new Path(destinationDir)
+    val fileSystem = try {
+      FileSystem.get(new URI(destinationDir), hadoopConfProvider())
+    } catch {
+      case e: Exception =>
+        throw new IllegalStateException(
+          s"Failed to obtain Hadoop FileSystem for destination: $destinationDir", e)
+    }
+    // Ensure remote directory exists
+    if (!fileSystem.exists(path)) {
+      fileSystem.mkdirs(path)
+    }
+    (fileSystem, path)
   }
 
   override def promote(localFile: File): Unit = {

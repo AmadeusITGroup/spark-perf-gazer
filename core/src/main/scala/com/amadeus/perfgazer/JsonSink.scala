@@ -46,10 +46,9 @@ class JsonSink(
     case DestinationMode.Hdfs =>
       val stagingDir = sparkConf.getOption(StagingDirKey)
         .getOrElse(s"/tmp/perfgazer/${sparkConf.getAppId}/")
-      val hadoopConf = SparkContext.getOrCreate(sparkConf).hadoopConfiguration
       val stagingFolder = new java.io.File(stagingDir)
       if (!stagingFolder.exists()) stagingFolder.mkdirs()
-      (stagingDir, new HadoopFilePromoter(destination, hadoopConf))
+      (stagingDir, new HadoopFilePromoter(destination, () => SparkContext.getOrCreate().hadoopConfiguration))
   }
 
   val queues: Set[ReportWriter] = supportedReportTypes.map(

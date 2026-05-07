@@ -152,6 +152,50 @@ class JsonSinkModeIntegrationSpec extends SimpleSpec {
     }
   }
 
+  describe("JsonSink HDFS mode end-to-end with lazy init (simulates spark.extraListeners)") {
+
+    it("should lazily initialize HadoopFilePromoter and promote files to remote destination") {
+      val remoteDir = Files.createTempDirectory("remote-lazy-init-")
+      val stagingDir = Files.createTempDirectory("staging-lazy-")
+
+      try {
+        // Simulate the lazy init path: HadoopFilePromoter constructed with a thunk
+        // that is NOT evaluated at construction time
+        var thunkCalled = false
+        val hadoopConf = new org.apache.hadoop.conf.Configuration()
+        hadoopConf.set("fs.file.impl", classOf[org.apache.hadoop.fs.LocalFileSystem].getName)
+
+        val promoter = new HadoopFilePromoter(
+          remoteDir.toUri.toString,
+          () => { thunkCalled = true; hadoopConf }
+        )
+
+        // Thunk should NOT have been called at construction
+        thunkCalled shouldBe false
+
+        // Write a file to staging dir and promote it — this triggers lazy init
+        val localFile = new File(stagingDir.toFile, "test-reports-abc123.json")
+        Files.write(localFile.toPath, """{"id":1}""".getBytes)
+
+        promoter.promote(localFile)
+
+        // Now the thunk should have been called
+        thunkCalled shouldBe true
+
+        // File should be at remote destination
+        val remoteFile = new File(remoteDir.toFile, "test-reports-abc123.json")
+        remoteFile.exists() shouldBe true
+        remoteFile.length() should be > 0L
+
+        // Local file should be deleted (delSrc=true)
+        localFile.exists() shouldBe false
+      } finally {
+        new Directory(remoteDir.toFile).deleteRecursively()
+        new Directory(stagingDir.toFile).deleteRecursively()
+      }
+    }
+  }
+
   describe("BufferedReportWriter promotion") {
 
     it("should call promote on close and on each rolled file") {

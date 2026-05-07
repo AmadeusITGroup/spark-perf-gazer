@@ -14,10 +14,17 @@ class HadoopFilePromoterSpec extends SimpleSpec {
       val hadoopConf = new Configuration()
       hadoopConf.set("fs.nonexistent.impl", "com.does.not.Exist")
 
-      val ex = intercept[IllegalStateException] {
-        new HadoopFilePromoter("nonexistent://invalid-bucket/path/", hadoopConf)
+      val promoter = new HadoopFilePromoter("nonexistent://invalid-bucket/path/", hadoopConf)
+      // Lazy init triggers on first promote() call
+      val dummyFile = Files.createTempFile("dummy-", ".json").toFile
+      try {
+        val ex = intercept[IllegalStateException] {
+          promoter.promote(dummyFile)
+        }
+        ex.getMessage should include("Failed to obtain Hadoop FileSystem")
+      } finally {
+        dummyFile.delete()
       }
-      ex.getMessage should include("Failed to obtain Hadoop FileSystem")
     }
 
     it("should create remote destination directory if it does not exist") {
@@ -29,7 +36,12 @@ class HadoopFilePromoterSpec extends SimpleSpec {
         val hadoopConf = new Configuration()
         hadoopConf.set("fs.file.impl", classOf[org.apache.hadoop.fs.LocalFileSystem].getName)
 
-        new HadoopFilePromoter(targetDir.toURI.toString, hadoopConf)
+        val promoter = new HadoopFilePromoter(targetDir.toURI.toString, hadoopConf)
+
+        // Lazy init triggers on first promote() — create a dummy file to promote
+        val localFile = Files.createTempFile("dummy-promote-", ".json").toFile
+        Files.write(localFile.toPath, "test".getBytes)
+        promoter.promote(localFile)
 
         targetDir.exists() shouldBe true
         targetDir.isDirectory shouldBe true
