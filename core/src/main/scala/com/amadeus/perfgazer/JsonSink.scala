@@ -48,7 +48,19 @@ class JsonSink(
         .getOrElse(s"/tmp/perfgazer/${sparkConf.getAppId}/")
       val stagingFolder = new java.io.File(stagingDir)
       if (!stagingFolder.exists()) stagingFolder.mkdirs()
-      (stagingDir, new HadoopFilePromoter(destination, () => SparkContext.getOrCreate().hadoopConfiguration))
+      val confSnapshot = sparkConf.getAll
+      (stagingDir, new HadoopFilePromoter(destination, () => {
+        val hadoopConf = SparkContext.getOrCreate().hadoopConfiguration
+        // Propagate fs.* keys from SparkConf into Hadoop Configuration.
+        // This ensures storage credentials (fs.azure.*, fs.s3a.*, fs.gs.*, etc.)
+        // are available even when set without the spark.hadoop. prefix.
+        confSnapshot.foreach { case (key, value) =>
+          if (key.startsWith("fs.") && hadoopConf.get(key) == null) {
+            hadoopConf.set(key, value)
+          }
+        }
+        hadoopConf
+      }))
   }
 
   val queues: Set[ReportWriter] = supportedReportTypes.map(
