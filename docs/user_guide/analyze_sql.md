@@ -49,6 +49,8 @@ Mind that if you use `basePath` and new partitions are discovered, the joins bet
 
 ## Analyze PerfGazer data
 
+The SQL queries below are available as constants in `com.amadeus.perfgazer.AnalysisQueries`. That class is the definitive source of truth for these queries and is tested in the integration test suite.
+
 You can start deep diving into all tasks with their parent stage and job with a query like the following:
 
 ```sql
@@ -192,23 +194,15 @@ SELECT j.jobId,
 
 ### Delta tables read with their pushdown predicates
 
-Extracts all Scan parquet leaf nodes from SQL plans and parses the `PushedFilters` from the execution plan details. This helps identify which predicates were pushed down to the Parquet reader for each Delta table scanned.
+Extracts all `PushedFilters` blocks from the SQL execution plan details. Each Scan parquet node in the physical plan includes a `PushedFilters` section listing predicates pushed down to the Parquet reader. This query pairs each scan with its pushed filters.
 
 ```sql
-WITH scans AS (
+WITH scan_details AS (
   SELECT sq.sqlId,
          sq.description,
          n.nodeName,
-         REGEXP_EXTRACT(
-           SUBSTRING(sq.details, LOCATE(n.coordinates, sq.details)),
-           'PushedFilters: \\[([^\\]]*)\\]',
-           1
-         ) AS pushedFilters,
-         REGEXP_EXTRACT(
-           SUBSTRING(sq.details, LOCATE(n.coordinates, sq.details)),
-           'Location: InMemoryFileIndex\\[([^\\]]*)\\]',
-           1
-         ) AS tableLocation
+         n.jobName,
+         sq.details
     FROM sql sq
          LATERAL VIEW EXPLODE(sq.nodes) AS n
    WHERE n.nodeName LIKE '%Scan parquet%'
@@ -216,18 +210,33 @@ WITH scans AS (
 )
 SELECT sqlId,
        description,
-       tableLocation,
-       pushedFilters
-  FROM scans
- ORDER BY sqlId, tableLocation;
+       jobName,
+       nodeName,
+       REGEXP_EXTRACT(details, 'PushedFilters: \\[([^\\]]*)\\]', 1) AS pushedFilters
+  FROM scan_details
+ ORDER BY sqlId;
+```
+
+Note: when multiple Scan parquet nodes exist in the same SQL execution, the `REGEXP_EXTRACT` above returns the first match from `details`. To extract all matches (one per scan), use `REGEXP_EXTRACT_ALL` (Spark 3.4+):
+
+```sql
+SELECT sq.sqlId,
+       sq.description,
+       pushed.pushedFilters
+  FROM sql sq
+       LATERAL VIEW EXPLODE(
+         REGEXP_EXTRACT_ALL(sq.details, 'PushedFilters: \\[([^\\]]*)\\]', 1)
+       ) pushed AS pushedFilters
+ WHERE SIZE(FILTER(sq.nodes, n -> n.nodeName LIKE '%Scan parquet%' AND n.isLeaf = true)) > 0
+ ORDER BY sq.sqlId;
 ```
 
 ??? example "Sample output"
 
-    | sqlId | description              | tableLocation                          | pushedFilters                                    |
-    |------:|--------------------------|----------------------------------------|--------------------------------------------------|
-    |     1 | Filter by region         | dbfs:/data/warehouse/customers         | IsNotNull(region), EqualTo(region,EMEA)          |
-    |     1 | Filter by region         | dbfs:/data/warehouse/orders            |                                                  |
-    |     2 | Join orders with items   | dbfs:/data/warehouse/orders            | IsNotNull(order_date), GreaterThan(order_date,2024-01-01) |
-    |     2 | Join orders with items   | dbfs:/data/warehouse/items             |                                                  |
+    | sqlId | description              | pushedFilters                                    |
+    |------:|--------------------------|--------------------------------------------------|
+    |     1 | Filter by region         | IsNotNull(region), EqualTo(region,EMEA)          |
+    |     1 | Filter by region         |                                                  |
+    |     2 | Join orders with items   | IsNotNull(order_date), GreaterThan(order_date,2024-01-01) |
+    |     2 | Join orders with items   |                                                  |
 

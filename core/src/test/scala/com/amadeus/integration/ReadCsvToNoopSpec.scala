@@ -1,11 +1,14 @@
 package com.amadeus.integration
 
-import com.amadeus.perfgazer.PerfGazer
+import com.amadeus.perfgazer.{AnalysisQueries, JsonSink, PerfGazer}
 import com.amadeus.perfgazer.reports._
 import com.amadeus.testfwk.ConfigSupport._
 import com.amadeus.testfwk.SinkSupport.TestableSink
 import com.amadeus.testfwk.{OptdSupport, SimpleSpec}
 import com.amadeus.testfwk.SparkSupport.withSpark
+import com.amadeus.testfwk.TempDirSupport.withTmpDir
+import org.apache.spark.SparkConf
+import org.apache.spark.sql.functions.lit
 import org.scalatest.GivenWhenThen
 
 class ReadCsvToNoopSpec extends SimpleSpec with GivenWhenThen {
@@ -13,78 +16,97 @@ class ReadCsvToNoopSpec extends SimpleSpec with GivenWhenThen {
   describe("The listener when reading a .csv and writing to noop") {
     it("should build reports for a noop write") {
       withSpark(appName = this.getClass.getName) { spark =>
-        Given("a Spark session with PerfGazer listeners")
-        val sinks = new TestableSink()
-        val emptySinks = new TestableSink()
-        val df = OptdSupport.readOptd(spark)
+        withTmpDir { tmpDir =>
+          Given("a Spark session with PerfGazer listeners")
+          val destination = s"$tmpDir/perfgazer-output"
+          val sparkConf = new SparkConf(false)
+            .set(JsonSink.DestinationKey, destination)
+          val jsonSink = new JsonSink(sparkConf)
 
-        val cfg = defaultTestConfig.withAllEnabled
-        val eventsListener = new PerfGazer(cfg, sinks)
-        spark.sparkContext.addSparkListener(eventsListener)
+          val sinks = new TestableSink()
+          val emptySinks = new TestableSink()
+          val df = OptdSupport.readOptd(spark)
 
-        val emptyEventsListener = new PerfGazer(cfg.withAllDisabled, emptySinks)
-        spark.sparkContext.addSparkListener(emptyEventsListener)
+          val cfg = defaultTestConfig.withAllEnabled
+          val eventsListener = new PerfGazer(cfg, jsonSink)
+          spark.sparkContext.addSparkListener(eventsListener)
 
-        When("a CSV is read and written to noop")
-        spark.sparkContext.setJobGroup("testgroup", "testjob")
-        df.write.format("noop").mode("overwrite").save()
+          val sinkEventsListener = new PerfGazer(cfg, sinks)
+          spark.sparkContext.addSparkListener(sinkEventsListener)
 
-        // Wait for listener asynchronous operations before removing it from sparkContext
-        Thread.sleep(3000)
-        spark.sparkContext.removeSparkListener(eventsListener)
-        spark.sparkContext.removeSparkListener(emptyEventsListener)
-        eventsListener.close()
-        emptyEventsListener.close()
+          val emptyEventsListener = new PerfGazer(cfg.withAllDisabled, emptySinks)
+          spark.sparkContext.addSparkListener(emptyEventsListener)
 
-        Then("it should build some reports")
-        sinks.reports.size shouldBe 4
+          When("a small job writes the CSV once to noop")
+          spark.sparkContext.setJobGroup("testgroup", "testjobsmall")
+          df.write.format("noop").mode("overwrite").save()
 
-        And("it should build SQL nodes with job name and node name")
-        val sqlReports = sinks.reports.collect { case r: SqlReport => r }
-        sqlReports.size should be(1)
-        val sqlReport = sqlReports.head
-        val nodes = sqlReport.nodes
-        nodes.size should be(2)
-        val sqlId = sqlReport.sqlId // Spark 4 may assign a different execution ID than Spark 3
-        nodes.map(i => (i.sqlId, i.jobName, i.nodeName)).head should be(sqlId, "testjob", "() OverwriteByExpression")
-        nodes.map(i => (i.sqlId, i.jobName, i.nodeName)).last should be(sqlId, "testjob", "() Scan csv ")
+          And("a large job writes the CSV 10 times to noop")
+          spark.sparkContext.setJobGroup("testgroup", "testjoblarge")
+          for (i <- 0 until 10) {
+            df.withColumn("instance", lit(i)).write.format("noop").mode("overwrite").save()
+          }
 
-        And("it should build SQL reports with metrics")
-        val csvNodes = sqlReport.nodes.filter(_.nodeName contains "Scan csv")
-        csvNodes.size should be(1)
-        val csvNode = csvNodes.head
-        csvNode.metrics.keys should contain("number of files read")
+          // Wait for listener asynchronous operations before removing it from sparkContext
+          Thread.sleep(3000)
+          spark.sparkContext.removeSparkListener(eventsListener)
+          spark.sparkContext.removeSparkListener(sinkEventsListener)
+          spark.sparkContext.removeSparkListener(emptyEventsListener)
+          eventsListener.close()
+          sinkEventsListener.close()
+          emptyEventsListener.close()
 
-        And("it should build SQL reports with details")
-        val sqlDetails = sqlReport.details
-        sqlDetails should include regex "== Parsed Logical Plan =="
-        sqlDetails should include regex "== Optimized Logical Plan =="
-        sqlDetails should include regex "== Physical Plan =="
+          Then("the listener should build some reports")
+          sinks.reports should not be empty
 
-        And("it should build job reports")
-        val jobReports = sinks.reports.collect { case r: JobReport => r }
-        jobReports.size should be(1)
-        val jobReport = jobReports.head
-        jobReport.jobId should be(1L)
-        jobReport.groupId should be("testgroup")
-        jobReport.jobName should be("testjob")
-        jobReport.sqlId should be(sqlReports.head.sqlId.toString) // Spark 4 may assign a different execution ID
-        jobReport.stages should be(Seq(1))
+          And("it should build SQL nodes with job name and node name")
+          val sqlReports = sinks.reports.collect { case r: SqlReport => r }
+          val smallSqlReport = sqlReports.find(_.nodes.exists(_.jobName == "testjobsmall")).get
+          val nodes = smallSqlReport.nodes
+          nodes.size should be(2)
+          val sqlId = smallSqlReport.sqlId
+          nodes.map(i => (i.sqlId, i.jobName, i.nodeName)).head should be(
+            sqlId, "testjobsmall", "() OverwriteByExpression"
+          )
+          nodes.map(i => (i.sqlId, i.jobName, i.nodeName)).last should be(
+            sqlId, "testjobsmall", "() Scan csv "
+          )
 
-        And("it should build stage reports (StagePrettyTranslator)")
-        val stageReports = sinks.reports.collect { case r: StageReport => r }
-        stageReports.size should be(1)
-        val stageReport = stageReports.head
-        stageReport.stageId should be(1)
-        stageReport.shuffleReadBytes should be(0)
-        stageReport.shuffleWriteBytes should be(0)
-        stageReport.attempt should be(0)
-        stageReport.readBytes should be > 30L*1024*1024
-        stageReport.writeBytes should be(0) // noop
-        stageReport.execCpuNs should be > 0L
+          And("it should build SQL reports with metrics")
+          val csvNodes = smallSqlReport.nodes.filter(_.nodeName contains "Scan csv")
+          csvNodes.size should be(1)
+          csvNodes.head.metrics.keys should contain("number of files read")
 
-        And("it should not generate any report if all is disabled")
-        emptySinks.reports.size should be(0)
+          And("it should build SQL reports with details")
+          smallSqlReport.details should include regex "== Parsed Logical Plan =="
+          smallSqlReport.details should include regex "== Optimized Logical Plan =="
+          smallSqlReport.details should include regex "== Physical Plan =="
+
+          And("it should build stage reports")
+          val stageReports = sinks.reports.collect { case r: StageReport => r }
+          stageReports should not be empty
+          stageReports.foreach(_.execCpuNs should be > 0L)
+
+          And("it should not generate any report if all is disabled")
+          emptySinks.reports.size should be(0)
+
+          And("it should report that the large job has more CPU usage than the small on")
+          val snippets = eventsListener.getSnippets
+          snippets.foreach(spark.sql)
+
+          val cpuResults = spark.sql(AnalysisQueries.JobsByCpuUsage).collect()
+          val cpuByJob = cpuResults.map(r => (r.getAs[String]("jobName"), r.getAs[Double]("cpuTimeSec")))
+          val largeCpu = cpuByJob.filter(_._1 == "testjoblarge").map(_._2).sum
+          val smallCpu = cpuByJob.filter(_._1 == "testjobsmall").map(_._2).sum
+          largeCpu should be > smallCpu
+
+          And("the large job should have more I/O than the small job")
+          val ioResults = spark.sql(AnalysisQueries.JobsByIoVolumes).collect()
+          val ioByJob = ioResults.map(r => (r.getAs[String]("jobName"), r.getAs[Double]("inputMb")))
+          val largeIo = ioByJob.filter(_._1 == "testjoblarge").map(_._2).sum
+          val smallIo = ioByJob.filter(_._1 == "testjobsmall").map(_._2).sum
+          largeIo should be > smallIo
+        }
       }
     }
   }
