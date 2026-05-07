@@ -5,6 +5,7 @@ import com.amadeus.perfgazer.events.JobEvent.EndUpdate
 import com.amadeus.perfgazer.events.{JobEvent, SqlEvent, StageEvent, TaskEvent}
 import com.amadeus.perfgazer.reports._
 import com.amadeus.perfgazer.utils.CappedConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import org.apache.spark.SparkConf
 import org.apache.spark.scheduler._
 import org.apache.spark.sql.execution.ui._
@@ -17,6 +18,8 @@ import org.slf4j.{Logger, LoggerFactory}
   * - ...
   */
 class PerfGazer(val c: PerfGazerConfig, val sink: Sink) extends SparkListener {
+  private val closed = new AtomicBoolean(false)
+
   // Declare types for keys of maps
   private type SqlKey = Long
   private type JobKey = Int
@@ -32,7 +35,7 @@ class PerfGazer(val c: PerfGazerConfig, val sink: Sink) extends SparkListener {
   PerfGazer.register(this)
 
   // Register shutdown hook to ensure listener is closed on JVM termination
-  Runtime.getRuntime.addShutdownHook(new Thread() {
+  Runtime.getRuntime.addShutdownHook(new Thread("PerfGazer-shutdown-hook") {
     override def run(): Unit = {
       logger.info("Shutdown hook triggered, closing listener")
       PerfGazer.this.close()
@@ -142,9 +145,13 @@ class PerfGazer(val c: PerfGazerConfig, val sink: Sink) extends SparkListener {
     * Log SQL view snippets and close the sink (if not already done).
     */
   def close(): Unit = {
-    sink.close()
-    logSnippets()
-    logger.info("Listener closed, size of maps sql={} and job={})", sqlStartEvents.size, jobStartEvents.size)
+    if (closed.compareAndSet(false, true)) {
+      sink.close()
+      logSnippets()
+      logger.info("Listener closed, size of maps sql={} and job={})", sqlStartEvents.size, jobStartEvents.size)
+    } else {
+      logger.info("Listener already closed, ignoring duplicate close()")
+    }
   }
 
   private def logSnippets(): Unit = {
