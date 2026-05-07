@@ -9,7 +9,7 @@ Within the Spark application, you can access such snippets by doing:
 
 ```scala
 import com.amadeus.perfgazer.PerfGazer
-val perfGazer = PerfGazer.instance.getOrElse(throw new RuntimeException("Oups"))
+val perfGazer = PerfGazer.instance.getOrElse(throw new RuntimeException("Oops"))
 
 val snippets: Set[String] = perfGazer.getSnippets
 // snippets.foreach(println) // print them
@@ -74,6 +74,14 @@ SELECT j.jobId,
  ORDER BY cpuTimeSec DESC;
 ```
 
+??? example "Sample output"
+
+    | jobId | jobName              | cpuTimeSec |
+    |------:|----------------------|-----------:|
+    |     2 | save at MyApp.scala:42 |    1782.43 |
+    |     1 | count at MyApp.scala:28 |     624.18 |
+    |     0 | read at MyApp.scala:15  |      84.92 |
+
 ### Jobs by I/O volumes
 
 Shows input, output, shuffle read/write and total I/O per job, all in MB.
@@ -93,6 +101,14 @@ SELECT j.jobId,
  ORDER BY totalIoMb DESC;
 ```
 
+??? example "Sample output"
+
+    | jobId | jobName              | inputMb | outputMb | shuffleReadMb | shuffleWriteMb | totalIoMb |
+    |------:|----------------------|--------:|---------:|--------------:|---------------:|----------:|
+    |     2 | save at MyApp.scala:42 | 1024.00 |   512.34 |        256.78 |         248.91 |   2042.03 |
+    |     1 | count at MyApp.scala:28 |  512.00 |     0.00 |        128.45 |         130.12 |    770.57 |
+    |     0 | read at MyApp.scala:15  |  256.00 |     0.00 |          0.00 |           0.00 |    256.00 |
+
 ### Jobs with spill
 
 Lists only jobs where memory or disk spill occurred, in MB.
@@ -109,6 +125,13 @@ HAVING SUM(s.memoryBytesSpilled) > 0
     OR SUM(s.diskBytesSpilled)   > 0
  ORDER BY diskSpillMb DESC;
 ```
+
+??? example "Sample output"
+
+    | jobId | jobName              | memorySpillMb | diskSpillMb |
+    |------:|----------------------|--------------:|------------:|
+    |     2 | save at MyApp.scala:42 |       2048.00 |      384.56 |
+    |     1 | count at MyApp.scala:28 |        512.00 |       64.12 |
 
 ### All joins with CPU and I/O from their job
 
@@ -139,6 +162,14 @@ SELECT sq.sqlId,
  ORDER BY js.cpuTimeSec DESC;
 ```
 
+??? example "Sample output"
+
+    | sqlId | description          | joinNode          | jobId | cpuTimeSec | totalIoMb |
+    |------:|----------------------|-------------------|------:|-----------:|----------:|
+    |     2 | Join orders with customers | SortMergeJoin     |     2 |     124.57 |   2042.03 |
+    |     1 | Enrich transactions  | BroadcastHashJoin |     1 |      58.23 |    770.57 |
+    |     0 | Aggregate daily totals | ShuffledHashJoin  |     0 |      32.11 |    256.00 |
+
 ### Wall clock duration of jobs
 
 Computes the elapsed wall-clock time of each job in seconds.
@@ -150,3 +181,11 @@ SELECT j.jobId,
   FROM job j
  ORDER BY wallClockSec DESC;
 ```
+
+??? example "Sample output"
+
+    | jobId | jobName              | wallClockSec |
+    |------:|----------------------|-------------:|
+    |     2 | save at MyApp.scala:42 |       245.67 |
+    |     1 | count at MyApp.scala:28 |        98.34 |
+    |     0 | read at MyApp.scala:15  |        15.21 |

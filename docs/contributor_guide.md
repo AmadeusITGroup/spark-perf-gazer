@@ -23,9 +23,6 @@ A `Report` is a type that represents the report unit shared with the end-user.
 Report case classes are annotated with `@TableDoc` and `@ColumnDoc` to serve as the single source of truth
 for the data model documentation (see [Data model documentation](#data-model-documentation) below).
 
-A `Filter` is a filter that operates on `Report`s, so that the end-user can have some control to focus specific aspects of
-their Spark ETL (like *file pruning* for instance).
-
 ## Build
 
 The project uses `sbt`. 
