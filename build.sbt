@@ -6,7 +6,7 @@ import sbt.Compile
 val SparkVersionKey = "spark.perfgazer.sparkVersion"
 val ScalaVersionKey = "spark.perfgazer.scalaVersion"
 val DefaultSparkVersion = "3.5.2"
-val DefaultScalaVersion = "2.12.17"
+val DefaultScalaVersion = "2.12.20"
 val SparkVersion = sys.props.getOrElse(SparkVersionKey, DefaultSparkVersion)
 val BuildScalaVersion = sys.props.getOrElse(ScalaVersionKey, DefaultScalaVersion)
 
