@@ -3,14 +3,17 @@
 # Files are placed in docs/ so MkDocs includes them in the built site.
 #
 # Page order is derived from mkdocs.yml nav — the single source of truth.
-# Usage: ./scripts/generate-llms-txt.sh
+# Usage: ./scripts/generate-llms-txt.sh [docs_dir] [version]
+#   docs_dir  — path to the docs directory (default: docs)
+#   version   — version slug used in URLs (default: latest)
 
 set -euo pipefail
 
 DOCS_DIR="${1:-docs}"
+DOCS_VERSION="${2:-latest}"
 MKDOCS_YML="mkdocs.yml"
 SCHEMA_FILE="$DOCS_DIR/schema/perfgazer-schema.json"
-SITE_URL="https://amadeusitgroup.github.io/spark-perf-gazer"
+SITE_URL="https://amadeusitgroup.github.io/spark-perf-gazer/$DOCS_VERSION"
 
 # ── Extract ordered markdown files from mkdocs.yml nav ───────────────────
 
@@ -26,6 +29,9 @@ done < <(grep -oE '[^ ]+\.md' "$MKDOCS_YML")
   echo "# PerfGazer"
   echo ""
   echo "> Performance Gazer for Apache Spark — a configurable Spark Listener for post-mortem analysis."
+  echo ""
+  echo "- [GitHub](https://github.com/AmadeusITGroup/spark-perf-gazer)"
+  echo "- [Full markdown documentation]($SITE_URL/llms-full.txt)"
   echo ""
   echo "## Docs"
   echo ""

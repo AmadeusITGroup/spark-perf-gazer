@@ -14,7 +14,7 @@ echo "==> Generating artifacts page from release matrix..."
 "$SCRIPT_DIR/generate-artifacts-md.sh"
 
 echo "==> Generating llms.txt and llms-full.txt..."
-"$SCRIPT_DIR/generate-llms-txt.sh"
+"$SCRIPT_DIR/generate-llms-txt.sh" docs "${DOCS_VERSION:-latest}"
 
 echo "==> Building MkDocs site..."
 mkdocs build
