@@ -696,7 +696,7 @@
 <h2 id="installing-the-jar">Installing the JAR</h2>
 <p>If you configure PerfGazer via <code>spark.extraListeners</code> (i.e. not bundled in your application), the JAR must be on the Databricks classpath before Spark initializes. Use an init script for this:</p>
 <ol>
-<li>Upload the spark-perf-gazer JAR to DBFS (or another location accessible by the cluster, like a Volume).</li>
+<li>Download the PerfGazer JAR from <a href="https://central.sonatype.com/namespace/io.github.amadeusitgroup">Maven Central</a> and upload it to DBFS (or another location accessible by the cluster, like a Volume).</li>
 <li>Create an <a href="https://docs.databricks.com/en/init-scripts/index.html">init script</a> that copies it at startup. For example:
     <div class="highlight"><pre><span></span><code>cp<span class="w"> </span>-f<span class="w"> </span>/dbfs/&lt;some_path&gt;/perfgazer_spark_&lt;some_version&gt;.jar<span class="w"> </span>/databricks/jars
 </code></pre></div></li>
