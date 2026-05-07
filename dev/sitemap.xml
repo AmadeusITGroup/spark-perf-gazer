@@ -2,38 +2,38 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://AmadeusITGroup.github.io/spark-perf-gazer/dev/</loc>
-         <lastmod>2026-05-05</lastmod>
+         <lastmod>2026-05-07</lastmod>
     </url>
     <url>
          <loc>https://AmadeusITGroup.github.io/spark-perf-gazer/dev/artifacts/</loc>
-         <lastmod>2026-05-05</lastmod>
+         <lastmod>2026-05-07</lastmod>
     </url>
     <url>
          <loc>https://AmadeusITGroup.github.io/spark-perf-gazer/dev/contributor_guide/</loc>
-         <lastmod>2026-05-05</lastmod>
+         <lastmod>2026-05-07</lastmod>
     </url>
     <url>
          <loc>https://AmadeusITGroup.github.io/spark-perf-gazer/dev/user_guide/</loc>
-         <lastmod>2026-05-05</lastmod>
+         <lastmod>2026-05-07</lastmod>
     </url>
     <url>
          <loc>https://AmadeusITGroup.github.io/spark-perf-gazer/dev/user_guide/analyze_sql/</loc>
-         <lastmod>2026-05-05</lastmod>
+         <lastmod>2026-05-07</lastmod>
     </url>
     <url>
          <loc>https://AmadeusITGroup.github.io/spark-perf-gazer/dev/user_guide/data_model/</loc>
-         <lastmod>2026-05-05</lastmod>
+         <lastmod>2026-05-07</lastmod>
     </url>
     <url>
          <loc>https://AmadeusITGroup.github.io/spark-perf-gazer/dev/user_guide/databricks/</loc>
-         <lastmod>2026-05-05</lastmod>
+         <lastmod>2026-05-07</lastmod>
     </url>
     <url>
          <loc>https://AmadeusITGroup.github.io/spark-perf-gazer/dev/user_guide/setup_code/</loc>
-         <lastmod>2026-05-05</lastmod>
+         <lastmod>2026-05-07</lastmod>
     </url>
     <url>
          <loc>https://AmadeusITGroup.github.io/spark-perf-gazer/dev/user_guide/setup_spark_properties/</loc>
-         <lastmod>2026-05-05</lastmod>
+         <lastmod>2026-05-07</lastmod>
     </url>
 </urlset>

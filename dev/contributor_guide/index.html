@@ -944,8 +944,6 @@ to the type of <code>Event</code>.</p>
 <p>A <code>Report</code> is a type that represents the report unit shared with the end-user.
 Report case classes are annotated with <code>@TableDoc</code> and <code>@ColumnDoc</code> to serve as the single source of truth
 for the data model documentation (see <a href="#data-model-documentation">Data model documentation</a> below).</p>
-<p>A <code>Filter</code> is a filter that operates on <code>Report</code>s, so that the end-user can have some control to focus specific aspects of
-their Spark ETL (like <em>file pruning</em> for instance).</p>
 <h2 id="build">Build</h2>
 <p>The project uses <code>sbt</code>. </p>
 <div class="highlight"><pre><span></span><code>sbt<span class="w"> </span><span class="nb">test</span><span class="w">                           </span><span class="c1"># run tests</span>

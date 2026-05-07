@@ -813,7 +813,7 @@
 You can run those snippets to perform analytics on the SQL queries, jobs, etc.</p>
 <p>Within the Spark application, you can access such snippets by doing: </p>
 <div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nn">com</span><span class="p">.</span><span class="nn">amadeus</span><span class="p">.</span><span class="nn">perfgazer</span><span class="p">.</span><span class="nc">PerfGazer</span>
-<span class="kd">val</span><span class="w"> </span><span class="n">perfGazer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">PerfGazer</span><span class="p">.</span><span class="n">instance</span><span class="p">.</span><span class="n">getOrElse</span><span class="p">(</span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="nc">RuntimeException</span><span class="p">(</span><span class="s">&quot;Oups&quot;</span><span class="p">))</span>
+<span class="kd">val</span><span class="w"> </span><span class="n">perfGazer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">PerfGazer</span><span class="p">.</span><span class="n">instance</span><span class="p">.</span><span class="n">getOrElse</span><span class="p">(</span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="nc">RuntimeException</span><span class="p">(</span><span class="s">&quot;Oops&quot;</span><span class="p">))</span>
 
 <span class="kd">val</span><span class="w"> </span><span class="n">snippets</span><span class="p">:</span><span class="w"> </span><span class="nc">Set</span><span class="p">[</span><span class="nc">String</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perfGazer</span><span class="p">.</span><span class="n">getSnippets</span>
 <span class="c1">// snippets.foreach(println) // print them</span>
@@ -857,6 +857,35 @@ For example:</p>
 <span class="w"> </span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobId</span><span class="p">,</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobName</span>
 <span class="w"> </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">cpuTimeSec</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
 </code></pre></div>
+<details class="example">
+<summary>Sample output</summary>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">jobId</th>
+<th>jobName</th>
+<th style="text-align: right;">cpuTimeSec</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">2</td>
+<td>save at MyApp.scala:42</td>
+<td style="text-align: right;">1782.43</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td>count at MyApp.scala:28</td>
+<td style="text-align: right;">624.18</td>
+</tr>
+<tr>
+<td style="text-align: right;">0</td>
+<td>read at MyApp.scala:15</td>
+<td style="text-align: right;">84.92</td>
+</tr>
+</tbody>
+</table>
+</details>
 <h3 id="jobs-by-io-volumes">Jobs by I/O volumes</h3>
 <p>Shows input, output, shuffle read/write and total I/O per job, all in MB.</p>
 <div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobId</span><span class="p">,</span>
@@ -872,6 +901,51 @@ For example:</p>
 <span class="w"> </span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobId</span><span class="p">,</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobName</span>
 <span class="w"> </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">totalIoMb</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
 </code></pre></div>
+<details class="example">
+<summary>Sample output</summary>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">jobId</th>
+<th>jobName</th>
+<th style="text-align: right;">inputMb</th>
+<th style="text-align: right;">outputMb</th>
+<th style="text-align: right;">shuffleReadMb</th>
+<th style="text-align: right;">shuffleWriteMb</th>
+<th style="text-align: right;">totalIoMb</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">2</td>
+<td>save at MyApp.scala:42</td>
+<td style="text-align: right;">1024.00</td>
+<td style="text-align: right;">512.34</td>
+<td style="text-align: right;">256.78</td>
+<td style="text-align: right;">248.91</td>
+<td style="text-align: right;">2042.03</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td>count at MyApp.scala:28</td>
+<td style="text-align: right;">512.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">128.45</td>
+<td style="text-align: right;">130.12</td>
+<td style="text-align: right;">770.57</td>
+</tr>
+<tr>
+<td style="text-align: right;">0</td>
+<td>read at MyApp.scala:15</td>
+<td style="text-align: right;">256.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">256.00</td>
+</tr>
+</tbody>
+</table>
+</details>
 <h3 id="jobs-with-spill">Jobs with spill</h3>
 <p>Lists only jobs where memory or disk spill occurred, in MB.</p>
 <div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobId</span><span class="p">,</span>
@@ -885,6 +959,33 @@ For example:</p>
 <span class="w">    </span><span class="k">OR</span><span class="w"> </span><span class="k">SUM</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">diskBytesSpilled</span><span class="p">)</span><span class="w">   </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span>
 <span class="w"> </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">diskSpillMb</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
 </code></pre></div>
+<details class="example">
+<summary>Sample output</summary>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">jobId</th>
+<th>jobName</th>
+<th style="text-align: right;">memorySpillMb</th>
+<th style="text-align: right;">diskSpillMb</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">2</td>
+<td>save at MyApp.scala:42</td>
+<td style="text-align: right;">2048.00</td>
+<td style="text-align: right;">384.56</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td>count at MyApp.scala:28</td>
+<td style="text-align: right;">512.00</td>
+<td style="text-align: right;">64.12</td>
+</tr>
+</tbody>
+</table>
+</details>
 <h3 id="all-joins-with-cpu-and-io-from-their-job">All joins with CPU and I/O from their job</h3>
 <p>Explodes the SQL plan nodes to find join operators, then enriches them with the aggregated CPU time and I/O volumes of the parent job.</p>
 <div class="highlight"><pre><span></span><code><span class="k">WITH</span><span class="w"> </span><span class="n">job_stats</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
@@ -910,6 +1011,47 @@ For example:</p>
 <span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">n</span><span class="p">.</span><span class="n">nodeName</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="s1">&#39;%Join%&#39;</span>
 <span class="w"> </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">js</span><span class="p">.</span><span class="n">cpuTimeSec</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
 </code></pre></div>
+<details class="example">
+<summary>Sample output</summary>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">sqlId</th>
+<th>description</th>
+<th>joinNode</th>
+<th style="text-align: right;">jobId</th>
+<th style="text-align: right;">cpuTimeSec</th>
+<th style="text-align: right;">totalIoMb</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">2</td>
+<td>Join orders with customers</td>
+<td>SortMergeJoin</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">124.57</td>
+<td style="text-align: right;">2042.03</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td>Enrich transactions</td>
+<td>BroadcastHashJoin</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">58.23</td>
+<td style="text-align: right;">770.57</td>
+</tr>
+<tr>
+<td style="text-align: right;">0</td>
+<td>Aggregate daily totals</td>
+<td>ShuffledHashJoin</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">32.11</td>
+<td style="text-align: right;">256.00</td>
+</tr>
+</tbody>
+</table>
+</details>
 <h3 id="wall-clock-duration-of-jobs">Wall clock duration of jobs</h3>
 <p>Computes the elapsed wall-clock time of each job in seconds.</p>
 <div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobId</span><span class="p">,</span>
@@ -918,6 +1060,35 @@ For example:</p>
 <span class="w">  </span><span class="k">FROM</span><span class="w"> </span><span class="n">job</span><span class="w"> </span><span class="n">j</span>
 <span class="w"> </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">wallClockSec</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
 </code></pre></div>
+<details class="example">
+<summary>Sample output</summary>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">jobId</th>
+<th>jobName</th>
+<th style="text-align: right;">wallClockSec</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">2</td>
+<td>save at MyApp.scala:42</td>
+<td style="text-align: right;">245.67</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td>count at MyApp.scala:28</td>
+<td style="text-align: right;">98.34</td>
+</tr>
+<tr>
+<td style="text-align: right;">0</td>
+<td>read at MyApp.scala:15</td>
+<td style="text-align: right;">15.21</td>
+</tr>
+</tbody>
+</table>
+</details>
 
 
 

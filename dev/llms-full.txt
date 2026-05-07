@@ -353,15 +353,40 @@ perfGazer.close()
 
 ---
 
-# Databricks job cluster setup
+# Databricks Setup
 
-To install the library on job clusters you can follow these steps:
+## Configuring `spark.extraListeners`
 
-1. Upload the spark-perf-gazer JAR to a location accessible by the job cluster (e.g., DBFS).
-2. Use an init script to install the PerfGazer library on the job cluster, for example:
+When you configure PerfGazer via `spark.extraListeners` (see [here](setup_spark_properties.md)), you override the default Databricks listener that powers the post-mortem Spark UI. To keep the Spark UI working, include the Databricks event logging listener alongside PerfGazer, separated by a comma:
+
+```
+spark.extraListeners=com.amadeus.perfgazer.PerfGazer,com.databricks.backend.daemon.driver.DBCEventLoggingListener
+```
+
+> If you do **not** set `spark.extraListeners` yourself, Databricks registers its listener automatically and you don't need to worry about this.
+
+## Installing the JAR
+
+If you configure PerfGazer via `spark.extraListeners` (i.e. not bundled in your application), the JAR must be on the Databricks classpath before Spark initializes. Use an init script for this:
+
+1. Upload the spark-perf-gazer JAR to DBFS (or another location accessible by the cluster, like a Volume).
+2. Create an [init script](https://docs.databricks.com/en/init-scripts/index.html) that copies it at startup. For example:
     ```shell
     cp -f /dbfs/<some_path>/perfgazer_spark_<some_version>.jar /databricks/jars
     ```
+3. Attach the init script to your cluster or job configuration.
+
+> If you use PerfGazer [via code](setup_code.md) instead, you can include it as a dependency in your fat JAR and skip the init script entirely.
+
+## Output Destination
+
+As of the latest release, PerfGazer uses the POSIX file interface on the driver to write its output. On Databricks this means you need a POSIX-compatible path, which currently limits you to a **DBFS mount point**:
+
+```
+--conf spark.perfgazer.sink.json.destination=/dbfs/mnt/<your_mount>/<path>/applicationId={{spark.app.id}}/
+```
+
+> Support for writing directly to cloud storage without a mount point is planned for a future release.
 
 
 
@@ -378,7 +403,7 @@ Within the Spark application, you can access such snippets by doing:
 
 ```scala
 import com.amadeus.perfgazer.PerfGazer
-val perfGazer = PerfGazer.instance.getOrElse(throw new RuntimeException("Oups"))
+val perfGazer = PerfGazer.instance.getOrElse(throw new RuntimeException("Oops"))
 
 val snippets: Set[String] = perfGazer.getSnippets
 // snippets.foreach(println) // print them
@@ -443,6 +468,14 @@ SELECT j.jobId,
  ORDER BY cpuTimeSec DESC;
 ```
 
+??? example "Sample output"
+
+    | jobId | jobName              | cpuTimeSec |
+    |------:|----------------------|-----------:|
+    |     2 | save at MyApp.scala:42 |    1782.43 |
+    |     1 | count at MyApp.scala:28 |     624.18 |
+    |     0 | read at MyApp.scala:15  |      84.92 |
+
 ### Jobs by I/O volumes
 
 Shows input, output, shuffle read/write and total I/O per job, all in MB.
@@ -462,6 +495,14 @@ SELECT j.jobId,
  ORDER BY totalIoMb DESC;
 ```
 
+??? example "Sample output"
+
+    | jobId | jobName              | inputMb | outputMb | shuffleReadMb | shuffleWriteMb | totalIoMb |
+    |------:|----------------------|--------:|---------:|--------------:|---------------:|----------:|
+    |     2 | save at MyApp.scala:42 | 1024.00 |   512.34 |        256.78 |         248.91 |   2042.03 |
+    |     1 | count at MyApp.scala:28 |  512.00 |     0.00 |        128.45 |         130.12 |    770.57 |
+    |     0 | read at MyApp.scala:15  |  256.00 |     0.00 |          0.00 |           0.00 |    256.00 |
+
 ### Jobs with spill
 
 Lists only jobs where memory or disk spill occurred, in MB.
@@ -478,6 +519,13 @@ HAVING SUM(s.memoryBytesSpilled) > 0
     OR SUM(s.diskBytesSpilled)   > 0
  ORDER BY diskSpillMb DESC;
 ```
+
+??? example "Sample output"
+
+    | jobId | jobName              | memorySpillMb | diskSpillMb |
+    |------:|----------------------|--------------:|------------:|
+    |     2 | save at MyApp.scala:42 |       2048.00 |      384.56 |
+    |     1 | count at MyApp.scala:28 |        512.00 |       64.12 |
 
 ### All joins with CPU and I/O from their job
 
@@ -508,6 +556,14 @@ SELECT sq.sqlId,
  ORDER BY js.cpuTimeSec DESC;
 ```
 
+??? example "Sample output"
+
+    | sqlId | description          | joinNode          | jobId | cpuTimeSec | totalIoMb |
+    |------:|----------------------|-------------------|------:|-----------:|----------:|
+    |     2 | Join orders with customers | SortMergeJoin     |     2 |     124.57 |   2042.03 |
+    |     1 | Enrich transactions  | BroadcastHashJoin |     1 |      58.23 |    770.57 |
+    |     0 | Aggregate daily totals | ShuffledHashJoin  |     0 |      32.11 |    256.00 |
+
 ### Wall clock duration of jobs
 
 Computes the elapsed wall-clock time of each job in seconds.
@@ -519,6 +575,14 @@ SELECT j.jobId,
   FROM job j
  ORDER BY wallClockSec DESC;
 ```
+
+??? example "Sample output"
+
+    | jobId | jobName              | wallClockSec |
+    |------:|----------------------|-------------:|
+    |     2 | save at MyApp.scala:42 |       245.67 |
+    |     1 | count at MyApp.scala:28 |        98.34 |
+    |     0 | read at MyApp.scala:15  |        15.21 |
 
 
 ---
@@ -650,9 +714,6 @@ to the type of `Event`.
 A `Report` is a type that represents the report unit shared with the end-user.
 Report case classes are annotated with `@TableDoc` and `@ColumnDoc` to serve as the single source of truth
 for the data model documentation (see [Data model documentation](#data-model-documentation) below).
-
-A `Filter` is a filter that operates on `Report`s, so that the end-user can have some control to focus specific aspects of
-their Spark ETL (like *file pruning* for instance).
 
 ## Build
 
