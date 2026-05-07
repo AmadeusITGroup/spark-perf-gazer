@@ -10,6 +10,7 @@ object PathBuilder {
 
   private val SeparatorPattern: Regex = """([/\\]+)""".r
   private val PlaceholderPattern: Regex = """\{\{([^}]+)\}\}""".r
+  private val UriSchemePattern: Regex = """^[a-zA-Z][a-zA-Z0-9+\-.]*://""".r
 
   private val jvmRunId: UUID = UUID.randomUUID()
   private val jvmStartupTime: LocalDateTime = LocalDateTime.now()
@@ -71,18 +72,25 @@ object PathBuilder {
     /**
       * The normalizePath method is used to standardize the format of a file system path.
       * It ensures that all directory separators in the path are consistent and that the path ends with a separator.
+      * URI scheme prefixes (e.g., "abfss://", "s3://", "hdfs://") are preserved intact.
       */
     def normalizePath: String = {
-      // Find the first separator used in the path (either / or \)
-      val normalized: String = SeparatorPattern.findFirstMatchIn(path) match {
+      // Detect and preserve URI scheme prefix (e.g., "abfss://", "s3a://", "hdfs://")
+      val (prefix, pathPart) = UriSchemePattern.findPrefixMatchOf(path) match {
+        case Some(m) => (m.matched, path.substring(m.end))
+        case None    => ("", path)
+      }
+
+      // Normalize only the path portion (after the scheme)
+      val normalized: String = SeparatorPattern.findFirstMatchIn(pathPart) match {
         case Some(m) =>
           val separator: String = m.group(1).take(1)
           // Replace all separators with the first one found, and ensure it ends with a separator
-          SeparatorPattern.replaceAllIn(path, separator.replace("\\", "\\\\")).stripSuffix(separator) + separator
+          SeparatorPattern.replaceAllIn(pathPart, separator.replace("\\", "\\\\")).stripSuffix(separator) + separator
         case None =>
-          path
+          pathPart
       }
-      normalized
+      prefix + normalized
     }
 
     /**

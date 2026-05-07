@@ -96,5 +96,31 @@ class PathBuilderSpec extends SimpleSpec with GivenWhenThen {
       "noseparator".normalizePath shouldBe "noseparator"
     }
 
+    it("should preserve URI scheme double-slash for abfss://") {
+      "abfss://container@account.blob.core.windows.net/path/to/dir".normalizePath shouldBe
+        "abfss://container@account.blob.core.windows.net/path/to/dir/"
+    }
+
+    it("should preserve URI scheme double-slash for s3a://") {
+      "s3a://bucket/prefix/path".normalizePath shouldBe "s3a://bucket/prefix/path/"
+    }
+
+    it("should preserve URI scheme double-slash for hdfs://") {
+      "hdfs://namenode:8020/data/output".normalizePath shouldBe "hdfs://namenode:8020/data/output/"
+    }
+
+    it("should collapse multiple slashes in path portion of URI but preserve scheme") {
+      "abfss://container@account.blob.core.windows.net//path///to//dir".normalizePath shouldBe
+        "abfss://container@account.blob.core.windows.net/path/to/dir/"
+    }
+
+    it("should preserve URI scheme for gs://") {
+      "gs://bucket/path/to/dir".normalizePath shouldBe "gs://bucket/path/to/dir/"
+    }
+
+    it("should preserve URI scheme for s3://") {
+      "s3://bucket/path".normalizePath shouldBe "s3://bucket/path/"
+    }
+
   }
 }
