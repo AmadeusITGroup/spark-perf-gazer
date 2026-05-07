@@ -189,3 +189,45 @@ SELECT j.jobId,
     |     2 | save at MyApp.scala:42 |       245.67 |
     |     1 | count at MyApp.scala:28 |        98.34 |
     |     0 | read at MyApp.scala:15  |        15.21 |
+
+### Delta tables read with their pushdown predicates
+
+Extracts all Scan parquet leaf nodes from SQL plans and parses the `PushedFilters` from the execution plan details. This helps identify which predicates were pushed down to the Parquet reader for each Delta table scanned.
+
+```sql
+WITH scans AS (
+  SELECT sq.sqlId,
+         sq.description,
+         n.nodeName,
+         REGEXP_EXTRACT(
+           SUBSTRING(sq.details, LOCATE(n.coordinates, sq.details)),
+           'PushedFilters: \\[([^\\]]*)\\]',
+           1
+         ) AS pushedFilters,
+         REGEXP_EXTRACT(
+           SUBSTRING(sq.details, LOCATE(n.coordinates, sq.details)),
+           'Location: InMemoryFileIndex\\[([^\\]]*)\\]',
+           1
+         ) AS tableLocation
+    FROM sql sq
+         LATERAL VIEW EXPLODE(sq.nodes) AS n
+   WHERE n.nodeName LIKE '%Scan parquet%'
+     AND n.isLeaf = true
+)
+SELECT sqlId,
+       description,
+       tableLocation,
+       pushedFilters
+  FROM scans
+ ORDER BY sqlId, tableLocation;
+```
+
+??? example "Sample output"
+
+    | sqlId | description              | tableLocation                          | pushedFilters                                    |
+    |------:|--------------------------|----------------------------------------|--------------------------------------------------|
+    |     1 | Filter by region         | dbfs:/data/warehouse/customers         | IsNotNull(region), EqualTo(region,EMEA)          |
+    |     1 | Filter by region         | dbfs:/data/warehouse/orders            |                                                  |
+    |     2 | Join orders with items   | dbfs:/data/warehouse/orders            | IsNotNull(order_date), GreaterThan(order_date,2024-01-01) |
+    |     2 | Join orders with items   | dbfs:/data/warehouse/items             |                                                  |
+

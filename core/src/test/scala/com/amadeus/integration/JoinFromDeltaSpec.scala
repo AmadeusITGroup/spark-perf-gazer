@@ -85,6 +85,28 @@ class JoinFromDeltaSpec
             .filter(r => joinFilter.eligible(r))
             .map(i => (i.jobName, i.metrics))
           joinActual should equal(Seq(("jobjoin", Map("number of output rows" -> "2"))))
+
+          And("it should report pushdown predicates on the iata_code column for the filtered table")
+          val joinSqlReports = sinks.reports
+            .collect { case i: SqlReport => i }
+            .filter(_.nodes.exists(n => n.jobName == "jobjoin"))
+          joinSqlReports should not be empty
+          val details = joinSqlReports.head.details
+          val pushedFiltersPattern = "PushedFilters: \\[([^\\]]+)\\]".r
+          val pushedFiltersMatches = pushedFiltersPattern.findAllMatchIn(details).map(_.group(1)).toSeq
+          pushedFiltersMatches should not be empty
+          val filtersOnIataCode = pushedFiltersMatches.filter(_.contains("iata_code"))
+          filtersOnIataCode should not be empty
+          filtersOnIataCode.head should include("IsNotNull(iata_code)")
+          filtersOnIataCode.head should include("EqualTo(iata_code,COR)")
+
+          And("it should report no pushdown predicates on the lookup table scan")
+          val lookupSqlReports = sinks.reports
+            .collect { case i: SqlReport => i }
+            .filter(_.nodes.exists(n => n.jobName == "joblookuptable"))
+          lookupSqlReports should not be empty
+          val lookupDetails = lookupSqlReports.head.details
+          lookupDetails should include("PushedFilters: []")
         }
       }
     }
