@@ -42,25 +42,30 @@ class JoinFromDeltaSpec
           val eventsListener = new PerfGazer(cfg, jsonSink)
           spark.sparkContext.addSparkListener(eventsListener)
 
-          When("a lookup table is created and joined with the main table")
-          // Create a lookup table with country_code and country_name, containing 252 rows
+          When("a partitioned lookup table is created and joined with the main table")
+          // Create a lookup table partitioned by country_code, containing 252 rows
           spark.sparkContext.setJobDescription("joblookuptable")
           df
             .select("country_code", "country_name")
             .distinct()
-            .coalesce(1) // to have only one file
             .write
             .format("delta")
+            .partitionBy("country_code")
             .mode("overwrite")
             .save(subdir(tmpDir, "joblookuptabledir"))
 
-          // JOIN with the lookup table
+          // JOIN with the lookup table, filtering on a partition column (country_code)
+          // and a data column (iata_code). This produces both PartitionFilters and PushedFilters.
           spark.sparkContext.setJobDescription("jobjoin")
           val df3 = df
-            .select("name", "country_code")
+            .select("name", "iata_code", "country_code")
             .filter(df("iata_code") === "COR")
+            .filter(df("country_code") === "AR")
             .as("l")
-            .join(DeltaTable.forPath(subdir(tmpDir, "joblookuptabledir")).toDF.as("r"), "country_code")
+            .join(
+              DeltaTable.forPath(subdir(tmpDir, "joblookuptabledir")).toDF.as("r"),
+              "country_code"
+            )
           df3.write.format("delta").mode("overwrite").save(subdir(tmpDir, "deltadirjob3"))
 
           Thread.sleep(3000)
@@ -72,7 +77,7 @@ class JoinFromDeltaSpec
           snippets.foreach(spark.sql)
 
           // The join query reads from two Parquet tables: the main OPTD table (filtered by
-          // iata_code = "COR") and the lookup table (country_code, country_name).
+          // iata_code = "COR" and country_code = "AR") and the partitioned lookup table.
           // Each produces a Scan parquet leaf node in the physical plan.
           And("it should report the two scan parquet nodes: build side and probe side of the join")
           val scanNodesDf = spark.sql(
@@ -86,9 +91,6 @@ class JoinFromDeltaSpec
           )
           val scanNodes = scanNodesDf.collectAs("jobName", "filesRead", "outputRows")
           scanNodes.length should equal(2)
-          scanNodes should contain(
-            ("jobjoin", "1", "252") // lookup table: 1 file, 252 distinct country rows
-          )
 
           // The join between the filtered main table (2 rows matching COR) and the lookup
           // table should produce exactly 2 output rows.
@@ -102,27 +104,39 @@ class JoinFromDeltaSpec
           ).collectAs("jobName", "outputRows")
           joinNodes should equal(Array(("jobjoin", "2")))
 
-          // Use AnalysisQueries.PushedFiltersPerScan to extract all PushedFilters blocks
-          // from the SQL plan details. The query returns one row per PushedFilters occurrence
-          // across all SQL executions that contain Scan parquet leaf nodes.
-          // The description column identifies which job the SQL execution belongs to.
-          And("it should extract pushdown predicates on iata_code for the jobjoin query")
-          val allResults = spark.sql(AnalysisQueries.PushedFiltersPerScan)
-            .collectAs("description", "pushedFilters")
+          // Use AnalysisQueries.FiltersPerScan to extract all filter predicates from the SQL
+          // plan details. The query returns one row per SQL execution with arrays of all
+          // locations, partitionFilters, pushedFilters, and dataFilters found in the plan.
+          And("it should extract filter predicates for the jobjoin query")
+          val filterResults = spark.sql(AnalysisQueries.FiltersPerScan).collect()
+          val joinRow = filterResults.find(_.getAs[String]("description") == "jobjoin").get
 
-          // The filter df("iata_code") === "COR" should be pushed down to the Parquet reader
-          // as IsNotNull + EqualTo predicates on the iata_code column.
-          allResults should contain(
-            ("jobjoin", "IsNotNull(iata_code), EqualTo(iata_code,COR), IsNotNull(country_code)")
+          // The main table scan: iata_code and country_code filters are pushed down.
+          // No partition filters since the main table is not partitioned.
+          val pushedFilters = joinRow.getAs[Seq[String]]("pushedFilters")
+          pushedFilters should contain(
+            "IsNotNull(iata_code), IsNotNull(country_code), EqualTo(iata_code,COR), EqualTo(country_code,AR)"
           )
 
-          // The lookup table creation (select distinct country_code, country_name — no filter)
-          // should have no pushed predicates on any data column.
-          And("it should report no pushdown predicates for the joblookuptable query")
-          allResults should contain(("joblookuptable", ""))
+          // The lookup table scan: country_code = "AR" is a partition filter (the table is
+          // partitioned by country_code), so it appears in partitionFilters, not pushedFilters.
+          val partitionFilters = joinRow.getAs[Seq[String]]("partitionFilters")
+          partitionFilters.exists(_.contains("country_code")) should be(true)
+
+          // Each scan should report a location pointing to the table directory.
+          val locations = joinRow.getAs[Seq[String]]("locations")
+          locations should not be empty
+          locations.foreach(_ should include("file:"))
+
+          // The lookup table creation (select distinct — no filter) should have no filters.
+          And("it should report no filters for the joblookuptable query")
+          val lookupRow = filterResults.find(_.getAs[String]("description") == "joblookuptable").get
+          lookupRow.getAs[Seq[String]]("partitionFilters").filter(_.nonEmpty) should be(empty)
+          lookupRow.getAs[Seq[String]]("pushedFilters").filter(_.nonEmpty) should be(empty)
 
           // With small datasets, no spill should occur.
           And("it should report no jobs with spill")
+          // Testing spill is difficult, for now we only check that the query syntax is correct
           val spillResults = spark.sql(AnalysisQueries.JobsWithSpill).collectAs("jobName")
           spillResults should be(empty)
         }

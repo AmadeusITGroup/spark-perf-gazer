@@ -192,51 +192,38 @@ SELECT j.jobId,
     |     1 | count at MyApp.scala:28 |        98.34 |
     |     0 | read at MyApp.scala:15  |        15.21 |
 
-### Delta tables read with their pushdown predicates
+### Delta tables read with their scan filters
 
-Extracts all `PushedFilters` blocks from the SQL execution plan details. Each Scan parquet node in the physical plan includes a `PushedFilters` section listing predicates pushed down to the Parquet reader. This query pairs each scan with its pushed filters.
+Each Scan parquet node in the physical plan includes a table location and three types of filter predicates:
 
-```sql
-WITH scan_details AS (
-  SELECT sq.sqlId,
-         sq.description,
-         n.nodeName,
-         n.jobName,
-         sq.details
-    FROM sql sq
-         LATERAL VIEW EXPLODE(sq.nodes) AS n
-   WHERE n.nodeName LIKE '%Scan parquet%'
-     AND n.isLeaf = true
-)
-SELECT sqlId,
-       description,
-       jobName,
-       nodeName,
-       REGEXP_EXTRACT(details, 'PushedFilters: \\[([^\\]]*)\\]', 1) AS pushedFilters
-  FROM scan_details
- ORDER BY sqlId;
-```
+- **Location**: the path to the table or file index being scanned.
+- **PartitionFilters**: predicates on partition columns, used to prune entire partition directories before reading.
+- **PushedFilters**: predicates pushed down to the Parquet reader, used to skip row groups via file statistics.
+- **DataFilters**: predicates applied row-by-row after reading, for expressions that could not be pushed down.
 
-Note: when multiple Scan parquet nodes exist in the same SQL execution, the `REGEXP_EXTRACT` above returns the first match from `details`. To extract all matches (one per scan), use `REGEXP_EXTRACT_ALL` (Spark 3.4+):
+This query extracts all occurrences of each field as independent arrays — one per SQL execution. This avoids positional correlation issues that can arise when different fields appear a different number of times in the plan text (Spark 3.4+):
 
 ```sql
 SELECT sq.sqlId,
        sq.description,
-       pushed.pushedFilters
+       REGEXP_EXTRACT_ALL(sq.details, 'Location: [^\\[]*\\[([^\\]]*?)(?:\\]|\\.\\.\\.,)', 1) AS locations,
+       REGEXP_EXTRACT_ALL(sq.details, 'PartitionFilters: \\[([^\\]]*)\\]', 1) AS partitionFilters,
+       REGEXP_EXTRACT_ALL(sq.details, 'PushedFilters: \\[([^\\]]*)\\]', 1) AS pushedFilters,
+       REGEXP_EXTRACT_ALL(sq.details, 'DataFilters: \\[([^\\]]*)\\]', 1) AS dataFilters,
+       sq.details
   FROM sql sq
-       LATERAL VIEW EXPLODE(
-         REGEXP_EXTRACT_ALL(sq.details, 'PushedFilters: \\[([^\\]]*)\\]', 1)
-       ) pushed AS pushedFilters
  WHERE SIZE(FILTER(sq.nodes, n -> n.nodeName LIKE '%Scan parquet%' AND n.isLeaf = true)) > 0
  ORDER BY sq.sqlId;
 ```
 
+This query is available as `com.amadeus.perfgazer.AnalysisQueries.FiltersPerScan`.
+
+The `details` column is included for debugging when regex extraction produces unexpected results. The Location regex handles both full paths (`Location: ...[path]`) and truncated paths on Databricks (`Location: ...[path...,`).
+
 ??? example "Sample output"
 
-    | sqlId | description              | pushedFilters                                    |
-    |------:|--------------------------|--------------------------------------------------|
-    |     1 | Filter by region         | IsNotNull(region), EqualTo(region,EMEA)          |
-    |     1 | Filter by region         |                                                  |
-    |     2 | Join orders with items   | IsNotNull(order_date), GreaterThan(order_date,2024-01-01) |
-    |     2 | Join orders with items   |                                                  |
+    | sqlId | description            | locations                                                    | partitionFilters                          | pushedFilters                                                          | dataFilters                                              |
+    |------:|------------------------|--------------------------------------------------------------|-------------------------------------------|------------------------------------------------------------------------|----------------------------------------------------------|
+    |     1 | Filter by region       | ["dbfs:/data/warehouse/customers", "dbfs:/data/warehouse/orders"] | ["isnotnull(region), (region = EMEA)", ""] | ["IsNotNull(region), EqualTo(region,EMEA)", ""]                        | ["isnotnull(region), (region = EMEA)", ""]               |
+    |     2 | Join orders with items | ["dbfs:/data/warehouse/orders", "dbfs:/data/warehouse/items"]    | ["", ""]                                  | ["IsNotNull(order_date), GreaterThan(order_date,2024-01-01)", ""]      | ["isnotnull(order_date), (order_date > 2024-01-01)", ""] |
 

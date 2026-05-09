@@ -57,18 +57,19 @@ object AnalysisQueries {
       |  FROM job j
       | ORDER BY wallClockSec DESC""".stripMargin
 
-  /** Extracts all PushedFilters blocks from SQL execution plan details for SQL executions
-    * that contain Scan parquet leaf nodes. Returns one row per PushedFilters occurrence.
+  /** Extracts all scan filter predicates and locations from SQL execution plan details.
+    * Returns one row per SQL execution that contains Scan parquet leaf nodes, with arrays
+    * of all locations, partition filters, pushed filters, and data filters found in the plan.
     * Requires Spark 3.4+ (REGEXP_EXTRACT_ALL).
     */
-  val PushedFiltersPerScan: String =
+  val FiltersPerScan: String =
     """SELECT sq.sqlId,
       |       sq.description,
-      |       pushed.pushedFilters
+      |       REGEXP_EXTRACT_ALL(sq.details, 'Location: [^\\[]*\\[([^\\]]*?)(?:\\]|\\.\\.\\.,)', 1) AS locations,
+      |       REGEXP_EXTRACT_ALL(sq.details, 'PartitionFilters: \\[([^\\]]*?)(?:\\]|\\.\\.\\.,)', 1) AS partitionFilters,
+      |       REGEXP_EXTRACT_ALL(sq.details, 'PushedFilters: \\[([^\\]]*?)(?:\\]|\\.\\.\\.,)', 1) AS pushedFilters,
+      |       REGEXP_EXTRACT_ALL(sq.details, 'DataFilters: \\[([^\\]]*?)(?:\\]|\\.\\.\\.,)', 1) AS dataFilters
       |  FROM sql sq
-      |       LATERAL VIEW EXPLODE(
-      |         REGEXP_EXTRACT_ALL(sq.details, 'PushedFilters: \\[([^\\]]*)\\]', 1)
-      |       ) pushed AS pushedFilters
       | WHERE SIZE(FILTER(sq.nodes, n -> n.nodeName LIKE '%Scan parquet%' AND n.isLeaf = true)) > 0
       | ORDER BY sq.sqlId""".stripMargin
 }
