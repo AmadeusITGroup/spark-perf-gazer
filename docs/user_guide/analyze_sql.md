@@ -178,6 +178,50 @@ SELECT sq.sqlId,
     |     1 | Enrich transactions  | BroadcastHashJoin |     1 |      58.23 |    770.57 |
     |     0 | Aggregate daily totals | ShuffledHashJoin  |     0 |      32.11 |    256.00 |
 
+### Join node metrics
+
+Explodes SQL plan nodes and returns metrics for join operators. Useful for inspecting the number of output rows produced by each join.
+
+Code reference: `AnalysisQueries.JoinNodeMetrics`
+
+```sql
+SELECT sqlId,
+       node.nodeName,
+       node.jobName,
+       FROM_JSON(TO_JSON(node.metrics), 'MAP<STRING, STRING>') AS metrics
+  FROM (SELECT sqlId, EXPLODE(nodes) AS node FROM sql) subquery
+ WHERE node.nodeName LIKE '%Join%';
+```
+
+??? example "Sample output"
+
+    | sqlId | nodeName          | jobName | metrics                          |
+    |------:|-------------------|---------|----------------------------------|
+    |     1 | BroadcastHashJoin | jobjoin | {number of output rows -> 2}     |
+    |     2 | SortMergeJoin     | bigjoin | {number of output rows -> 10000} |
+
+### Scan node metrics
+
+Explodes SQL plan nodes and returns metrics for scan parquet operators. Useful for checking how many files and rows were read by each scan.
+
+Code reference: `AnalysisQueries.ScanNodeMetrics`
+
+```sql
+SELECT sqlId,
+       node.nodeName,
+       node.jobName,
+       FROM_JSON(TO_JSON(node.metrics), 'MAP<STRING, STRING>') AS metrics
+  FROM (SELECT sqlId, EXPLODE(nodes) AS node FROM sql) subquery
+ WHERE node.nodeName LIKE '%Scan parquet%';
+```
+
+??? example "Sample output"
+
+    | sqlId | nodeName                    | jobName | metrics                                                        |
+    |------:|-----------------------------|---------|----------------------------------------------------------------|
+    |     1 | Scan parquet delta.`/path`  | jobjoin | {number of files read -> 1, number of output rows -> 252}      |
+    |     1 | Scan parquet delta.`/path2` | jobjoin | {number of files read -> 4, number of output rows -> 9000}     |
+
 ### Wall clock duration of jobs
 
 Computes the elapsed wall-clock time of each job in seconds.

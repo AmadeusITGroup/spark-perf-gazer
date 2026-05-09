@@ -57,6 +57,24 @@ object AnalysisQueries {
       |  FROM job j
       | ORDER BY wallClockSec DESC""".stripMargin
 
+  /** Explodes SQL plan nodes and returns metrics for join operators. */
+  val JoinNodeMetrics: String =
+    """SELECT sqlId,
+      |       node.nodeName,
+      |       node.jobName,
+      |       FROM_JSON(TO_JSON(node.metrics), 'MAP<STRING, STRING>') AS metrics
+      |  FROM (SELECT sqlId, EXPLODE(nodes) AS node FROM sql) subquery
+      | WHERE node.nodeName LIKE '%Join%'""".stripMargin
+
+  /** Explodes SQL plan nodes and returns metrics for scan parquet operators. */
+  val ScanNodeMetrics: String =
+    """SELECT sqlId,
+      |       node.nodeName,
+      |       node.jobName,
+      |       FROM_JSON(TO_JSON(node.metrics), 'MAP<STRING, STRING>') AS metrics
+      |  FROM (SELECT sqlId, EXPLODE(nodes) AS node FROM sql) subquery
+      | WHERE node.nodeName LIKE '%Scan parquet%'""".stripMargin
+
   /** Detects task-level skew per job/stage using statistical thresholds.
     *
     * Reports stages where the maximum task duration exceeds 1.5x the 75th percentile,
