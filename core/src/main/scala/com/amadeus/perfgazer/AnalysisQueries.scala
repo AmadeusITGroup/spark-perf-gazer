@@ -57,4 +57,26 @@ object AnalysisQueries {
       |  FROM job j
       | ORDER BY wallClockSec DESC""".stripMargin
 
+  /** Detects task-level skew per job/stage using statistical thresholds.
+    *
+    * Reports stages where the maximum task duration exceeds 1.5x the 75th percentile,
+    * indicating that a few tasks are significantly slower than the rest.
+    */
+  val SkewDetection: String =
+    """SELECT j.jobId,
+      |       j.jobName,
+      |       t.stageId,
+      |       COUNT(1) AS taskCount,
+      |       ROUND(MAX(t.executorRunTime) / 1000, 2) AS maxDurationSec,
+      |       ROUND(PERCENTILE(t.executorRunTime, 0.5) / 1000, 2) AS medianDurationSec,
+      |       ROUND(PERCENTILE(t.executorRunTime, 0.75) / 1000, 2) AS p75DurationSec,
+      |       ROUND(STDDEV(t.executorRunTime) / 1000, 2) AS stddevDurationSec,
+      |       ROUND(MAX(t.executorRunTime) / PERCENTILE(t.executorRunTime, 0.75), 2) AS skewFactor
+      |  FROM job j
+      |  JOIN stage s ON ARRAY_CONTAINS(j.stages, s.stageId)
+      |  JOIN task t ON t.stageId = s.stageId
+      | GROUP BY j.jobId, j.jobName, t.stageId
+      |HAVING MAX(t.executorRunTime) > 1.5 * PERCENTILE(t.executorRunTime, 0.75)
+      | ORDER BY skewFactor DESC""".stripMargin
+
 }

@@ -66,6 +66,8 @@ Below we provide a collection of queries you can run to explore various performa
 
 Aggregates executor CPU time across all stages of each job, converted from nanoseconds to seconds.
 
+Code reference: `AnalysisQueries.JobsByCpuUsage`
+
 ```sql
 SELECT j.jobId,
        j.jobName,
@@ -87,6 +89,8 @@ SELECT j.jobId,
 ### Jobs by I/O volumes
 
 Shows input, output, shuffle read/write and total I/O per job, all in MB.
+
+Code reference: `AnalysisQueries.JobsByIoVolumes`
 
 ```sql
 SELECT j.jobId,
@@ -114,6 +118,8 @@ SELECT j.jobId,
 ### Jobs with spill
 
 Lists only jobs where memory or disk spill occurred, in MB.
+
+Code reference: `AnalysisQueries.JobsWithSpill`
 
 ```sql
 SELECT j.jobId,
@@ -176,6 +182,8 @@ SELECT sq.sqlId,
 
 Computes the elapsed wall-clock time of each job in seconds.
 
+Code reference: `AnalysisQueries.WallClockDurationOfJobs`
+
 ```sql
 SELECT j.jobId,
        j.jobName,
@@ -191,3 +199,35 @@ SELECT j.jobId,
     |     2 | save at MyApp.scala:42 |       245.67 |
     |     1 | count at MyApp.scala:28 |        98.34 |
     |     0 | read at MyApp.scala:15  |        15.21 |
+
+### Skew detection
+
+Detects task-level skew per job/stage using statistical thresholds. Reports stages where the maximum task duration exceeds 1.5x the 75th percentile, indicating that a few tasks are significantly slower than the rest. The `skewFactor` column quantifies how much the slowest task deviates from the pack.
+
+Code reference: `AnalysisQueries.SkewDetection`
+
+```sql
+SELECT j.jobId,
+       j.jobName,
+       t.stageId,
+       COUNT(1) AS taskCount,
+       ROUND(MAX(t.executorRunTime) / 1000, 2) AS maxDurationSec,
+       ROUND(PERCENTILE(t.executorRunTime, 0.5) / 1000, 2) AS medianDurationSec,
+       ROUND(PERCENTILE(t.executorRunTime, 0.75) / 1000, 2) AS p75DurationSec,
+       ROUND(STDDEV(t.executorRunTime) / 1000, 2) AS stddevDurationSec,
+       ROUND(MAX(t.executorRunTime) / PERCENTILE(t.executorRunTime, 0.75), 2) AS skewFactor
+  FROM job j
+  JOIN stage s ON ARRAY_CONTAINS(j.stages, s.stageId)
+  JOIN task t ON t.stageId = s.stageId
+ GROUP BY j.jobId, j.jobName, t.stageId
+HAVING MAX(t.executorRunTime) > 1.5 * PERCENTILE(t.executorRunTime, 0.75)
+ ORDER BY skewFactor DESC;
+```
+
+??? example "Sample output"
+
+    | jobId | jobName              | stageId | taskCount | maxDurationSec | medianDurationSec | p75DurationSec | stddevDurationSec | skewFactor |
+    |------:|----------------------|--------:|----------:|---------------:|------------------:|---------------:|------------------:|-----------:|
+    |     2 | save at MyApp.scala:42 |       3 |       200 |          45.20 |              2.10 |           3.50 |             8.42 |      12.91 |
+    |     1 | count at MyApp.scala:28 |       1 |       100 |          12.80 |              1.50 |           2.00 |             3.21 |       6.40 |
+

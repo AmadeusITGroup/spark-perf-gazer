@@ -120,6 +120,14 @@ class ReadCsvToNoopSpec extends SimpleSpec with GivenWhenThen {
           val largeIo = ioByJob.filter(_._1 == "testjoblarge").map(_._2).sum
           val smallIo = ioByJob.filter(_._1 == "testjobsmall").map(_._2).sum
           largeIo should be > smallIo
+
+          And("skew detection should return results with expected columns")
+          val skewResults = spark.sql(AnalysisQueries.SkewDetection).collect()
+          // In local[1] mode skew is unlikely, but the query must execute and return the right schema
+          val skewColumns = spark.sql(AnalysisQueries.SkewDetection).columns.toSet
+          skewColumns should contain allOf("jobId", "jobName", "stageId", "taskCount",
+            "maxDurationSec", "medianDurationSec", "p75DurationSec", "stddevDurationSec", "skewFactor")
+
         }
       }
     }
