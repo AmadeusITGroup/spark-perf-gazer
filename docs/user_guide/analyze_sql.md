@@ -49,6 +49,8 @@ Mind that if you use `basePath` and new partitions are discovered, the joins bet
 
 ## Analyze PerfGazer data
 
+The SQL queries below are available as constants in `com.amadeus.perfgazer.AnalysisQueries`. That class is the definitive source of truth for these queries and is tested in the integration test suite.
+
 You can start deep diving into all tasks with their parent stage and job with a query like the following:
 
 ```sql
