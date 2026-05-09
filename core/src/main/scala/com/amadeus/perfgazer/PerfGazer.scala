@@ -69,7 +69,7 @@ class PerfGazer(val c: PerfGazerConfig, val sink: Sink) extends SparkListener {
 
   override def onJobStart(jobStart: SparkListenerJobStart): Unit = {
     if (c.jobsEnabled) {
-      jobStartEvents.put(jobStart.jobId, JobEvent.from(jobStart))
+      jobStartEvents.put(jobStart.jobId, JobEvent.from(jobStart, c.jobsProperties))
       logger.trace("onJobStart(...) id = {} (size of map {})", jobStart.jobId, jobStartEvents.size)
     }
   }

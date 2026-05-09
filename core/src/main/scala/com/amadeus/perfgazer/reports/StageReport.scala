@@ -30,7 +30,9 @@ case class StageReport(
   @ColumnDoc(description = "Bytes spilled to memory", unit = "bytes")
   memoryBytesSpilled: Long,
   @ColumnDoc(description = "Bytes spilled to disk", unit = "bytes")
-  diskBytesSpilled: Long
+  diskBytesSpilled: Long,
+  @ColumnDoc(description = "Accumulator IDs associated with this stage")
+  accumulatorIds: Seq[Long] = Seq.empty
 ) extends Report {
   override def reportType: ReportType = StageReportType
 }
@@ -56,7 +58,8 @@ object StageReport {
       execJvmGcNs = end.execjvmGCNs,
       attempt = end.attempt,
       memoryBytesSpilled = end.memoryBytesSpilled,
-      diskBytesSpilled = end.diskBytesSpilled
+      diskBytesSpilled = end.diskBytesSpilled,
+      accumulatorIds = end.accumulatorIds
     )
   }
 

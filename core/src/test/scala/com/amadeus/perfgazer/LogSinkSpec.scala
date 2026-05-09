@@ -10,7 +10,7 @@ class LogSinkSpec extends SimpleSpec {
     it("should write log") {
       val logSink = new LogSink()
 
-      val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, "1", Seq(1))
+      val jr = JobReport(1, "testgroup", "testjob", Instant.now.getEpochSecond, Instant.now.getEpochSecond + 1000, Map.empty[String, String], "1", Seq(1))
       logSink.write(jr)
       logSink.close()
     }

@@ -2,8 +2,8 @@ package com.amadeus.perfgazer.reports
 
 import com.amadeus.perfgazer.events.SqlEvent
 import com.amadeus.perfgazer.schema.{ColumnDoc, TableDoc}
-import org.apache.spark.sql.execution.{ExtendedMode, QueryExecution, SparkPlan}
-import org.apache.spark.sql.execution.adaptive.{AdaptiveSparkPlanExec, ShuffleQueryStageExec}
+import org.apache.spark.sql.execution.{ExtendedMode, QueryExecution, SparkPlan, WholeStageCodegenExec, InputAdapter, CodegenSupport}
+import org.apache.spark.sql.execution.adaptive.{AdaptiveSparkPlanExec, BroadcastQueryStageExec, ShuffleQueryStageExec}
 import org.apache.spark.sql.execution.metric.SQLMetric
 import org.apache.spark.sql.execution.ui.{SparkInternal, SparkListenerSQLExecutionEnd}
 
@@ -39,38 +39,75 @@ object SqlReport {
     )
   }
 
+  /** True for operators that can live inside a WSCG region. */
+  private def supportsCodegen(p: SparkPlan): Boolean = p.isInstanceOf[CodegenSupport]
+
+  /** InputAdapter is codegen-capable, but its child is outside the WSCG region. */
+  private def isInputAdapter(p: SparkPlan): Boolean = p.isInstanceOf[InputAdapter]
+
   private def buildNodes(
     jobName: String,
     baseCoordinates: String,
     sqlId: Long,
     plan: SparkPlan,
-    parentNodeName: String
+    parentNodeName: String,
+    parentCodegenId: Option[Int]
   ): Seq[SqlNode] = {
 
     val (children, metrics) = plan match {
       case a: AdaptiveSparkPlanExec => (a.finalPhysicalPlan.children, a.finalPhysicalPlan.metrics)
       case a: ShuffleQueryStageExec => (a.shuffle.children, a.shuffle.metrics)
+      case b: BroadcastQueryStageExec => (b.plan.children, b.plan.metrics)
       case x => (x.children, x.metrics)
     }
 
+    // If this node is a WSCG root, fetch the current codegenStageId
+    val (enteredCodegenId, isWholeStageRoot) = plan match {
+      case w: WholeStageCodegenExec => (Some(w.codegenStageId), true)
+      case _                        => (parentCodegenId       , false)
+    }
+
+    // Attach id ONLY if the node is a WSCG root OR it supports codegen AND we're inside a WSCG region
+    val currCodegenId: Option[Int] =
+      if (isWholeStageRoot || (supportsCodegen(plan) && enteredCodegenId.isDefined)) {
+        enteredCodegenId
+      } else {
+        None
+      }
+
+    // Codegen propagation rule to children:
+    // - If WholeStageCodegenExec: propagate id into children
+    // - If other CodegenSupport: carry id
+    // - If InputAdapter: DO NOT propagate past its child (boundary downwards)
+    // - Otherwise (not codegen): boundary -> reset id
+    val nextCodegenId: Option[Int] =
+      if (isWholeStageRoot || (supportsCodegen(plan) && !isInputAdapter(plan))) {
+        enteredCodegenId
+      } else {
+        None
+      }
+
+    val currNodeName = s"${plan.nodeName} (${plan.id})"
     val currNode = SqlNode(
       sqlId = sqlId,
       jobName = jobName,
-      nodeName = s"() ${plan.nodeName}",
+      nodeName = currNodeName,
       coordinates = baseCoordinates,
-      metrics = metrics.map(metricToKv),
+      metrics = metrics.filter(_._2.isRegistered).map(metricToKv),
       isLeaf = children.isEmpty,
-      parentNodeName = parentNodeName
+      parentNodeName = parentNodeName,
+      codegenId = currCodegenId,
+      isWholeStageRoot = isWholeStageRoot,
+      codegenAccumulatorIds = metrics.filter(_._2.isRegistered).map(m => m._2.id).toSeq
     )
     val childNode = children.zipWithIndex.flatMap { case (pi, i) =>
-      buildNodes(jobName, baseCoordinates + s".$i", sqlId, pi, plan.nodeName)
+      buildNodes(jobName, baseCoordinates + s".$i", sqlId, pi, currNodeName, nextCodegenId)
     }
     Seq(currNode) ++ childNode
   }
 
   private def describe(qe: QueryExecution): String = {
-    val s = qe.explainString(ExtendedMode) // TODO check formatted as well
-    s
+    qe.explainString(ExtendedMode)
   }
 
   private def metricToKv(s: (String, SQLMetric)): (String, String) =
@@ -84,7 +121,23 @@ object SqlReport {
   private def asNodes(start: SqlEvent, end: SparkListenerSQLExecutionEnd): Seq[SqlNode] = {
     val sqlId = start.id
     val plan = SparkInternal.executedPlan(end)
-    val nodes = buildNodes(start.description, "0", sqlId, plan, "")
-    nodes
+    val nodes = buildNodes(start.description, "0", sqlId, plan, "", None)
+
+    // Aggregate codegenAccumulatorIds by codegenId
+    val codegenIdToAccIds: Map[Int, Seq[Long]] = nodes
+      .filter(_.codegenId.isDefined)
+      .groupBy(_.codegenId.get)
+      .mapValues(_.flatMap(_.codegenAccumulatorIds).distinct)
+      .toMap
+
+    // Update nodes with aggregated codegenAccumulatorIds
+    nodes.map { node =>
+      node.codegenId match {
+        case Some(id) =>
+          node.copy(codegenAccumulatorIds = codegenIdToAccIds(id))
+        case None =>
+          node
+      }
+    }
   }
 }

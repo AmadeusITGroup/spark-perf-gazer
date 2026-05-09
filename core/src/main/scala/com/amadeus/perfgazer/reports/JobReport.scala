@@ -15,6 +15,8 @@ case class JobReport(
   jobStartTime: Long,
   @ColumnDoc(description = "Epoch timestamp when the job ended", unit = "ms")
   jobEndTime: Long,
+  @ColumnDoc(description = "Filtered job properties from SparkListenerJobStart")
+  jobProperties: Map[String, String],
   @ColumnDoc(description = "Associated SQL execution identifier")
   sqlId: String,
   @ColumnDoc(description = "List of stage IDs in this job")
@@ -38,6 +40,9 @@ object JobReport{
       jobEndTime = end.jobEnd.time,
       groupId = start.group,
       jobName = start.name,
+      jobProperties = start.properties.stringPropertyNames().toArray(new Array[String](0))
+        .map(name => name -> start.properties.getProperty(name))
+        .toMap,
       sqlId = start.sqlId,
       stages = start.initialStages.map(_.id)
     )

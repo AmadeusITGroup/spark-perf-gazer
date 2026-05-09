@@ -17,7 +17,8 @@ case class StageEvent(
   execCpuNs: Long,
   execRunNs: Long,
   execjvmGCNs: Long,
-  attempt: Int
+  attempt: Int,
+  accumulatorIds: Seq[Long]
 )
 
 object StageEvent {
@@ -34,6 +35,7 @@ object StageEvent {
     execCpuNs = stageInfo.taskMetrics.executorCpuTime,
     execRunNs = stageInfo.taskMetrics.executorRunTime,
     execjvmGCNs = stageInfo.taskMetrics.jvmGCTime,
-    attempt = stageInfo.attemptNumber()
+    attempt = stageInfo.attemptNumber(),
+    accumulatorIds = stageInfo.accumulables.keys.toSeq
   )
 }

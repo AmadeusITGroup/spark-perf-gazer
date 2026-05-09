@@ -12,6 +12,7 @@ case class JobEvent(
   sqlId: String,
   id: Long,
   startTime: Long,
+  properties: Properties,
   initialStages: Seq[StageRef]
 )
 
@@ -26,7 +27,7 @@ object JobEvent {
   private val SPARK_JOB_GROUP_ID = "spark.jobGroup.id"
   private val SPARK_SQL_EXECUTION_ID = "spark.sql.execution.id"
 
-  def from(jobStart: SparkListenerJobStart): JobEvent = {
+  def from(jobStart: SparkListenerJobStart, jobsProperties: String = ""): JobEvent = {
     val properties = jobStart.properties
     val stageInfos = jobStart.stageInfos
     val d = sanitize(properties.getProperty(SPARK_JOB_DESCRIPTION))
@@ -35,7 +36,17 @@ object JobEvent {
     val s = stageInfos.map(i => StageRef(i.stageId, i.numTasks)).sortBy(_.id)
     val jobId = jobStart.jobId
     val jobStartTime = jobStart.time
-    JobEvent(id = jobId, startTime = jobStartTime,  name = d, group = g, sqlId = i, initialStages = s)
+
+    // Convert comma-separated list to Seq[String]
+    val keys = jobsProperties.split(",").map(_.trim).filter(_.nonEmpty)
+
+    // Filter properties by keys
+    val p = new Properties()
+    keys.foreach { key =>
+      Option(properties.getProperty(key)).foreach(value => p.setProperty(key, value))
+    }
+
+    JobEvent(id = jobId, startTime = jobStartTime, name = d, group = g, sqlId = i, properties = p, initialStages = s)
   }
 
   private def sanitize(s: String): String = {

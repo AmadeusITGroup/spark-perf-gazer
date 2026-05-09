@@ -46,8 +46,8 @@ class ReadCsvToNoopSpec extends SimpleSpec with GivenWhenThen {
         val nodes = sqlReport.nodes
         nodes.size should be(2)
         val sqlId = sqlReport.sqlId // Spark 4 may assign a different execution ID than Spark 3
-        nodes.map(i => (i.sqlId, i.jobName, i.nodeName)).head should be(sqlId, "testjob", "() OverwriteByExpression")
-        nodes.map(i => (i.sqlId, i.jobName, i.nodeName)).last should be(sqlId, "testjob", "() Scan csv ")
+        nodes.map(i => (i.sqlId, i.jobName, i.nodeName.split(" ").dropRight(1).mkString(" ").trim)).head should be(sqlId, "testjob", "OverwriteByExpression")
+        nodes.map(i => (i.sqlId, i.jobName, i.nodeName.split(" ").dropRight(1).mkString(" ").trim)).last should be(sqlId, "testjob", "Scan csv")
 
         And("it should build SQL reports with metrics")
         val csvNodes = sqlReport.nodes.filter(_.nodeName contains "Scan csv")
@@ -82,6 +82,26 @@ class ReadCsvToNoopSpec extends SimpleSpec with GivenWhenThen {
         stageReport.readBytes should be > 30L*1024*1024
         stageReport.writeBytes should be(0) // noop
         stageReport.execCpuNs should be > 0L
+
+        And("SQL node metrics should only contain registered metrics (no nulls or sentinel values)")
+        nodes.foreach { node =>
+          node.metrics.keys.foreach { metricName =>
+            metricName should not be empty
+          }
+          node.metrics.values.foreach { metricValue =>
+            metricValue should not be "-1"
+          }
+        }
+
+        And("SQL node names should include plan node IDs")
+        nodes.foreach { node =>
+          node.nodeName should include regex "\\(\\d+\\)"
+        }
+
+        And("stage reports should include accumulator IDs")
+        stageReports.foreach { stage =>
+          stage.accumulatorIds should not be null
+        }
 
         And("it should not generate any report if all is disabled")
         emptySinks.reports.size should be(0)
