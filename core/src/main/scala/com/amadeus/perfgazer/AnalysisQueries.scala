@@ -5,6 +5,9 @@ package com.amadeus.perfgazer
   *
   * These queries are the definitive source of truth for the analysis use cases
   * documented in docs/user_guide/analyze_sql.md.
+  * 
+  * All these queries should be tested, and referenced by the user guide documentation.
+  * If new queries are added, they must be tested ideally in the integration tests.
   *
   * They assume the PerfGazer JSON report views (sql, job, stage, task) have been
   * created via the snippets provided by [[PerfGazer.getSnippets]].
