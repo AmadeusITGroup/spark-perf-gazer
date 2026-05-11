@@ -581,10 +581,43 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#join-node-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Join node metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scan-node-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scan node metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#wall-clock-duration-of-jobs" class="md-nav__link">
     <span class="md-ellipsis">
       
         Wall clock duration of jobs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skew-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skew detection
       
     </span>
   </a>
@@ -772,10 +805,43 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#join-node-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Join node metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scan-node-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scan node metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#wall-clock-duration-of-jobs" class="md-nav__link">
     <span class="md-ellipsis">
       
         Wall clock duration of jobs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skew-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skew detection
       
     </span>
   </a>
@@ -840,6 +906,7 @@ For example:</p>
 <p>The <code>basePath</code> option indicates Spark from which point start performing auto-discover of partition columns (e.g. <code>applicationId</code>).</p>
 <p>Mind that if you use <code>basePath</code> and new partitions are discovered, the joins between the views will have to take into account partition columns if meaningful to associate correctly jobs/stages/... from different runs.</p>
 <h2 id="analyze-perfgazer-data">Analyze PerfGazer data</h2>
+<p>The SQL queries below are available as constants in <code>com.amadeus.perfgazer.AnalysisQueries</code>. That class is the definitive source of truth for these queries and is tested in the integration test suite.</p>
 <p>You can start deep diving into all tasks with their parent stage and job with a query like the following:</p>
 <div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span>
 <span class="w">  </span><span class="k">FROM</span><span class="w"> </span><span class="n">job</span><span class="w"> </span><span class="n">j</span>
@@ -849,6 +916,7 @@ For example:</p>
 <p>Below we provide a collection of queries you can run to explore various performance aspects of your Spark application.</p>
 <h3 id="jobs-by-cpu-usage">Jobs by CPU usage</h3>
 <p>Aggregates executor CPU time across all stages of each job, converted from nanoseconds to seconds.</p>
+<p>Code reference: <code>AnalysisQueries.JobsByCpuUsage</code></p>
 <div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobId</span><span class="p">,</span>
 <span class="w">       </span><span class="n">j</span><span class="p">.</span><span class="n">jobName</span><span class="p">,</span>
 <span class="w">       </span><span class="n">ROUND</span><span class="p">(</span><span class="k">SUM</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">execCpuNs</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1</span><span class="n">e9</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">cpuTimeSec</span>
@@ -888,6 +956,7 @@ For example:</p>
 </details>
 <h3 id="jobs-by-io-volumes">Jobs by I/O volumes</h3>
 <p>Shows input, output, shuffle read/write and total I/O per job, all in MB.</p>
+<p>Code reference: <code>AnalysisQueries.JobsByIoVolumes</code></p>
 <div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobId</span><span class="p">,</span>
 <span class="w">       </span><span class="n">j</span><span class="p">.</span><span class="n">jobName</span><span class="p">,</span>
 <span class="w">       </span><span class="n">ROUND</span><span class="p">(</span><span class="k">SUM</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">readBytes</span><span class="p">)</span><span class="w">         </span><span class="o">/</span><span class="w"> </span><span class="mi">1048576</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">inputMb</span><span class="p">,</span>
@@ -948,6 +1017,7 @@ For example:</p>
 </details>
 <h3 id="jobs-with-spill">Jobs with spill</h3>
 <p>Lists only jobs where memory or disk spill occurred, in MB.</p>
+<p>Code reference: <code>AnalysisQueries.JobsWithSpill</code></p>
 <div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobId</span><span class="p">,</span>
 <span class="w">       </span><span class="n">j</span><span class="p">.</span><span class="n">jobName</span><span class="p">,</span>
 <span class="w">       </span><span class="n">ROUND</span><span class="p">(</span><span class="k">SUM</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">memoryBytesSpilled</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1048576</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">memorySpillMb</span><span class="p">,</span>
@@ -1052,8 +1122,83 @@ For example:</p>
 </tbody>
 </table>
 </details>
+<h3 id="join-node-metrics">Join node metrics</h3>
+<p>Explodes SQL plan nodes and returns metrics for join operators. Useful for inspecting the number of output rows produced by each join.</p>
+<p>Code reference: <code>AnalysisQueries.JoinNodeMetrics</code></p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">sqlId</span><span class="p">,</span>
+<span class="w">       </span><span class="n">node</span><span class="p">.</span><span class="n">nodeName</span><span class="p">,</span>
+<span class="w">       </span><span class="n">node</span><span class="p">.</span><span class="n">jobName</span><span class="p">,</span>
+<span class="w">       </span><span class="n">FROM_JSON</span><span class="p">(</span><span class="n">TO_JSON</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">metrics</span><span class="p">),</span><span class="w"> </span><span class="s1">&#39;MAP&lt;STRING, STRING&gt;&#39;</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">metrics</span>
+<span class="w">  </span><span class="k">FROM</span><span class="w"> </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="n">sqlId</span><span class="p">,</span><span class="w"> </span><span class="n">EXPLODE</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">node</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="k">sql</span><span class="p">)</span><span class="w"> </span><span class="n">subquery</span>
+<span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">node</span><span class="p">.</span><span class="n">nodeName</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="s1">&#39;%Join%&#39;</span><span class="p">;</span>
+</code></pre></div>
+<details class="example">
+<summary>Sample output</summary>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">sqlId</th>
+<th>nodeName</th>
+<th>jobName</th>
+<th>metrics</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">1</td>
+<td>BroadcastHashJoin</td>
+<td>jobjoin</td>
+<td>{number of output rows -&gt; 2}</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td>SortMergeJoin</td>
+<td>bigjoin</td>
+<td>{number of output rows -&gt; 10000}</td>
+</tr>
+</tbody>
+</table>
+</details>
+<h3 id="scan-node-metrics">Scan node metrics</h3>
+<p>Explodes SQL plan nodes and returns metrics for scan parquet operators. Useful for checking how many files and rows were read by each scan.</p>
+<p>Code reference: <code>AnalysisQueries.ScanNodeMetrics</code></p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">sqlId</span><span class="p">,</span>
+<span class="w">       </span><span class="n">node</span><span class="p">.</span><span class="n">nodeName</span><span class="p">,</span>
+<span class="w">       </span><span class="n">node</span><span class="p">.</span><span class="n">jobName</span><span class="p">,</span>
+<span class="w">       </span><span class="n">FROM_JSON</span><span class="p">(</span><span class="n">TO_JSON</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">metrics</span><span class="p">),</span><span class="w"> </span><span class="s1">&#39;MAP&lt;STRING, STRING&gt;&#39;</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">metrics</span>
+<span class="w">  </span><span class="k">FROM</span><span class="w"> </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="n">sqlId</span><span class="p">,</span><span class="w"> </span><span class="n">EXPLODE</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">node</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="k">sql</span><span class="p">)</span><span class="w"> </span><span class="n">subquery</span>
+<span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">node</span><span class="p">.</span><span class="n">nodeName</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="s1">&#39;%Scan parquet%&#39;</span><span class="p">;</span>
+</code></pre></div>
+<details class="example">
+<summary>Sample output</summary>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">sqlId</th>
+<th>nodeName</th>
+<th>jobName</th>
+<th>metrics</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">1</td>
+<td>Scan parquet delta.<code>/path</code></td>
+<td>jobjoin</td>
+<td>{number of files read -&gt; 1, number of output rows -&gt; 252}</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td>Scan parquet delta.<code>/path2</code></td>
+<td>jobjoin</td>
+<td>{number of files read -&gt; 4, number of output rows -&gt; 9000}</td>
+</tr>
+</tbody>
+</table>
+</details>
 <h3 id="wall-clock-duration-of-jobs">Wall clock duration of jobs</h3>
 <p>Computes the elapsed wall-clock time of each job in seconds.</p>
+<p>Code reference: <code>AnalysisQueries.WallClockDurationOfJobs</code></p>
 <div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobId</span><span class="p">,</span>
 <span class="w">       </span><span class="n">j</span><span class="p">.</span><span class="n">jobName</span><span class="p">,</span>
 <span class="w">       </span><span class="n">ROUND</span><span class="p">((</span><span class="n">j</span><span class="p">.</span><span class="n">jobEndTime</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobStartTime</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">wallClockSec</span>
@@ -1085,6 +1230,67 @@ For example:</p>
 <td style="text-align: right;">0</td>
 <td>read at MyApp.scala:15</td>
 <td style="text-align: right;">15.21</td>
+</tr>
+</tbody>
+</table>
+</details>
+<h3 id="skew-detection">Skew detection</h3>
+<p>Detects task-level skew per job/stage using statistical thresholds. Reports stages where the maximum task duration exceeds 1.5x the 75th percentile, indicating that a few tasks are significantly slower than the rest. The <code>skewFactor</code> column quantifies how much the slowest task deviates from the pack.</p>
+<p>Code reference: <code>AnalysisQueries.SkewDetection</code></p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobId</span><span class="p">,</span>
+<span class="w">       </span><span class="n">j</span><span class="p">.</span><span class="n">jobName</span><span class="p">,</span>
+<span class="w">       </span><span class="n">t</span><span class="p">.</span><span class="n">stageId</span><span class="p">,</span>
+<span class="w">       </span><span class="k">COUNT</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">taskCount</span><span class="p">,</span>
+<span class="w">       </span><span class="n">ROUND</span><span class="p">(</span><span class="k">MAX</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">executorRunTime</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">maxDurationSec</span><span class="p">,</span>
+<span class="w">       </span><span class="n">ROUND</span><span class="p">(</span><span class="n">PERCENTILE</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">executorRunTime</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">medianDurationSec</span><span class="p">,</span>
+<span class="w">       </span><span class="n">ROUND</span><span class="p">(</span><span class="n">PERCENTILE</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">executorRunTime</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">.</span><span class="mi">75</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">p75DurationSec</span><span class="p">,</span>
+<span class="w">       </span><span class="n">ROUND</span><span class="p">(</span><span class="n">STDDEV</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">executorRunTime</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">stddevDurationSec</span><span class="p">,</span>
+<span class="w">       </span><span class="n">ROUND</span><span class="p">(</span><span class="k">MAX</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">executorRunTime</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">PERCENTILE</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">executorRunTime</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">.</span><span class="mi">75</span><span class="p">),</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">skewFactor</span>
+<span class="w">  </span><span class="k">FROM</span><span class="w"> </span><span class="n">job</span><span class="w"> </span><span class="n">j</span>
+<span class="w">  </span><span class="k">JOIN</span><span class="w"> </span><span class="n">stage</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">ARRAY_CONTAINS</span><span class="p">(</span><span class="n">j</span><span class="p">.</span><span class="n">stages</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">stageId</span><span class="p">)</span>
+<span class="w">  </span><span class="k">JOIN</span><span class="w"> </span><span class="n">task</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">stageId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">stageId</span>
+<span class="w"> </span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobId</span><span class="p">,</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobName</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">stageId</span>
+<span class="k">HAVING</span><span class="w"> </span><span class="k">MAX</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">executorRunTime</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="p">.</span><span class="mi">5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">PERCENTILE</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">executorRunTime</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">.</span><span class="mi">75</span><span class="p">)</span>
+<span class="w"> </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">skewFactor</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
+</code></pre></div>
+<details class="example">
+<summary>Sample output</summary>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">jobId</th>
+<th>jobName</th>
+<th style="text-align: right;">stageId</th>
+<th style="text-align: right;">taskCount</th>
+<th style="text-align: right;">maxDurationSec</th>
+<th style="text-align: right;">medianDurationSec</th>
+<th style="text-align: right;">p75DurationSec</th>
+<th style="text-align: right;">stddevDurationSec</th>
+<th style="text-align: right;">skewFactor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">2</td>
+<td>save at MyApp.scala:42</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">200</td>
+<td style="text-align: right;">45.20</td>
+<td style="text-align: right;">2.10</td>
+<td style="text-align: right;">3.50</td>
+<td style="text-align: right;">8.42</td>
+<td style="text-align: right;">12.91</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td>count at MyApp.scala:28</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: right;">12.80</td>
+<td style="text-align: right;">1.50</td>
+<td style="text-align: right;">2.00</td>
+<td style="text-align: right;">3.21</td>
+<td style="text-align: right;">6.40</td>
 </tr>
 </tbody>
 </table>

@@ -443,6 +443,8 @@ Mind that if you use `basePath` and new partitions are discovered, the joins bet
 
 ## Analyze PerfGazer data
 
+The SQL queries below are available as constants in `com.amadeus.perfgazer.AnalysisQueries`. That class is the definitive source of truth for these queries and is tested in the integration test suite.
+
 You can start deep diving into all tasks with their parent stage and job with a query like the following:
 
 ```sql
@@ -457,6 +459,8 @@ Below we provide a collection of queries you can run to explore various performa
 ### Jobs by CPU usage
 
 Aggregates executor CPU time across all stages of each job, converted from nanoseconds to seconds.
+
+Code reference: `AnalysisQueries.JobsByCpuUsage`
 
 ```sql
 SELECT j.jobId,
@@ -479,6 +483,8 @@ SELECT j.jobId,
 ### Jobs by I/O volumes
 
 Shows input, output, shuffle read/write and total I/O per job, all in MB.
+
+Code reference: `AnalysisQueries.JobsByIoVolumes`
 
 ```sql
 SELECT j.jobId,
@@ -506,6 +512,8 @@ SELECT j.jobId,
 ### Jobs with spill
 
 Lists only jobs where memory or disk spill occurred, in MB.
+
+Code reference: `AnalysisQueries.JobsWithSpill`
 
 ```sql
 SELECT j.jobId,
@@ -564,9 +572,55 @@ SELECT sq.sqlId,
     |     1 | Enrich transactions  | BroadcastHashJoin |     1 |      58.23 |    770.57 |
     |     0 | Aggregate daily totals | ShuffledHashJoin  |     0 |      32.11 |    256.00 |
 
+### Join node metrics
+
+Explodes SQL plan nodes and returns metrics for join operators. Useful for inspecting the number of output rows produced by each join.
+
+Code reference: `AnalysisQueries.JoinNodeMetrics`
+
+```sql
+SELECT sqlId,
+       node.nodeName,
+       node.jobName,
+       FROM_JSON(TO_JSON(node.metrics), 'MAP<STRING, STRING>') AS metrics
+  FROM (SELECT sqlId, EXPLODE(nodes) AS node FROM sql) subquery
+ WHERE node.nodeName LIKE '%Join%';
+```
+
+??? example "Sample output"
+
+    | sqlId | nodeName          | jobName | metrics                          |
+    |------:|-------------------|---------|----------------------------------|
+    |     1 | BroadcastHashJoin | jobjoin | {number of output rows -> 2}     |
+    |     2 | SortMergeJoin     | bigjoin | {number of output rows -> 10000} |
+
+### Scan node metrics
+
+Explodes SQL plan nodes and returns metrics for scan parquet operators. Useful for checking how many files and rows were read by each scan.
+
+Code reference: `AnalysisQueries.ScanNodeMetrics`
+
+```sql
+SELECT sqlId,
+       node.nodeName,
+       node.jobName,
+       FROM_JSON(TO_JSON(node.metrics), 'MAP<STRING, STRING>') AS metrics
+  FROM (SELECT sqlId, EXPLODE(nodes) AS node FROM sql) subquery
+ WHERE node.nodeName LIKE '%Scan parquet%';
+```
+
+??? example "Sample output"
+
+    | sqlId | nodeName                    | jobName | metrics                                                        |
+    |------:|-----------------------------|---------|----------------------------------------------------------------|
+    |     1 | Scan parquet delta.`/path`  | jobjoin | {number of files read -> 1, number of output rows -> 252}      |
+    |     1 | Scan parquet delta.`/path2` | jobjoin | {number of files read -> 4, number of output rows -> 9000}     |
+
 ### Wall clock duration of jobs
 
 Computes the elapsed wall-clock time of each job in seconds.
+
+Code reference: `AnalysisQueries.WallClockDurationOfJobs`
 
 ```sql
 SELECT j.jobId,
@@ -583,6 +637,38 @@ SELECT j.jobId,
     |     2 | save at MyApp.scala:42 |       245.67 |
     |     1 | count at MyApp.scala:28 |        98.34 |
     |     0 | read at MyApp.scala:15  |        15.21 |
+
+### Skew detection
+
+Detects task-level skew per job/stage using statistical thresholds. Reports stages where the maximum task duration exceeds 1.5x the 75th percentile, indicating that a few tasks are significantly slower than the rest. The `skewFactor` column quantifies how much the slowest task deviates from the pack.
+
+Code reference: `AnalysisQueries.SkewDetection`
+
+```sql
+SELECT j.jobId,
+       j.jobName,
+       t.stageId,
+       COUNT(1) AS taskCount,
+       ROUND(MAX(t.executorRunTime) / 1000, 2) AS maxDurationSec,
+       ROUND(PERCENTILE(t.executorRunTime, 0.5) / 1000, 2) AS medianDurationSec,
+       ROUND(PERCENTILE(t.executorRunTime, 0.75) / 1000, 2) AS p75DurationSec,
+       ROUND(STDDEV(t.executorRunTime) / 1000, 2) AS stddevDurationSec,
+       ROUND(MAX(t.executorRunTime) / PERCENTILE(t.executorRunTime, 0.75), 2) AS skewFactor
+  FROM job j
+  JOIN stage s ON ARRAY_CONTAINS(j.stages, s.stageId)
+  JOIN task t ON t.stageId = s.stageId
+ GROUP BY j.jobId, j.jobName, t.stageId
+HAVING MAX(t.executorRunTime) > 1.5 * PERCENTILE(t.executorRunTime, 0.75)
+ ORDER BY skewFactor DESC;
+```
+
+??? example "Sample output"
+
+    | jobId | jobName              | stageId | taskCount | maxDurationSec | medianDurationSec | p75DurationSec | stddevDurationSec | skewFactor |
+    |------:|----------------------|--------:|----------:|---------------:|------------------:|---------------:|------------------:|-----------:|
+    |     2 | save at MyApp.scala:42 |       3 |       200 |          45.20 |              2.10 |           3.50 |             8.42 |      12.91 |
+    |     1 | count at MyApp.scala:28 |       1 |       100 |          12.80 |              1.50 |           2.00 |             3.21 |       6.40 |
+
 
 
 ---
