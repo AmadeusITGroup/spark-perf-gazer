@@ -1,6 +1,6 @@
 package com.amadeus.integration
 
-import com.amadeus.perfgazer.PerfGazer
+import com.amadeus.perfgazer.{AnalysisQueries, JsonSink, PerfGazer}
 import com.amadeus.perfgazer.reports.SqlReport
 import com.amadeus.testfwk.ConfigSupport._
 import com.amadeus.testfwk.SinkSupport.TestableSink
@@ -38,6 +38,13 @@ class JoinFromDeltaSpec
 
           val eventsListener = new PerfGazer(cfg, sinks)
           spark.sparkContext.addSparkListener(eventsListener)
+
+          val destination = s"$tmpDir/perfgazer-output"
+          val sparkConf = new org.apache.spark.SparkConf(false)
+            .set(JsonSink.DestinationKey, destination)
+          val jsonSink = new JsonSink(sparkConf)
+          val jsonListener = new PerfGazer(cfg, jsonSink)
+          spark.sparkContext.addSparkListener(jsonListener)
 
           When("a lookup table is created and joined with the main table")
           // Create a lookup table with country_code and country_name, containing 252 rows
@@ -85,6 +92,27 @@ class JoinFromDeltaSpec
             .filter(r => joinFilter.eligible(r))
             .map(i => (i.jobName, i.metrics))
           joinActual should equal(Seq(("jobjoin", Map("number of output rows" -> "2"))))
+
+          And("the JoinNodeMetrics query should return the join with its output rows")
+          Thread.sleep(2000)
+          spark.sparkContext.removeSparkListener(jsonListener)
+          jsonListener.close()
+
+          val snippets = jsonListener.getSnippets
+          snippets.foreach(spark.sql)
+
+          val joinMetrics = spark.sql(AnalysisQueries.JoinNodeMetrics).collect()
+          val joinRows = joinMetrics.map(r =>
+            (r.getAs[String]("jobName"), r.getAs[Map[String, String]]("metrics"))
+          )
+          joinRows should contain(("jobjoin", Map("number of output rows" -> "2")))
+
+          And("the ScanNodeMetrics query should return scan nodes with number of output rows")
+          val scanMetrics = spark.sql(AnalysisQueries.ScanNodeMetrics).collect()
+          val scanRows = scanMetrics
+            .filter(_.getAs[String]("jobName") == "jobjoin")
+            .map(r => r.getAs[Map[String, String]]("metrics"))
+          scanRows.exists(_.get("number of output rows").contains("252")) should be(true)
         }
       }
     }
