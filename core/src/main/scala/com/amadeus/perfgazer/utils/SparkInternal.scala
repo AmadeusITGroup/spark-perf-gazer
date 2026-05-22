@@ -10,10 +10,4 @@ object SparkInternal {
   def queryExecution(event: SparkListenerSQLExecutionEnd): QueryExecution = {
     event.qe
   }
-
-  /** Returns the full extended plan (logical + physical) when running live.
-    * Returns None when replaying from an event log, where qe is not available.
-    */
-  def extendedDetails(event: SparkListenerSQLExecutionEnd): Option[String] =
-    Option(event.qe).map(_.explainString(ExtendedMode))
 }

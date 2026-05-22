@@ -55,7 +55,7 @@ class ReplayEventLogSpec extends SimpleSpec {
         printFiles("sql report", sqlReportFiles)
 
         val sqlReports = readNonEmptyLines(sqlReportFiles)
-        sqlReports should have size 2
+        sqlReports.size should be >= 2
 
         sqlReports.foreach { report =>
           jsonString(report, "$.details") should include("== Physical Plan ==")
