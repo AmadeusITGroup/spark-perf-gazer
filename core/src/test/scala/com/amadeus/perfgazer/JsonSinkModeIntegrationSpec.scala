@@ -98,17 +98,16 @@ class JsonSinkModeIntegrationSpec extends SimpleSpec {
           jsonSink1.close()
           new Directory(stagingDirFile).deleteRecursively()
 
-          // Custom stagingDir from SparkConf
+          // Custom stagingDir set via Config (code-first API)
           val customStagingDir = Files.createTempDirectory("custom-staging-")
           try {
-            val sparkConf2 = spark.sparkContext.getConf
-              .clone()
-              .set(JsonSink.StagingDirKey, customStagingDir.toString + "/")
-
-            val conf2 = Config(destination = s"dbfs:${remoteDir.toString}/")
+            val conf2 = Config(
+              destination = s"dbfs:${remoteDir.toString}/",
+              stagingDir = customStagingDir.toString + "/"
+            )
             val jsonSink2 = new JsonSink(
               config = conf2,
-              sparkConf = sparkConf2,
+              sparkConf = spark.sparkContext.getConf,
               reportTypes = Set(TestReportType)
             )
 
@@ -128,14 +127,13 @@ class JsonSinkModeIntegrationSpec extends SimpleSpec {
           try {
             nestedStagingDir.exists() shouldBe false
 
-            val sparkConf3 = spark.sparkContext.getConf
-              .clone()
-              .set(JsonSink.StagingDirKey, nestedStagingDir.getAbsolutePath + "/")
-
-            val conf3 = Config(destination = s"dbfs:${remoteDir.toString}/")
+            val conf3 = Config(
+              destination = s"dbfs:${remoteDir.toString}/",
+              stagingDir = nestedStagingDir.getAbsolutePath + "/"
+            )
             val jsonSink3 = new JsonSink(
               config = conf3,
-              sparkConf = sparkConf3,
+              sparkConf = spark.sparkContext.getConf,
               reportTypes = Set(TestReportType)
             )
 

@@ -29,7 +29,8 @@ class JsonSink(
         writeBatchSize = sparkConf.getInt(WriteBatchSizeKey, DefaultWriteBatchSize),
         fileSizeLimit = sparkConf.getLong(FileSizeLimitKey, DefaultFileSizeLimit),
         asyncFlushTimeoutMillisecs = sparkConf.getLong(AsyncFlushTimeoutMillisecsKey, DefaultAsyncFlushTimeoutMillisecs),
-        waitForGracefulCloseMillisecs = sparkConf.getLong(WaitForCloseTimeoutMillisecsKey, DefaultWaitForGracefulCloseMillisecs)
+        waitForGracefulCloseMillisecs = sparkConf.getLong(WaitForCloseTimeoutMillisecsKey, DefaultWaitForGracefulCloseMillisecs),
+        stagingDir = sparkConf.get(StagingDirKey, DefaultStagingDir)
       ),
       sparkConf
     )
@@ -44,8 +45,7 @@ class JsonSink(
     case DestinationMode.Posix =>
       (destination, new NoOpFilePromoter())
     case DestinationMode.Hdfs =>
-      val stagingDir = sparkConf.getOption(StagingDirKey)
-        .getOrElse(s"/tmp/perfgazer/${sparkConf.getAppId}/")
+      val stagingDir = config.stagingDir.resolveProperties(sparkConf)
       val stagingFolder = new java.io.File(stagingDir)
       if (!stagingFolder.exists()) stagingFolder.mkdirs()
       val confSnapshot = sparkConf.getAll
@@ -100,6 +100,7 @@ object JsonSink {
   val DefaultFileSizeLimit: Long = 200L * 1024 * 1024 // 200 MB
   val DefaultAsyncFlushTimeoutMillisecs: Long = 10 * 1000L
   val DefaultWaitForGracefulCloseMillisecs: Long = 10 * 1000L
+  val DefaultStagingDir: String = "/tmp/perfgazer/{{spark.app.id}}/"
 
   /** Configuration object for JsonSink
     *
@@ -110,13 +111,17 @@ object JsonSink {
     * @param fileSizeLimit file size to reach before switching to a new file (in bytes)
     * @param asyncFlushTimeoutMillisecs Maximum time to wait regularly before flushing reports to disk (in milliseconds)
     * @param waitForGracefulCloseMillisecs Maximum time to wait for graceful close of the sink (in milliseconds)
+    * @param stagingDir Local staging directory used in HDFS mode (remote destination URI). Completed files are
+    *                   written here via POSIX I/O before being promoted to the remote destination. Supports the
+    *                   same placeholders as `destination` (e.g. `{{spark.app.id}}`). Ignored in POSIX mode.
     */
   case class Config(
      destination: String,
      writeBatchSize: Int = DefaultWriteBatchSize,
      fileSizeLimit: Long = DefaultFileSizeLimit,
      asyncFlushTimeoutMillisecs: Long = DefaultAsyncFlushTimeoutMillisecs,
-     waitForGracefulCloseMillisecs: Long = DefaultWaitForGracefulCloseMillisecs
+     waitForGracefulCloseMillisecs: Long = DefaultWaitForGracefulCloseMillisecs,
+     stagingDir: String = DefaultStagingDir
   )
 
   trait JsonViewDDLGenerator {
