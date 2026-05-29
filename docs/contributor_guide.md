@@ -23,6 +23,49 @@ A `Report` is a type that represents the report unit shared with the end-user.
 Report case classes are annotated with `@TableDoc` and `@ColumnDoc` to serve as the single source of truth
 for the data model documentation (see [Data model documentation](#data-model-documentation) below).
 
+## Sink architecture
+
+Once reports are produced, they are handed to a **`Sink`** for persistence. The `Sink` trait
+(`core/.../Sink.scala`) is the extension point for output backends. Implementations must be
+thread-safe — `write` and `close` are invoked from the Spark `ListenerBus` thread. The trait also
+exposes `generateViewSnippet` so each backend can describe how to query its output (e.g. a SQL view).
+
+Two implementations ship today: `LogSink` (writes reports to the logger, mainly for debugging) and
+`JsonSink`, the default production sink.
+
+### JsonSink
+
+`JsonSink` never writes inline. To keep the `ListenerBus` thread free, it creates one `ReportWriter`
+per report type, each owning a queue and a single daemon thread; `write` just routes a report to the
+matching writer. The daemon thread drains the queue into a `BufferedReportWriter`, the only component
+that touches the filesystem. It buffers reports and flushes them as newline-delimited JSON when
+`writeBatchSize` is reached (or on a periodic flush), rolling to a new file once `fileSizeLimit`
+is exceeded. Each completed file is handed to a `FilePromoter`, which moves it to its final location
+("promotes" it) — what that involves depends on the destination (see below). On close (triggered by
+an explicit `close()` or the auto-registered JVM shutdown hook), the final partial file is flushed and
+promoted — no new file is rolled.
+
+How a completed file reaches its final location depends on the destination scheme, detected by
+`DestinationMode.detect`:
+
+- **POSIX mode** (path starts with `/`) — files are written directly to the destination. The
+  `NoOpFilePromoter` does nothing because the file is already in place.
+- **HDFS mode** (remote URI: `s3://`, `s3a://`, `abfss://`, `gs://`, `dbfs:/`, `hdfs://`) — files are
+  written to a local staging directory first, then the `HadoopFilePromoter` copies each completed
+  file to the remote destination via the Hadoop `FileSystem` API and deletes the local copy. On copy
+  failure the local file is retained for recovery, so staging doubles as a durability buffer. The
+  Hadoop `FileSystem` is initialized lazily (sinks are constructed during `spark.extraListeners`
+  init, before the `SparkContext` is ready), and `fs.*` credential keys are propagated from
+  `SparkConf` into the Hadoop `Configuration`.
+
+Any other scheme throws `IllegalArgumentException`.
+
+### Adding a new sink
+
+Implement the `Sink` trait and provide a constructor taking a `SparkConf` so it can be instantiated
+from the `spark.perfgazer.sink.class` configuration. Keep `write` non-blocking if the backend is slow
+— follow the `ReportWriter` async-queue pattern rather than doing I/O on the calling thread.
+
 ## Build
 
 The project uses `sbt`. 

@@ -34,11 +34,12 @@ spark-shell \
 
 | Property | Default | Description |
 |---|---|---|
-| `spark.perfgazer.sink.json.destination` | — | Destination path for JSON output. Should include a partition that uniquely identifies the run (e.g. `applicationId` or `runId`) so that data from different runs does not get mixed. |
+| `spark.perfgazer.sink.json.destination` | — | Destination path for JSON output. Either a local POSIX path (written directly by the driver) or a remote URI (`s3a://`, `abfss://`, `gs://`, `dbfs:/`, `hdfs://`, …), in which case files are first written to a local staging directory on the driver and then promoted to the remote destination (see `spark.perfgazer.sink.json.stagingDir`). Should include a partition that uniquely identifies the run (e.g. `applicationId` or `runId`) so that data from different runs does not get mixed. |
 | `spark.perfgazer.sink.json.writeBatchSize` | `100` | Number of records to accumulate before writing to disk |
 | `spark.perfgazer.sink.json.fileSizeLimit` | `209715200` (200 MB) | File size threshold before rolling to a new file |
 | `spark.perfgazer.sink.json.asyncFlushTimeoutMillisecsKey` | — | Max time between periodic flushes (ms) |
 | `spark.perfgazer.sink.json.waitForCloseTimeoutMillisecsKey` | — | Max time to wait for graceful sink close (ms) |
+| `spark.perfgazer.sink.json.stagingDir` | `/tmp/perfgazer/{{spark.app.id}}/` | Local staging directory used in HDFS mode (remote `destination` URI). Ignored when `destination` is a local POSIX path. Supports the same placeholders as `destination`. |
 
 ### Destination placeholders
 
@@ -57,4 +58,4 @@ The destination path supports `{{key}}` placeholders resolved at runtime:
 
 Date, time, and runId values are captured once at JVM startup and remain stable across multiple resolutions.
 
-> Note: `JsonSink` uses the POSIX interface on the driver to write JSON files.
+> Note: when writing to a remote `destination`, see [Driver Resources](driver_resources.md) for guidance on staging disk usage, storage locality, and driver CPU.
