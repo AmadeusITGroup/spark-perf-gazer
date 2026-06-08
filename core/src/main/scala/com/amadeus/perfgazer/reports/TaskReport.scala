@@ -103,10 +103,10 @@ object TaskReport {
       remoteBlocksFetched = end.remoteBlocksFetched,
       remoteBytesRead = end.remoteBytesRead,
       remoteBytesReadToDisk = end.remoteBytesReadToDisk,
-      totalRecordsRead = end.recordsRead,
+      totalRecordsRead = end.totalRecordsRead,
       remoteRequestsDuration = end.remoteRequestsDuration,
-      shuffleBytesWritten = end.bytesWritten,
-      shuffleRecordsWritten = end.recordsWritten,
+      shuffleBytesWritten = end.shuffleBytesWritten,
+      shuffleRecordsWritten = end.shuffleRecordsWritten,
       shuffleWriteTime = end.shuffleWriteTime
     )
   }
