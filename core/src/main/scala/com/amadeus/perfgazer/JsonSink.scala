@@ -38,6 +38,11 @@ class JsonSink(
 
   override def supportedReportTypes: Set[ReportType] = reportTypes
 
+  /** Eagerly initialize the file promoter so that a misconfigured remote
+    * destination fails fast at application start rather than during report writing.
+    */
+  override def init(): Unit = filePromoter.init()
+
   val destination: String = config.destination.resolveProperties(sparkConf)
   val mode: DestinationMode = DestinationMode.detect(destination)
 

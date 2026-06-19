@@ -49,6 +49,37 @@ class HadoopFilePromoterSpec extends SimpleSpec {
         deleteRecursively(baseDir.toFile)
       }
     }
+
+    it("should fail fast on init() when FileSystem cannot be obtained") {
+      val hadoopConf = new Configuration()
+      hadoopConf.set("fs.nonexistent.impl", "com.does.not.Exist")
+
+      val promoter = new HadoopFilePromoter("nonexistent://invalid-bucket/path/", hadoopConf)
+
+      val ex = intercept[IllegalStateException] {
+        promoter.init()
+      }
+      ex.getMessage should include("Failed to obtain Hadoop FileSystem")
+    }
+
+    it("should create remote destination directory eagerly on init()") {
+      val baseDir = Files.createTempDirectory("promoter-init-eager-")
+      val targetDir = new File(baseDir.toFile, "subdir/nested")
+      try {
+        targetDir.exists() shouldBe false
+
+        val hadoopConf = new Configuration()
+        hadoopConf.set("fs.file.impl", classOf[org.apache.hadoop.fs.LocalFileSystem].getName)
+
+        val promoter = new HadoopFilePromoter(targetDir.toURI.toString, hadoopConf)
+        promoter.init()
+
+        targetDir.exists() shouldBe true
+        targetDir.isDirectory shouldBe true
+      } finally {
+        deleteRecursively(baseDir.toFile)
+      }
+    }
   }
 
   describe("HadoopFilePromoter.promote") {

@@ -10,9 +10,10 @@ import java.net.URI
  * FilePromoter for HDFS/cloud mode. Copies completed local staging files
  * to the remote destination via Hadoop FileSystem API.
  *
- * The Hadoop FileSystem is initialized lazily on the first promote() call,
- * allowing safe construction during spark.extraListeners initialization
- * (before SparkContext is fully available).
+ * The Hadoop FileSystem is resolved lazily, but init() (invoked at application
+ * start via the sink) forces this resolution eagerly so misconfiguration fails
+ * fast. The lazy fallback still covers the case where the listener is registered
+ * after the application has already started (so onApplicationStart never fired).
  *
  * @param destinationDir    The remote destination directory URI (e.g., "s3a://bucket/path/")
  * @param hadoopConfProvider  Thunk that provides the Hadoop Configuration (evaluated lazily)
@@ -39,6 +40,15 @@ class HadoopFilePromoter(destinationDir: String, hadoopConfProvider: () => Confi
       fileSystem.mkdirs(path)
     }
     (fileSystem, path)
+  }
+
+  /**
+   * Eagerly resolve the remote FileSystem and ensure the destination directory exists.
+   * Forces the lazy initialization so that misconfiguration surfaces at application
+   * start rather than on the first promote() call.
+   */
+  override def init(): Unit = {
+    val _ = remoteDestPath
   }
 
   override def promote(localFile: File): Unit = {
