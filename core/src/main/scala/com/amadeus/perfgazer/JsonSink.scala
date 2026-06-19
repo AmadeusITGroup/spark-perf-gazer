@@ -59,8 +59,6 @@ class JsonSink(
       (destination, new NoOpFilePromoter())
     case DestinationMode.Hdfs =>
       val stagingDir = config.stagingDir.resolveProperties(sparkConf)
-      val stagingFolder = new java.io.File(stagingDir)
-      if (!stagingFolder.exists()) stagingFolder.mkdirs()
       val confSnapshot = sparkConf.getAll
       (stagingDir, new HadoopFilePromoter(destination, () => {
         val hadoopConf = SparkContext.getOrCreate().hadoopConfiguration

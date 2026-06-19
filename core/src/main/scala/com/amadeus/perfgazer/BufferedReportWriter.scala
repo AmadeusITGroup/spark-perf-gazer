@@ -23,6 +23,12 @@ class BufferedReportWriter(config: Config, reportType: ReportType, dir: String, 
   val logger: Logger = LoggerFactory.getLogger(getClass.getName)
   private val formats: AnyRef with Formats = Serialization.formats(NoTypeHints)
 
+  // ensure the local staging directory exists before opening any file
+  {
+    val folder = new File(dir)
+    if (!folder.exists()) folder.mkdirs()
+  }
+
   // mutable variables
   private var currentFile = newFilePrintWriter()
   private val buffer: ListBuffer[Report] = new ListBuffer[Report]()
@@ -67,8 +73,6 @@ class BufferedReportWriter(config: Config, reportType: ReportType, dir: String, 
   }
 
   private def newFilePrintWriter(): FilePrintWriter = {
-    val folder = new File(dir)
-    if (!folder.exists()) folder.mkdirs()
     val path = s"$dir/${reportType.name}-reports-${UUID.randomUUID()}.json"
     val file = new File(path)
     val writer = new PrintWriter(new FileWriter(file, true))
