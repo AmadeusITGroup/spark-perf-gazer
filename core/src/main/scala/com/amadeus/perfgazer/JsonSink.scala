@@ -6,6 +6,8 @@ import com.amadeus.perfgazer.PathBuilder._
 import org.apache.spark.{SparkConf, SparkContext}
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.util.{Failure, Success}
+
 /** Sink of a collection of reports to JSON files.
   *
   * This sink uses POSIX interface on the driver to write the JSON files.
@@ -44,7 +46,13 @@ class JsonSink(
   override def init(): Unit = filePromoter.init()
 
   val destination: String = config.destination.resolveProperties(sparkConf)
-  val mode: DestinationMode = DestinationMode.detect(destination)
+
+  // Detection parses and validates the destination, failing fast on a malformed value.
+  val mode: DestinationMode = DestinationMode.detect(destination) match {
+    case Success(m) => m
+    case Failure(e) =>
+      throw new IllegalArgumentException(s"Invalid destination '$destination': not a valid path or URI", e)
+  }
 
   private val (writeDir, filePromoter): (String, FilePromoter) = mode match {
     case DestinationMode.Posix =>
