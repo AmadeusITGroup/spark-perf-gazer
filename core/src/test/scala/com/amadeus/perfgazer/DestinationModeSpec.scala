@@ -45,10 +45,32 @@ class DestinationModeSpec extends SimpleSpec {
       DestinationMode.detect("ftp://server/path") shouldBe Success(DestinationMode.Hdfs)
     }
 
+    it("should return Hdfs for file://") {
+      DestinationMode.detect("file:///tmp/reports") shouldBe Success(DestinationMode.Hdfs)
+    }
+
+    it("should return Posix for a Windows path with a lowercase drive letter") {
+      DestinationMode.detect("c:/tmp/reports") shouldBe Success(DestinationMode.Posix)
+    }
+
+    it("should return Posix for a Windows path with a drive letter and forward slashes") {
+      DestinationMode.detect("C:/tmp/reports") shouldBe Success(DestinationMode.Posix)
+    }
+
+    it("should return Posix for a Windows path with backslashes") {
+      DestinationMode.detect("C:\\tmp\\reports") shouldBe Success(DestinationMode.Posix)
+    }
+
     it("should return a Failure for a malformed destination") {
       val result = DestinationMode.detect("http://exa mple.com/path")
       result.isFailure shouldBe true
       result.failed.get shouldBe a[URISyntaxException]
+    }
+
+    it("should return a Failure for an empty destination") {
+      val result = DestinationMode.detect("")
+      result.isFailure shouldBe true
+      result.failed.get shouldBe a[IllegalArgumentException]
     }
   }
 }
