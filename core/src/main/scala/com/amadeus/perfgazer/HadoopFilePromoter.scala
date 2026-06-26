@@ -48,7 +48,12 @@ class HadoopFilePromoter(destinationDir: String, hadoopConfProvider: () => Confi
    * start rather than on the first promote() call.
    */
   override def init(): Unit = {
-    val _ = remoteDestPath
+    val (resolvedFs, resolvedPath) = (fs, remoteDestPath)
+    logger.info(
+      "Hadoop destination initialized: path={}, fs={}",
+      resolvedPath: Any,
+      resolvedFs.getUri: Any
+    )
   }
 
   override def promote(localFile: File): Unit = {
