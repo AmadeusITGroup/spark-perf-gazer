@@ -1,0 +1,1384 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Performance Gazer for Apache Spark - A configurable Spark Listener for post-mortem analysis">
+      
+      
+      
+        <link rel="canonical" href="https://AmadeusITGroup.github.io/spark-perf-gazer/v0.0.2-rc7/user_guide/analyze_sql/">
+      
+      
+        <link rel="prev" href="../driver_resources/">
+      
+      
+        <link rel="next" href="../data_model/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Analyze with SQL - PerfGazer</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  <link rel="alternate" type="text/plain" href="https://AmadeusITGroup.github.io/spark-perf-gazer/v0.0.2-rc7llms.txt" title="LLM-friendly documentation index" />
+  <link rel="alternate" type="text/plain" href="https://AmadeusITGroup.github.io/spark-perf-gazer/v0.0.2-rc7llms-full.txt" title="LLM-friendly full documentation" />
+
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#analyze-using-sql" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="PerfGazer" class="md-header__button md-logo" aria-label="PerfGazer" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PerfGazer
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Analyze with SQL
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/AmadeusITGroup/spark-perf-gazer" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    AmadeusITGroup/spark-perf-gazer
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="PerfGazer" class="md-nav__button md-logo" aria-label="PerfGazer" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PerfGazer
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/AmadeusITGroup/spark-perf-gazer" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    AmadeusITGroup/spark-perf-gazer
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Available Artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../setup_spark_properties/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup via Spark Properties
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../setup_code/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup via Code
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../databricks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Databricks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../driver_resources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Driver Resources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze with SQL
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze with SQL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#create-perfgazer-views" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create PerfGazer views
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#query-across-all-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query across all runs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#analyze-perfgazer-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analyze PerfGazer data
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Analyze PerfGazer data">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#jobs-by-cpu-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Jobs by CPU usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jobs-by-io-volumes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Jobs by I/O volumes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jobs-with-spill" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Jobs with spill
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#all-joins-with-cpu-and-io-from-their-job" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        All joins with CPU and I/O from their job
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#join-node-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Join node metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scan-node-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scan node metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wall-clock-duration-of-jobs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wall clock duration of jobs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skew-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skew detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data_model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Model Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributor_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributor Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#create-perfgazer-views" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create PerfGazer views
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#query-across-all-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query across all runs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#analyze-perfgazer-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analyze PerfGazer data
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Analyze PerfGazer data">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#jobs-by-cpu-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Jobs by CPU usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jobs-by-io-volumes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Jobs by I/O volumes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jobs-with-spill" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Jobs with spill
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#all-joins-with-cpu-and-io-from-their-job" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        All joins with CPU and I/O from their job
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#join-node-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Join node metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scan-node-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scan node metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wall-clock-duration-of-jobs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wall clock duration of jobs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skew-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skew detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="analyze-using-sql">Analyze using SQL</h1>
+<h2 id="create-perfgazer-views">Create PerfGazer views</h2>
+<p>PerfGazer exposes SQL queries (called <code>snippets</code>) to create temporary views to access the PerfGazer data produced by the Spark application. 
+You can run those snippets to perform analytics on the SQL queries, jobs, etc.</p>
+<p>Within the Spark application, you can access such snippets by doing: </p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nn">com</span><span class="p">.</span><span class="nn">amadeus</span><span class="p">.</span><span class="nn">perfgazer</span><span class="p">.</span><span class="nc">PerfGazer</span>
+<span class="kd">val</span><span class="w"> </span><span class="n">perfGazer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">PerfGazer</span><span class="p">.</span><span class="n">instance</span><span class="p">.</span><span class="n">getOrElse</span><span class="p">(</span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="nc">RuntimeException</span><span class="p">(</span><span class="s">&quot;Oops&quot;</span><span class="p">))</span>
+
+<span class="kd">val</span><span class="w"> </span><span class="n">snippets</span><span class="p">:</span><span class="w"> </span><span class="nc">Set</span><span class="p">[</span><span class="nc">String</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perfGazer</span><span class="p">.</span><span class="n">getSnippets</span>
+<span class="c1">// snippets.foreach(println) // print them</span>
+<span class="c1">// snippets.foreach(spark.sql) // launch them</span>
+</code></pre></div>
+<p>Additionally, at Spark application shutdown, PerfGazer will display those snippets in the logs (info log level). You can copy and paste them in a notebook to start performing investigations. </p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Copy and paste the snippets shown in the logs by Perfgazer during shutdown (info level)</span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">TEMPORARY</span><span class="w"> </span><span class="k">VIEW</span><span class="w"> </span><span class="k">sql</span><span class="w"> </span><span class="p">...</span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">TEMPORARY</span><span class="w"> </span><span class="k">VIEW</span><span class="w"> </span><span class="n">job</span><span class="w"> </span><span class="p">...</span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">TEMPORARY</span><span class="w"> </span><span class="k">VIEW</span><span class="w"> </span><span class="n">stage</span><span class="w"> </span><span class="p">...</span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">TEMPORARY</span><span class="w"> </span><span class="k">VIEW</span><span class="w"> </span><span class="n">task</span><span class="w"> </span><span class="p">...</span>
+</code></pre></div>
+<h2 id="query-across-all-runs">Query across all runs</h2>
+<p>The snippets above point to the current run. To create a view spanning all runs available, you can use <code>**</code> with a <code>basePath</code>. 
+For example:</p>
+<div class="highlight"><pre><span></span><code><span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">TEMPORARY</span><span class="w"> </span><span class="k">VIEW</span><span class="w"> </span><span class="p">[</span><span class="k">sql</span><span class="o">|</span><span class="n">job</span><span class="o">|</span><span class="n">stage</span><span class="o">|</span><span class="p">...]</span>
+<span class="k">USING</span><span class="w"> </span><span class="n">json</span>
+<span class="k">OPTIONS</span><span class="w"> </span><span class="p">(</span>
+<span class="w">  </span><span class="n">path</span><span class="w"> </span><span class="ss">&quot;&lt;base_path&gt;/**/[sql|job|stage|...]-reports-*.json&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="n">basePath</span><span class="w"> </span><span class="ss">&quot;&lt;base_path&gt;/&quot;</span>
+<span class="p">);</span>
+</code></pre></div>
+<p>Replace <code>&lt;base_path&gt;</code> with your actual base destination. </p>
+<p>The <code>basePath</code> option indicates Spark from which point start performing auto-discover of partition columns (e.g. <code>applicationId</code>).</p>
+<p>Mind that if you use <code>basePath</code> and new partitions are discovered, the joins between the views will have to take into account partition columns if meaningful to associate correctly jobs/stages/... from different runs.</p>
+<h2 id="analyze-perfgazer-data">Analyze PerfGazer data</h2>
+<p>The SQL queries below are available as constants in <code>com.amadeus.perfgazer.AnalysisQueries</code>. That class is the definitive source of truth for these queries and is tested in the integration test suite.</p>
+<p>You can start deep diving into all tasks with their parent stage and job with a query like the following:</p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span>
+<span class="w">  </span><span class="k">FROM</span><span class="w"> </span><span class="n">job</span><span class="w"> </span><span class="n">j</span>
+<span class="w">  </span><span class="k">JOIN</span><span class="w"> </span><span class="n">stage</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">ARRAY_CONTAINS</span><span class="p">(</span><span class="n">j</span><span class="p">.</span><span class="n">stages</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">stageId</span><span class="p">)</span>
+<span class="w">  </span><span class="k">JOIN</span><span class="w"> </span><span class="n">task</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">stageId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">stageId</span><span class="p">;</span>
+</code></pre></div>
+<p>Below we provide a collection of queries you can run to explore various performance aspects of your Spark application.</p>
+<h3 id="jobs-by-cpu-usage">Jobs by CPU usage</h3>
+<p>Aggregates executor CPU time across all stages of each job, converted from nanoseconds to seconds.</p>
+<p>Code reference: <code>AnalysisQueries.JobsByCpuUsage</code></p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobId</span><span class="p">,</span>
+<span class="w">       </span><span class="n">j</span><span class="p">.</span><span class="n">jobName</span><span class="p">,</span>
+<span class="w">       </span><span class="n">ROUND</span><span class="p">(</span><span class="k">SUM</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">execCpuNs</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1</span><span class="n">e9</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">cpuTimeSec</span>
+<span class="w">  </span><span class="k">FROM</span><span class="w"> </span><span class="n">job</span><span class="w"> </span><span class="n">j</span>
+<span class="w">  </span><span class="k">JOIN</span><span class="w"> </span><span class="n">stage</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">ARRAY_CONTAINS</span><span class="p">(</span><span class="n">j</span><span class="p">.</span><span class="n">stages</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">stageId</span><span class="p">)</span>
+<span class="w"> </span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobId</span><span class="p">,</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobName</span>
+<span class="w"> </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">cpuTimeSec</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
+</code></pre></div>
+<details class="example">
+<summary>Sample output</summary>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">jobId</th>
+<th>jobName</th>
+<th style="text-align: right;">cpuTimeSec</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">2</td>
+<td>save at MyApp.scala:42</td>
+<td style="text-align: right;">1782.43</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td>count at MyApp.scala:28</td>
+<td style="text-align: right;">624.18</td>
+</tr>
+<tr>
+<td style="text-align: right;">0</td>
+<td>read at MyApp.scala:15</td>
+<td style="text-align: right;">84.92</td>
+</tr>
+</tbody>
+</table>
+</details>
+<h3 id="jobs-by-io-volumes">Jobs by I/O volumes</h3>
+<p>Shows input, output, shuffle read/write and total I/O per job, all in MB.</p>
+<p>Code reference: <code>AnalysisQueries.JobsByIoVolumes</code></p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobId</span><span class="p">,</span>
+<span class="w">       </span><span class="n">j</span><span class="p">.</span><span class="n">jobName</span><span class="p">,</span>
+<span class="w">       </span><span class="n">ROUND</span><span class="p">(</span><span class="k">SUM</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">readBytes</span><span class="p">)</span><span class="w">         </span><span class="o">/</span><span class="w"> </span><span class="mi">1048576</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">inputMb</span><span class="p">,</span>
+<span class="w">       </span><span class="n">ROUND</span><span class="p">(</span><span class="k">SUM</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">writeBytes</span><span class="p">)</span><span class="w">        </span><span class="o">/</span><span class="w"> </span><span class="mi">1048576</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">outputMb</span><span class="p">,</span>
+<span class="w">       </span><span class="n">ROUND</span><span class="p">(</span><span class="k">SUM</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">shuffleReadBytes</span><span class="p">)</span><span class="w">  </span><span class="o">/</span><span class="w"> </span><span class="mi">1048576</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">shuffleReadMb</span><span class="p">,</span>
+<span class="w">       </span><span class="n">ROUND</span><span class="p">(</span><span class="k">SUM</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">shuffleWriteBytes</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1048576</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">shuffleWriteMb</span><span class="p">,</span>
+<span class="w">       </span><span class="n">ROUND</span><span class="p">(</span><span class="k">SUM</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">readBytes</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">writeBytes</span>
+<span class="w">               </span><span class="o">+</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">shuffleReadBytes</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">shuffleWriteBytes</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1048576</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">totalIoMb</span>
+<span class="w">  </span><span class="k">FROM</span><span class="w"> </span><span class="n">job</span><span class="w"> </span><span class="n">j</span>
+<span class="w">  </span><span class="k">JOIN</span><span class="w"> </span><span class="n">stage</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">ARRAY_CONTAINS</span><span class="p">(</span><span class="n">j</span><span class="p">.</span><span class="n">stages</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">stageId</span><span class="p">)</span>
+<span class="w"> </span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobId</span><span class="p">,</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobName</span>
+<span class="w"> </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">totalIoMb</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
+</code></pre></div>
+<details class="example">
+<summary>Sample output</summary>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">jobId</th>
+<th>jobName</th>
+<th style="text-align: right;">inputMb</th>
+<th style="text-align: right;">outputMb</th>
+<th style="text-align: right;">shuffleReadMb</th>
+<th style="text-align: right;">shuffleWriteMb</th>
+<th style="text-align: right;">totalIoMb</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">2</td>
+<td>save at MyApp.scala:42</td>
+<td style="text-align: right;">1024.00</td>
+<td style="text-align: right;">512.34</td>
+<td style="text-align: right;">256.78</td>
+<td style="text-align: right;">248.91</td>
+<td style="text-align: right;">2042.03</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td>count at MyApp.scala:28</td>
+<td style="text-align: right;">512.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">128.45</td>
+<td style="text-align: right;">130.12</td>
+<td style="text-align: right;">770.57</td>
+</tr>
+<tr>
+<td style="text-align: right;">0</td>
+<td>read at MyApp.scala:15</td>
+<td style="text-align: right;">256.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">256.00</td>
+</tr>
+</tbody>
+</table>
+</details>
+<h3 id="jobs-with-spill">Jobs with spill</h3>
+<p>Lists only jobs where memory or disk spill occurred, in MB.</p>
+<p>Code reference: <code>AnalysisQueries.JobsWithSpill</code></p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobId</span><span class="p">,</span>
+<span class="w">       </span><span class="n">j</span><span class="p">.</span><span class="n">jobName</span><span class="p">,</span>
+<span class="w">       </span><span class="n">ROUND</span><span class="p">(</span><span class="k">SUM</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">memoryBytesSpilled</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1048576</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">memorySpillMb</span><span class="p">,</span>
+<span class="w">       </span><span class="n">ROUND</span><span class="p">(</span><span class="k">SUM</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">diskBytesSpilled</span><span class="p">)</span><span class="w">   </span><span class="o">/</span><span class="w"> </span><span class="mi">1048576</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">diskSpillMb</span>
+<span class="w">  </span><span class="k">FROM</span><span class="w"> </span><span class="n">job</span><span class="w"> </span><span class="n">j</span>
+<span class="w">  </span><span class="k">JOIN</span><span class="w"> </span><span class="n">stage</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">ARRAY_CONTAINS</span><span class="p">(</span><span class="n">j</span><span class="p">.</span><span class="n">stages</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">stageId</span><span class="p">)</span>
+<span class="w"> </span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobId</span><span class="p">,</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobName</span>
+<span class="k">HAVING</span><span class="w"> </span><span class="k">SUM</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">memoryBytesSpilled</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">    </span><span class="k">OR</span><span class="w"> </span><span class="k">SUM</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">diskBytesSpilled</span><span class="p">)</span><span class="w">   </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span>
+<span class="w"> </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">diskSpillMb</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
+</code></pre></div>
+<details class="example">
+<summary>Sample output</summary>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">jobId</th>
+<th>jobName</th>
+<th style="text-align: right;">memorySpillMb</th>
+<th style="text-align: right;">diskSpillMb</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">2</td>
+<td>save at MyApp.scala:42</td>
+<td style="text-align: right;">2048.00</td>
+<td style="text-align: right;">384.56</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td>count at MyApp.scala:28</td>
+<td style="text-align: right;">512.00</td>
+<td style="text-align: right;">64.12</td>
+</tr>
+</tbody>
+</table>
+</details>
+<h3 id="all-joins-with-cpu-and-io-from-their-job">All joins with CPU and I/O from their job</h3>
+<p>Explodes the SQL plan nodes to find join operators, then enriches them with the aggregated CPU time and I/O volumes of the parent job.</p>
+<div class="highlight"><pre><span></span><code><span class="k">WITH</span><span class="w"> </span><span class="n">job_stats</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="w">  </span><span class="k">SELECT</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobId</span><span class="p">,</span>
+<span class="w">         </span><span class="n">j</span><span class="p">.</span><span class="n">jobName</span><span class="p">,</span>
+<span class="w">         </span><span class="n">j</span><span class="p">.</span><span class="n">sqlId</span><span class="p">,</span>
+<span class="w">         </span><span class="n">ROUND</span><span class="p">(</span><span class="k">SUM</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">execCpuNs</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1</span><span class="n">e9</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">cpuTimeSec</span><span class="p">,</span>
+<span class="w">         </span><span class="n">ROUND</span><span class="p">(</span><span class="k">SUM</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">readBytes</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">writeBytes</span>
+<span class="w">                 </span><span class="o">+</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">shuffleReadBytes</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">shuffleWriteBytes</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1048576</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">totalIoMb</span>
+<span class="w">    </span><span class="k">FROM</span><span class="w"> </span><span class="n">job</span><span class="w"> </span><span class="n">j</span>
+<span class="w">    </span><span class="k">JOIN</span><span class="w"> </span><span class="n">stage</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">ARRAY_CONTAINS</span><span class="p">(</span><span class="n">j</span><span class="p">.</span><span class="n">stages</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">stageId</span><span class="p">)</span>
+<span class="w">   </span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobId</span><span class="p">,</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobName</span><span class="p">,</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">sqlId</span>
+<span class="p">)</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">sq</span><span class="p">.</span><span class="n">sqlId</span><span class="p">,</span>
+<span class="w">       </span><span class="n">sq</span><span class="p">.</span><span class="n">description</span><span class="p">,</span>
+<span class="w">       </span><span class="n">n</span><span class="p">.</span><span class="n">nodeName</span><span class="w">   </span><span class="k">AS</span><span class="w"> </span><span class="n">joinNode</span><span class="p">,</span>
+<span class="w">       </span><span class="n">js</span><span class="p">.</span><span class="n">jobId</span><span class="p">,</span>
+<span class="w">       </span><span class="n">js</span><span class="p">.</span><span class="n">cpuTimeSec</span><span class="p">,</span>
+<span class="w">       </span><span class="n">js</span><span class="p">.</span><span class="n">totalIoMb</span>
+<span class="w">  </span><span class="k">FROM</span><span class="w"> </span><span class="k">sql</span><span class="w"> </span><span class="n">sq</span>
+<span class="w">  </span><span class="k">JOIN</span><span class="w"> </span><span class="n">job_stats</span><span class="w"> </span><span class="n">js</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">js</span><span class="p">.</span><span class="n">sqlId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">CAST</span><span class="p">(</span><span class="n">sq</span><span class="p">.</span><span class="n">sqlId</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">STRING</span><span class="p">)</span>
+<span class="w">       </span><span class="k">LATERAL</span><span class="w"> </span><span class="k">VIEW</span><span class="w"> </span><span class="n">EXPLODE</span><span class="p">(</span><span class="n">sq</span><span class="p">.</span><span class="n">nodes</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">n</span>
+<span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">n</span><span class="p">.</span><span class="n">nodeName</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="s1">&#39;%Join%&#39;</span>
+<span class="w"> </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">js</span><span class="p">.</span><span class="n">cpuTimeSec</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
+</code></pre></div>
+<details class="example">
+<summary>Sample output</summary>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">sqlId</th>
+<th>description</th>
+<th>joinNode</th>
+<th style="text-align: right;">jobId</th>
+<th style="text-align: right;">cpuTimeSec</th>
+<th style="text-align: right;">totalIoMb</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">2</td>
+<td>Join orders with customers</td>
+<td>SortMergeJoin</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">124.57</td>
+<td style="text-align: right;">2042.03</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td>Enrich transactions</td>
+<td>BroadcastHashJoin</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">58.23</td>
+<td style="text-align: right;">770.57</td>
+</tr>
+<tr>
+<td style="text-align: right;">0</td>
+<td>Aggregate daily totals</td>
+<td>ShuffledHashJoin</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">32.11</td>
+<td style="text-align: right;">256.00</td>
+</tr>
+</tbody>
+</table>
+</details>
+<h3 id="join-node-metrics">Join node metrics</h3>
+<p>Explodes SQL plan nodes and returns metrics for join operators. Useful for inspecting the number of output rows produced by each join.</p>
+<p>Code reference: <code>AnalysisQueries.JoinNodeMetrics</code></p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">sqlId</span><span class="p">,</span>
+<span class="w">       </span><span class="n">node</span><span class="p">.</span><span class="n">nodeName</span><span class="p">,</span>
+<span class="w">       </span><span class="n">node</span><span class="p">.</span><span class="n">jobName</span><span class="p">,</span>
+<span class="w">       </span><span class="n">FROM_JSON</span><span class="p">(</span><span class="n">TO_JSON</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">metrics</span><span class="p">),</span><span class="w"> </span><span class="s1">&#39;MAP&lt;STRING, STRING&gt;&#39;</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">metrics</span>
+<span class="w">  </span><span class="k">FROM</span><span class="w"> </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="n">sqlId</span><span class="p">,</span><span class="w"> </span><span class="n">EXPLODE</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">node</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="k">sql</span><span class="p">)</span><span class="w"> </span><span class="n">subquery</span>
+<span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">node</span><span class="p">.</span><span class="n">nodeName</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="s1">&#39;%Join%&#39;</span><span class="p">;</span>
+</code></pre></div>
+<details class="example">
+<summary>Sample output</summary>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">sqlId</th>
+<th>nodeName</th>
+<th>jobName</th>
+<th>metrics</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">1</td>
+<td>BroadcastHashJoin</td>
+<td>jobjoin</td>
+<td>{number of output rows -&gt; 2}</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td>SortMergeJoin</td>
+<td>bigjoin</td>
+<td>{number of output rows -&gt; 10000}</td>
+</tr>
+</tbody>
+</table>
+</details>
+<h3 id="scan-node-metrics">Scan node metrics</h3>
+<p>Explodes SQL plan nodes and returns metrics for scan parquet operators. Useful for checking how many files and rows were read by each scan.</p>
+<p>Code reference: <code>AnalysisQueries.ScanNodeMetrics</code></p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">sqlId</span><span class="p">,</span>
+<span class="w">       </span><span class="n">node</span><span class="p">.</span><span class="n">nodeName</span><span class="p">,</span>
+<span class="w">       </span><span class="n">node</span><span class="p">.</span><span class="n">jobName</span><span class="p">,</span>
+<span class="w">       </span><span class="n">FROM_JSON</span><span class="p">(</span><span class="n">TO_JSON</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">metrics</span><span class="p">),</span><span class="w"> </span><span class="s1">&#39;MAP&lt;STRING, STRING&gt;&#39;</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">metrics</span>
+<span class="w">  </span><span class="k">FROM</span><span class="w"> </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="n">sqlId</span><span class="p">,</span><span class="w"> </span><span class="n">EXPLODE</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">node</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="k">sql</span><span class="p">)</span><span class="w"> </span><span class="n">subquery</span>
+<span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">node</span><span class="p">.</span><span class="n">nodeName</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="s1">&#39;%Scan parquet%&#39;</span><span class="p">;</span>
+</code></pre></div>
+<details class="example">
+<summary>Sample output</summary>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">sqlId</th>
+<th>nodeName</th>
+<th>jobName</th>
+<th>metrics</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">1</td>
+<td>Scan parquet delta.<code>/path</code></td>
+<td>jobjoin</td>
+<td>{number of files read -&gt; 1, number of output rows -&gt; 252}</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td>Scan parquet delta.<code>/path2</code></td>
+<td>jobjoin</td>
+<td>{number of files read -&gt; 4, number of output rows -&gt; 9000}</td>
+</tr>
+</tbody>
+</table>
+</details>
+<h3 id="wall-clock-duration-of-jobs">Wall clock duration of jobs</h3>
+<p>Computes the elapsed wall-clock time of each job in seconds.</p>
+<p>Code reference: <code>AnalysisQueries.WallClockDurationOfJobs</code></p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobId</span><span class="p">,</span>
+<span class="w">       </span><span class="n">j</span><span class="p">.</span><span class="n">jobName</span><span class="p">,</span>
+<span class="w">       </span><span class="n">ROUND</span><span class="p">((</span><span class="n">j</span><span class="p">.</span><span class="n">jobEndTime</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobStartTime</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">wallClockSec</span>
+<span class="w">  </span><span class="k">FROM</span><span class="w"> </span><span class="n">job</span><span class="w"> </span><span class="n">j</span>
+<span class="w"> </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">wallClockSec</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
+</code></pre></div>
+<details class="example">
+<summary>Sample output</summary>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">jobId</th>
+<th>jobName</th>
+<th style="text-align: right;">wallClockSec</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">2</td>
+<td>save at MyApp.scala:42</td>
+<td style="text-align: right;">245.67</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td>count at MyApp.scala:28</td>
+<td style="text-align: right;">98.34</td>
+</tr>
+<tr>
+<td style="text-align: right;">0</td>
+<td>read at MyApp.scala:15</td>
+<td style="text-align: right;">15.21</td>
+</tr>
+</tbody>
+</table>
+</details>
+<h3 id="skew-detection">Skew detection</h3>
+<p>Detects task-level skew per job/stage using statistical thresholds. Reports stages where the maximum task duration exceeds 1.5x the 75th percentile, indicating that a few tasks are significantly slower than the rest. The <code>skewFactor</code> column quantifies how much the slowest task deviates from the pack.</p>
+<p>Code reference: <code>AnalysisQueries.SkewDetection</code></p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobId</span><span class="p">,</span>
+<span class="w">       </span><span class="n">j</span><span class="p">.</span><span class="n">jobName</span><span class="p">,</span>
+<span class="w">       </span><span class="n">t</span><span class="p">.</span><span class="n">stageId</span><span class="p">,</span>
+<span class="w">       </span><span class="k">COUNT</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">taskCount</span><span class="p">,</span>
+<span class="w">       </span><span class="n">ROUND</span><span class="p">(</span><span class="k">MAX</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">executorRunTime</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">maxDurationSec</span><span class="p">,</span>
+<span class="w">       </span><span class="n">ROUND</span><span class="p">(</span><span class="n">PERCENTILE</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">executorRunTime</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">medianDurationSec</span><span class="p">,</span>
+<span class="w">       </span><span class="n">ROUND</span><span class="p">(</span><span class="n">PERCENTILE</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">executorRunTime</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">.</span><span class="mi">75</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">p75DurationSec</span><span class="p">,</span>
+<span class="w">       </span><span class="n">ROUND</span><span class="p">(</span><span class="n">STDDEV</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">executorRunTime</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">stddevDurationSec</span><span class="p">,</span>
+<span class="w">       </span><span class="n">ROUND</span><span class="p">(</span><span class="k">MAX</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">executorRunTime</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">PERCENTILE</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">executorRunTime</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">.</span><span class="mi">75</span><span class="p">),</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">skewFactor</span>
+<span class="w">  </span><span class="k">FROM</span><span class="w"> </span><span class="n">job</span><span class="w"> </span><span class="n">j</span>
+<span class="w">  </span><span class="k">JOIN</span><span class="w"> </span><span class="n">stage</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">ARRAY_CONTAINS</span><span class="p">(</span><span class="n">j</span><span class="p">.</span><span class="n">stages</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">stageId</span><span class="p">)</span>
+<span class="w">  </span><span class="k">JOIN</span><span class="w"> </span><span class="n">task</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">stageId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">stageId</span>
+<span class="w"> </span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobId</span><span class="p">,</span><span class="w"> </span><span class="n">j</span><span class="p">.</span><span class="n">jobName</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">stageId</span>
+<span class="k">HAVING</span><span class="w"> </span><span class="k">MAX</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">executorRunTime</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="p">.</span><span class="mi">5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">PERCENTILE</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">executorRunTime</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">.</span><span class="mi">75</span><span class="p">)</span>
+<span class="w"> </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">skewFactor</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
+</code></pre></div>
+<details class="example">
+<summary>Sample output</summary>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">jobId</th>
+<th>jobName</th>
+<th style="text-align: right;">stageId</th>
+<th style="text-align: right;">taskCount</th>
+<th style="text-align: right;">maxDurationSec</th>
+<th style="text-align: right;">medianDurationSec</th>
+<th style="text-align: right;">p75DurationSec</th>
+<th style="text-align: right;">stddevDurationSec</th>
+<th style="text-align: right;">skewFactor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">2</td>
+<td>save at MyApp.scala:42</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">200</td>
+<td style="text-align: right;">45.20</td>
+<td style="text-align: right;">2.10</td>
+<td style="text-align: right;">3.50</td>
+<td style="text-align: right;">8.42</td>
+<td style="text-align: right;">12.91</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td>count at MyApp.scala:28</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: right;">12.80</td>
+<td style="text-align: right;">1.50</td>
+<td style="text-align: right;">2.00</td>
+<td style="text-align: right;">3.21</td>
+<td style="text-align: right;">6.40</td>
+</tr>
+</tbody>
+</table>
+</details>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.indexes", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

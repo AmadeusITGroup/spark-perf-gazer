@@ -1,0 +1,1251 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Performance Gazer for Apache Spark - A configurable Spark Listener for post-mortem analysis">
+      
+      
+      
+        <link rel="canonical" href="https://AmadeusITGroup.github.io/spark-perf-gazer/v0.0.2-rc7/contributor_guide/">
+      
+      
+        <link rel="prev" href="../user_guide/data_model/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Contributor Guide - PerfGazer</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  <link rel="alternate" type="text/plain" href="https://AmadeusITGroup.github.io/spark-perf-gazer/v0.0.2-rc7llms.txt" title="LLM-friendly documentation index" />
+  <link rel="alternate" type="text/plain" href="https://AmadeusITGroup.github.io/spark-perf-gazer/v0.0.2-rc7llms-full.txt" title="LLM-friendly full documentation" />
+
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#contributor-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="PerfGazer" class="md-header__button md-logo" aria-label="PerfGazer" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PerfGazer
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Contributor Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/AmadeusITGroup/spark-perf-gazer" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    AmadeusITGroup/spark-perf-gazer
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="PerfGazer" class="md-nav__button md-logo" aria-label="PerfGazer" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PerfGazer
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/AmadeusITGroup/spark-perf-gazer" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    AmadeusITGroup/spark-perf-gazer
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Available Artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../user_guide/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user_guide/setup_spark_properties/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup via Spark Properties
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user_guide/setup_code/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup via Code
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user_guide/databricks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Databricks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user_guide/driver_resources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Driver Resources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user_guide/analyze_sql/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze with SQL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user_guide/data_model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Model Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributor Guide
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributor Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#technical-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Technical overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sink-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sink architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sink architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#jsonsink" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JsonSink
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-new-sink" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a new sink
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dev-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dev environment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Documentation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#data-model-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data model documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#local-preview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local preview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#full-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full build
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#removing-a-published-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removing a published version
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scripts-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scripts reference
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#releasing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Releasing
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#technical-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Technical overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sink-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sink architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sink architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#jsonsink" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JsonSink
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-new-sink" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a new sink
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dev-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dev environment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Documentation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#data-model-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data model documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#local-preview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local preview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#full-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full build
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#removing-a-published-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removing a published version
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scripts-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scripts reference
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#releasing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Releasing
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="contributor-guide">Contributor Guide</h1>
+<h2 id="technical-overview">Technical overview</h2>
+<p>Once registered, PerfGazer will listen to multiple events coming from <code>Spark</code>.</p>
+<p>Some event objects at query/job/stage level are stored in memory for later processing.
+Those events are wrapped by subtypes of <code>Event</code>. They are mostly start events, with some exceptions.
+These are preserved in a <code>CappedConcurrentHashMap</code> that has a maximum size so that memory usage is limited.
+The Spark events wrapped are related to classes like: </p>
+<ul>
+<li><code>org.apache.spark...StageInfo</code></li>
+<li><code>org.apache.spark...SparkListenerJobEnd</code></li>
+<li>...</li>
+</ul>
+<p>When a SQL query, a job, a stage, or a task finishes, it triggers a callback mechanism. </p>
+<p>When the inputs are requested to <code>PerfGazer</code>, all collected <code>Event</code>s are inspected and transformed into <code>Report</code>s at the end
+of the query/job/stage execution enriched with some extra information only available then, according
+to the type of <code>Event</code>.</p>
+<p>A <code>Report</code> is a type that represents the report unit shared with the end-user.
+Report case classes are annotated with <code>@TableDoc</code> and <code>@ColumnDoc</code> to serve as the single source of truth
+for the data model documentation (see <a href="#data-model-documentation">Data model documentation</a> below).</p>
+<h2 id="sink-architecture">Sink architecture</h2>
+<p>Once reports are produced, they are handed to a <strong><code>Sink</code></strong> for persistence. The <code>Sink</code> trait
+(<code>core/.../Sink.scala</code>) is the extension point for output backends. Implementations must be
+thread-safe — <code>write</code> and <code>close</code> are invoked from the Spark <code>ListenerBus</code> thread. The trait also
+exposes <code>generateViewSnippet</code> so each backend can describe how to query its output (e.g. a SQL view).</p>
+<p>Two implementations ship today: <code>LogSink</code> (writes reports to the logger, mainly for debugging) and
+<code>JsonSink</code>, the default production sink.</p>
+<h3 id="jsonsink">JsonSink</h3>
+<p><code>JsonSink</code> never writes inline. To keep the <code>ListenerBus</code> thread free, it creates one <code>ReportWriter</code>
+per report type, each owning a queue and a single daemon thread; <code>write</code> just routes a report to the
+matching writer. The daemon thread drains the queue into a <code>BufferedReportWriter</code>, the only component
+that touches the filesystem. It buffers reports and flushes them as newline-delimited JSON when
+<code>writeBatchSize</code> is reached (or on a periodic flush), rolling to a new file once <code>fileSizeLimit</code>
+is exceeded. Each completed file is handed to a <code>FilePromoter</code>, which moves it to its final location
+("promotes" it) — what that involves depends on the destination (see below). On close (triggered by
+an explicit <code>close()</code> or the auto-registered JVM shutdown hook), the final partial file is flushed and
+promoted — no new file is rolled.</p>
+<p>How a completed file reaches its final location depends on the destination scheme, detected by
+<code>DestinationMode.detect</code>:</p>
+<ul>
+<li><strong>POSIX mode</strong> (path starts with <code>/</code>) — files are written directly to the destination. The
+  <code>NoOpFilePromoter</code> does nothing because the file is already in place.</li>
+<li><strong>HDFS mode</strong> (remote URI: <code>s3://</code>, <code>s3a://</code>, <code>abfss://</code>, <code>gs://</code>, <code>dbfs:/</code>, <code>hdfs://</code>) — files are
+  written to a local staging directory first, then the <code>HadoopFilePromoter</code> copies each completed
+  file to the remote destination via the Hadoop <code>FileSystem</code> API and deletes the local copy. On copy
+  failure the local file is retained for recovery, so staging doubles as a durability buffer. The
+  Hadoop <code>FileSystem</code> is initialized lazily (sinks are constructed during <code>spark.extraListeners</code>
+  init, before the <code>SparkContext</code> is ready), and <code>fs.*</code> credential keys are propagated from
+  <code>SparkConf</code> into the Hadoop <code>Configuration</code>.</li>
+</ul>
+<p>Any other scheme throws <code>IllegalArgumentException</code>.</p>
+<h3 id="adding-a-new-sink">Adding a new sink</h3>
+<p>Implement the <code>Sink</code> trait and provide a constructor taking a <code>SparkConf</code> so it can be instantiated
+from the <code>spark.perfgazer.sink.class</code> configuration. Keep <code>write</code> non-blocking if the backend is slow
+— follow the <code>ReportWriter</code> async-queue pattern rather than doing I/O on the calling thread.</p>
+<h2 id="build">Build</h2>
+<p>The project uses <code>sbt</code>. </p>
+<div class="highlight"><pre><span></span><code>sbt<span class="w"> </span><span class="nb">test</span><span class="w">                           </span><span class="c1"># run tests</span>
+sbt<span class="w"> </span>coverageOn<span class="w"> </span><span class="nb">test</span><span class="w"> </span>coverageReport<span class="w"> </span><span class="c1"># run tests with coverage checks on</span>
+</code></pre></div>
+<h2 id="dev-environment">Dev environment</h2>
+<p>We use IntelliJ IDEA, you can update the ScalaTest Configuration Template to avoid manual settings.</p>
+<div class="highlight"><pre><span></span><code>Go to Run -&gt; Edit Configurations -&gt; Edit configuration templates -&gt; ScalaTest 
+</code></pre></div>
+<p>For code formatting setup: </p>
+<div class="highlight"><pre><span></span><code>Settings -&gt; Editor -&gt; Code Style -&gt; Scala -&gt; Formatter: ScalaFMT
+</code></pre></div>
+<h2 id="run">Run</h2>
+<p>You can run a local <code>spark-shell</code> with the listener as follows:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># publish a local snapshot version</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">VERSION</span><span class="o">=</span><span class="m">0</span>.0.0-<span class="nv">$RANDOM</span>-<span class="nv">$RANDOM</span>
+sbt<span class="w"> </span><span class="s2">&quot;set ThisBuild / version := \&quot;</span><span class="nv">$VERSION</span><span class="s2">\&quot;&quot;</span><span class="w"> </span>publishLocal
+<span class="c1"># run spark shell with the listener (change the version accordingly) using the snippet provided above</span>
+spark-shell<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--packages<span class="w"> </span>io.github.amadeusitgroup:perfgazer_spark_3-5-2_2.12:<span class="nv">$VERSION</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--conf<span class="w"> </span>spark.extraListeners<span class="o">=</span>com.amadeus.perfgazer.PerfGazer<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--conf<span class="w"> </span>spark.perfgazer.sink.class<span class="o">=</span>com.amadeus.perfgazer.JsonSink<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--conf<span class="w"> </span>spark.perfgazer.sink.json.destination<span class="o">=</span>/tmp/perfgazer/applicationId<span class="o">={{</span>spark.app.id<span class="o">}}</span>/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--conf<span class="w"> </span><span class="s2">&quot;spark.driver.bindAddress=127.0.0.1&quot;</span><span class="w"> </span>--conf<span class="w"> </span><span class="s2">&quot;spark.driver.host=127.0.0.1&quot;</span>
+</code></pre></div>
+<p>Then you can run something like this in the shell to see logs from the listener:</p>
+<div class="highlight"><pre><span></span><code><span class="n">sc</span><span class="p">.</span><span class="n">setLogLevel</span><span class="p">(</span><span class="s">&quot;INFO&quot;</span><span class="p">)</span><span class="w"> </span><span class="c1">// to change the log level</span>
+<span class="n">spark</span><span class="p">.</span><span class="n">sql</span><span class="p">(</span><span class="s">&quot;select 1&quot;</span><span class="p">).</span><span class="n">show</span><span class="p">()</span>
+<span class="p">:</span><span class="n">quit</span>
+</code></pre></div>
+<h2 id="documentation">Documentation</h2>
+<p>The project uses <a href="https://www.mkdocs.org/">MkDocs</a> with the <a href="https://squidfunk.github.io/mkdocs-material/">Material theme</a>.</p>
+<h3 id="data-model-documentation">Data model documentation</h3>
+<p>The data model (SQL view schemas) is documented via custom annotations on the report case classes in <code>core/.../reports/</code>.
+A build-time generator (<code>doc-generator/</code>) reads these annotations and produces:</p>
+<ul>
+<li><code>docs/user_guide/data_model.md</code> — human-friendly Markdown tables with SQL types</li>
+<li><code>docs/schema/perfgazer-schema.json</code> — agent-friendly structured JSON</li>
+</ul>
+<p>When adding or modifying fields in a report case class, annotate them with <code>@ColumnDoc</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@ColumnDoc</span><span class="p">(</span><span class="n">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Wall-clock duration of the task&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">unit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;ms&quot;</span><span class="p">)</span>
+<span class="n">taskDuration</span><span class="p">:</span><span class="w"> </span><span class="nc">Long</span><span class="p">,</span>
+</code></pre></div>
+<p>When adding a new report case class, annotate the class with <code>@TableDoc</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@TableDoc</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;task&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Task-level execution metrics. One row per completed Spark task.&quot;</span><span class="p">)</span>
+<span class="k">case</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">TaskReport</span><span class="p">(</span>
+<span class="w">  </span><span class="p">...</span>
+</code></pre></div>
+<p>Both generated files are gitignored — they are produced by CI and by the local preview script.</p>
+<h3 id="local-preview">Local preview</h3>
+<p>First, generate the data model schemas from the annotated case classes:</p>
+<div class="highlight"><pre><span></span><code>sbt<span class="w"> </span>docGenerator/run
+</code></pre></div>
+<p>Then serve the site locally:</p>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>mkdocs<span class="w"> </span>mkdocs-material
+mkdocs<span class="w"> </span>serve
+</code></pre></div>
+<p>Open http://127.0.0.1:8000 in your browser.</p>
+<p>Alternatively, <code>./scripts/docs-serve-local.sh</code> runs both steps in sequence.</p>
+<h3 id="full-build">Full build</h3>
+<p>To reproduce the full CI documentation build (including <code>llms.txt</code> for AI agents):</p>
+<div class="highlight"><pre><span></span><code>./scripts/docs-build.sh
+</code></pre></div>
+<p>This runs schema generation, <code>mkdocs build</code>, and <code>generate-llms-txt.sh</code>. Output goes to <code>site/</code>.</p>
+<h3 id="deployment">Deployment</h3>
+<p>Documentation is versioned using <a href="https://github.com/jimporter/mike">mike</a> and deployed to GitHub Pages automatically under the following conditions:</p>
+<ul>
+<li>When pushing to <code>main</code> with changes in <code>docs/</code>, <code>mkdocs.yml</code>, report classes, or <code>doc-generator/</code>, the <code>dev</code> version is deployed.</li>
+<li>When publishing a GitHub Release, a versioned copy (e.g. <code>v0.1.0</code>) is deployed and the <code>latest</code> alias is updated.</li>
+</ul>
+<p>The doc site is available at <a href="https://amadeusitgroup.github.io/spark-perf-gazer/">amadeusitgroup.github.io/spark-perf-gazer</a>.</p>
+<h4 id="removing-a-published-version">Removing a published version</h4>
+<p>Deleting a GitHub Release does <strong>not</strong> remove the version from the docs site — versioned docs live as static files on the <code>gh-pages</code> branch, independent of GitHub Releases.</p>
+<p>To remove a version from the docs site:</p>
+<div class="highlight"><pre><span></span><code>mike<span class="w"> </span>delete<span class="w"> </span>&lt;version&gt;<span class="w">   </span><span class="c1"># e.g. mike delete v0.1.0</span>
+git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>gh-pages
+</code></pre></div>
+<p>If you also want to clean up the GitHub Release and its tag, do that separately via the GitHub UI or CLI.</p>
+<h3 id="scripts-reference">Scripts reference</h3>
+<table>
+<thead>
+<tr>
+<th>Script</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>scripts/docs-serve-local.sh</code></td>
+<td>Full local docs build + live preview server (<code>mkdocs serve</code>)</td>
+</tr>
+<tr>
+<td><code>scripts/docs-build.sh</code></td>
+<td>Full docs build (schemas + MkDocs + llms.txt), same as CI</td>
+</tr>
+<tr>
+<td><code>scripts/generate-llms-txt.sh</code></td>
+<td>Generate <code>llms.txt</code> and <code>llms-full.txt</code> in <code>docs/</code> for agent consumption</td>
+</tr>
+</tbody>
+</table>
+<h2 id="contributing">Contributing</h2>
+<p>To contribute to this project, see <a href="https://github.com/AmadeusITGroup/spark-perf-gazer/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</p>
+<h2 id="releasing">Releasing</h2>
+<p>To release a new version of this project, see <a href="https://github.com/AmadeusITGroup/spark-perf-gazer/blob/main/RELEASING.md">RELEASING.md</a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.indexes", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,23 @@
+# PerfGazer
+
+> Performance Gazer for Apache Spark — a configurable Spark Listener for post-mortem analysis.
+
+- [GitHub](https://github.com/AmadeusITGroup/spark-perf-gazer)
+- [Full markdown documentation](https://amadeusitgroup.github.io/spark-perf-gazer/latest/llms-full.txt)
+
+## Docs
+
+- [Home](https://amadeusitgroup.github.io/spark-perf-gazer/latest//)
+- [Available Artifacts](https://amadeusitgroup.github.io/spark-perf-gazer/latest/artifacts/)
+- [Index](https://amadeusitgroup.github.io/spark-perf-gazer/latest/user_guide/)
+- [Setup via Spark Properties](https://amadeusitgroup.github.io/spark-perf-gazer/latest/user_guide/setup_spark_properties/)
+- [Setup via Code](https://amadeusitgroup.github.io/spark-perf-gazer/latest/user_guide/setup_code/)
+- [Databricks](https://amadeusitgroup.github.io/spark-perf-gazer/latest/user_guide/databricks/)
+- [Driver Resources](https://amadeusitgroup.github.io/spark-perf-gazer/latest/user_guide/driver_resources/)
+- [Analyze with SQL](https://amadeusitgroup.github.io/spark-perf-gazer/latest/user_guide/analyze_sql/)
+- [Data Model Reference](https://amadeusitgroup.github.io/spark-perf-gazer/latest/user_guide/data_model/)
+- [Contributor Guide](https://amadeusitgroup.github.io/spark-perf-gazer/latest/contributor_guide/)
+
+## Data Model
+
+- [Schema (JSON)](https://amadeusitgroup.github.io/spark-perf-gazer/latest/schema/perfgazer-schema.json)

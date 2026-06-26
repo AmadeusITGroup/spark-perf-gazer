@@ -1,0 +1,1118 @@
+# PerfGazer — Full Documentation
+
+# PerfGazer
+
+Performance Gazer for Apache Spark.
+
+PerfGazer is a configurable Spark Listener that allows you to retrieve important stats about Spark SQL queries, jobs, and stages in a post-mortem way.
+
+## Architecture
+
+![PerfGazer Architecture](sparklear-archi.drawio.svg)
+
+PerfGazer plugs into the Spark Driver as a **SparkListener**, alongside built-in listeners like `JobProgressListener` or `AppStatusListener`. The Spark **ListenerBus** dispatches execution events to all registered listeners. While the standard listeners feed the Spark UI, PerfGazer captures the same events and routes them through a configurable **Sink** to produce structured reports (SQL, Jobs, Stages, Tasks) that can be queried and analyzed programmatically — no UI navigation required.
+
+## Why PerfGazer?
+
+The Spark UI has limitations:
+
+- Manual process (UI navigation)
+- Often slow to load
+- Limited retention (stats data is often purged)
+- Not made for analytics
+
+PerfGazer solves these problems by providing programmatic access to execution statistics.
+
+## Features
+
+- Reports at every level: SQL queries, jobs, stages, and tasks
+- Full physical plan extraction with per-operator metrics
+- Stage-level I/O, shuffle, CPU time, and spill tracking
+- Task-level granularity: detect skew, GC pressure, and shuffle bottlenecks
+- JSON output queryable directly with Spark SQL (views auto-generated)
+- Configurable: enable or disable each report level independently
+- Pluggable sink architecture via the `Sink` trait
+- Zero-code setup through `spark.extraListeners` configuration
+
+## Next Steps
+
+- [User Guide](user_guide/index.md) - Setup, configuration, and data analysis examples
+- [Contributor Guide](contributor_guide.md) - Build and development
+
+
+---
+
+# Available Artifacts
+
+<!-- Auto-generated from .github/artifact-matrix.json — do not edit by hand. -->
+
+PerfGazer publishes a separate artifact for every supported Spark / Scala
+combination. Pick the row that matches your cluster and use the coordinates
+below.
+
+## Compatibility Matrix
+
+| Spark | Scala | Java | Databricks Runtime |
+|-------|-------|------|--------------------|
+| 3.4.1 | 2.12 | 8 | 13.3 |
+| 3.5.2 | 2.12 | 8 | 16.4 |
+| 3.5.2 | 2.13 | 17 | 16.4 |
+| 4.1.0 | 2.13 | 21 | 18.1 |
+
+## Dependency Coordinates
+
+Replace **`VERSION`** with the latest release:
+![GitHub Release](https://img.shields.io/github/v/release/AmadeusITGroup/spark-perf-gazer)
+
+### Spark 3.4.1 — Scala 2.12
+
+Databricks Runtime **13.3** · Java 8
+
+=== "spark-shell / spark-submit"
+
+    ```bash
+    --packages io.github.amadeusitgroup:perfgazer_spark_3-4-1_2.12:VERSION
+    ```
+
+=== "sbt"
+
+    ```scala
+    libraryDependencies += "io.github.amadeusitgroup" %% "perfgazer_spark_3-4-1_2.12" % "VERSION"
+    ```
+
+=== "Maven"
+
+    ```xml
+    <dependency>
+        <groupId>io.github.amadeusitgroup</groupId>
+        <artifactId>perfgazer_spark_3-4-1_2.12</artifactId>
+        <version>VERSION</version>
+    </dependency>
+    ```
+
+=== "Gradle"
+
+    ```groovy
+    implementation 'io.github.amadeusitgroup:perfgazer_spark_3-4-1_2.12:VERSION'
+    ```
+
+### Spark 3.5.2 — Scala 2.12
+
+Databricks Runtime **16.4** · Java 8
+
+=== "spark-shell / spark-submit"
+
+    ```bash
+    --packages io.github.amadeusitgroup:perfgazer_spark_3-5-2_2.12:VERSION
+    ```
+
+=== "sbt"
+
+    ```scala
+    libraryDependencies += "io.github.amadeusitgroup" %% "perfgazer_spark_3-5-2_2.12" % "VERSION"
+    ```
+
+=== "Maven"
+
+    ```xml
+    <dependency>
+        <groupId>io.github.amadeusitgroup</groupId>
+        <artifactId>perfgazer_spark_3-5-2_2.12</artifactId>
+        <version>VERSION</version>
+    </dependency>
+    ```
+
+=== "Gradle"
+
+    ```groovy
+    implementation 'io.github.amadeusitgroup:perfgazer_spark_3-5-2_2.12:VERSION'
+    ```
+
+### Spark 3.5.2 — Scala 2.13
+
+Databricks Runtime **16.4** · Java 17
+
+=== "spark-shell / spark-submit"
+
+    ```bash
+    --packages io.github.amadeusitgroup:perfgazer_spark_3-5-2_2.13:VERSION
+    ```
+
+=== "sbt"
+
+    ```scala
+    libraryDependencies += "io.github.amadeusitgroup" %% "perfgazer_spark_3-5-2_2.13" % "VERSION"
+    ```
+
+=== "Maven"
+
+    ```xml
+    <dependency>
+        <groupId>io.github.amadeusitgroup</groupId>
+        <artifactId>perfgazer_spark_3-5-2_2.13</artifactId>
+        <version>VERSION</version>
+    </dependency>
+    ```
+
+=== "Gradle"
+
+    ```groovy
+    implementation 'io.github.amadeusitgroup:perfgazer_spark_3-5-2_2.13:VERSION'
+    ```
+
+### Spark 4.1.0 — Scala 2.13
+
+Databricks Runtime **18.1** · Java 21
+
+=== "spark-shell / spark-submit"
+
+    ```bash
+    --packages io.github.amadeusitgroup:perfgazer_spark_4-1-0_2.13:VERSION
+    ```
+
+=== "sbt"
+
+    ```scala
+    libraryDependencies += "io.github.amadeusitgroup" %% "perfgazer_spark_4-1-0_2.13" % "VERSION"
+    ```
+
+=== "Maven"
+
+    ```xml
+    <dependency>
+        <groupId>io.github.amadeusitgroup</groupId>
+        <artifactId>perfgazer_spark_4-1-0_2.13</artifactId>
+        <version>VERSION</version>
+    </dependency>
+    ```
+
+=== "Gradle"
+
+    ```groovy
+    implementation 'io.github.amadeusitgroup:perfgazer_spark_4-1-0_2.13:VERSION'
+    ```
+
+
+
+---
+
+# User Guide
+
+Follow these steps to get PerfGazer up and running.
+
+## Step 1 — Annotate your Spark code
+
+This step is optional but strongly encouraged as it will make the listener data much easier to analyze, specially with Spark applications with several jobs.
+
+Add job descriptions to your Spark code using `setJobDescription` or `setLocalProperty`:
+
+```scala
+spark.sparkContext.setJobDescription("my-etl-job: loading customer data")
+```
+
+or with a job group:
+
+```scala
+spark.sparkContext.setJobGroup("my-etl-job", "loading customer data")
+```
+
+These labels will appear in the collected reports and help you correlate metrics back to specific parts of your application.
+
+## Step 2 — Set up the listener
+
+The listener can be configured in two ways. The default and recommended approach is via Spark properties, which requires no code changes.
+
+- [Configuration via Spark properties](setup_spark_properties.md) ← start here
+- [Configuration via code change](setup_code.md)
+
+For Databricks-specific setup, see [Databricks](databricks.md).
+
+## Step 3 — Run your Spark application
+
+Run your application as usual. PerfGazer will collect metrics in the background and flush them to the configured sink.
+
+PerfGazer registers a shutdown hook that ensures the listener is closed gracefully when the driver JVM exits, regardless of which setup method you used.
+
+## Step 4 — Analyze the listener data
+
+Once your application has run, the collected reports can be analyzed in different ways depending on your environment and preference:
+
+- [Analyze using SQL](analyze_sql.md)
+
+> Note: at application shutdown, PerfGazer prints view creation snippets in the logs that match your configuration. These are a convenient starting point for SQL analysis.
+
+
+---
+
+# Setup via Spark Properties
+
+This approach requires no code changes. You only need the PerfGazer JAR on the classpath.
+
+A typical usage via `spark-shell` is shown below (for `spark-submit` it is similar).
+Use the latest release version: ![GitHub Release](https://img.shields.io/github/v/release/AmadeusITGroup/spark-perf-gazer).
+
+```
+spark-shell \
+  --packages io.github.amadeusitgroup:perfgazer_spark_3-5-2_2.12:0.0.1 \
+  --conf spark.driver.bindAddress=127.0.0.1 \
+  --conf spark.driver.host=127.0.0.1 \
+  --conf spark.extraListeners=com.amadeus.perfgazer.PerfGazer \
+  --conf spark.perfgazer.sink.class=com.amadeus.perfgazer.JsonSink \
+  --conf spark.perfgazer.sink.json.destination=/tmp/perfgazer/jsonsink/date={{perfgazer.now.year}}-{{perfgazer.now.month}}-{{perfgazer.now.day}}/applicationId={{spark.app.id}}
+```
+
+> Note: `spark.driver.bindAddress` and `spark.driver.host` force Spark to bind to the loopback interface (`127.0.0.1`). This is required on macOS to prevent the OS firewall from blocking Spark's internal Netty RPC channel. Without these settings, macOS may prompt to allow network access and fail if denied.
+
+## Available properties
+
+### PerfGazer settings
+
+| Property | Default | Description |
+|---|---|---|
+| `spark.perfgazer.sql.enabled` | `true` | Enable/disable SQL-level metrics collection |
+| `spark.perfgazer.jobs.enabled` | `true` | Enable/disable job-level metrics collection |
+| `spark.perfgazer.stages.enabled` | `true` | Enable/disable stage-level metrics collection |
+| `spark.perfgazer.tasks.enabled` | `false` | Enable/disable task-level metrics collection |
+| `spark.perfgazer.max.cache.size` | `100` | Maximum number of events to keep in memory |
+| `spark.perfgazer.sink.class` | — | Fully qualified class name of the sink to use |
+
+### JsonSink settings
+
+| Property | Default | Description |
+|---|---|---|
+| `spark.perfgazer.sink.json.destination` | — | Destination path for JSON output. Either a local POSIX path (written directly by the driver) or a remote URI (`s3a://`, `abfss://`, `gs://`, `dbfs:/`, `hdfs://`, …), in which case files are first written to a local staging directory on the driver and then promoted to the remote destination (see `spark.perfgazer.sink.json.stagingDir`). Should include a partition that uniquely identifies the run (e.g. `applicationId` or `runId`) so that data from different runs does not get mixed. |
+| `spark.perfgazer.sink.json.writeBatchSize` | `100` | Number of records to accumulate before writing to disk |
+| `spark.perfgazer.sink.json.fileSizeLimit` | `209715200` (200 MB) | File size threshold before rolling to a new file |
+| `spark.perfgazer.sink.json.asyncFlushTimeoutMillisecsKey` | — | Max time between periodic flushes (ms) |
+| `spark.perfgazer.sink.json.waitForCloseTimeoutMillisecsKey` | — | Max time to wait for graceful sink close (ms) |
+| `spark.perfgazer.sink.json.stagingDir` | `/tmp/perfgazer/{{spark.app.id}}/` | Local staging directory used in HDFS mode (remote `destination` URI). Ignored when `destination` is a local POSIX path. Supports the same placeholders as `destination`. |
+
+### Destination placeholders
+
+The destination path supports `{{key}}` placeholders resolved at runtime:
+
+| Placeholder | Description |
+|---|---|
+| `{{perfgazer.now.year}}` | Current year (4 digits) |
+| `{{perfgazer.now.month}}` | Current month (2 digits) |
+| `{{perfgazer.now.day}}` | Current day (2 digits) |
+| `{{perfgazer.now.hour}}` | Current hour (2 digits) |
+| `{{perfgazer.now.minute}}` | Current minute (2 digits) |
+| `{{perfgazer.now.second}}` | Current second (2 digits) |
+| `{{perfgazer.runid}}` | JVM-stable UUID, unique per application run |
+| `{{spark.*}}` | Any Spark configuration property, e.g. `{{spark.app.id}}` |
+
+Date, time, and runId values are captured once at JVM startup and remain stable across multiple resolutions.
+
+> Note: when writing to a remote `destination`, see [Driver Resources](driver_resources.md) for guidance on staging disk usage, storage locality, and driver CPU.
+
+
+---
+
+# Setup via Code Change
+
+This approach configures and registers the listener programmatically. Include the library as a dependency in your project.
+
+This approach is required when the JVM is launched before you can add your properties to it. This seems to be the case in Databricks.
+
+```scala
+import com.amadeus.perfgazer.{JsonSink, PerfGazer, PerfGazerConfig}
+
+val jsonSink = new JsonSink(
+  JsonSink.Config(
+    destination = "/dbfs/perfgazer/v1/",
+    writeBatchSize = 100,
+    fileSizeLimit = 10L * 1024
+  ),
+  spark.sparkContext.getConf
+)
+
+val perfGazerConfig = PerfGazerConfig(
+  sqlEnabled = true,
+  jobsEnabled = true,
+  stagesEnabled = true,
+  tasksEnabled = false,
+  maxCacheSize = 100
+)
+
+val perfGazer = new PerfGazer(perfGazerConfig, jsonSink)
+
+// Register the listener
+spark.sparkContext.addSparkListener(perfGazer)
+
+// Your Spark code here ...
+
+// At the end of your application, remove the listener and close it properly
+spark.sparkContext.removeSparkListener(perfGazer)
+perfGazer.close()
+```
+
+> Note: a shutdown hook is registered automatically on construction, so the listener will be closed on JVM termination even if you omit the explicit `removeSparkListener`/`close()` calls. That said, calling them explicitly at the end of your application is still good practice to ensure a clean, predictable teardown.
+
+
+> Note: the destination should include a partition that uniquely identifies the application run (e.g. `applicationId={{spark.app.id}}` or `runId={{perfgazer.runid}}`) so that data from different runs does not get mixed. See [destination placeholders](setup_spark_properties.md#destination-placeholders) for available placeholders.
+
+
+> Note: when `destination` is a remote URI (`s3a://`, `abfss://`, `gs://`, `dbfs:/`, `hdfs://`, …), the sink first writes files to a local staging directory and then promotes them to the remote destination. The staging directory defaults to `/tmp/perfgazer/{{spark.app.id}}/` and can be overridden via the `stagingDir` field of `JsonSink.Config` (it supports the same [placeholders](setup_spark_properties.md#destination-placeholders) as `destination`):
+>
+> ```scala
+> JsonSink.Config(
+>   destination = "abfss://container@account.dfs.core.windows.net/perfgazer/v1/applicationId={{spark.app.id}}/",
+>   stagingDir = "/local/ssd/perfgazer/{{spark.app.id}}/"
+> )
+> ```
+
+
+> Note: when writing to a remote `destination`, see [Driver Resource Considerations](driver_resources.md) for guidance on staging disk usage, storage locality, and driver CPU.
+
+
+---
+
+# Databricks Setup
+
+## Configuring `spark.extraListeners`
+
+When you configure PerfGazer via `spark.extraListeners` (see [here](setup_spark_properties.md)), you override the default Databricks listener that powers the post-mortem Spark UI. To keep the Spark UI working, include the Databricks event logging listener alongside PerfGazer, separated by a comma:
+
+```
+spark.extraListeners=com.amadeus.perfgazer.PerfGazer,com.databricks.backend.daemon.driver.DBCEventLoggingListener
+```
+
+> If you do **not** set `spark.extraListeners` yourself, Databricks registers its listener automatically and you don't need to worry about this.
+
+## Installing the JAR
+
+If you configure PerfGazer via `spark.extraListeners` (i.e. not bundled in your application), the JAR must be on the Databricks classpath before Spark initializes. Use an init script for this:
+
+1. Download the PerfGazer JAR from [Maven Central](https://central.sonatype.com/namespace/io.github.amadeusitgroup) and upload it to DBFS (or another location accessible by the cluster, like a Volume).
+2. Create an [init script](https://docs.databricks.com/en/init-scripts/index.html) that copies it at startup. For example:
+    ```shell
+    cp -f /dbfs/<some_path>/perfgazer_spark_<some_version>.jar /databricks/jars
+    ```
+3. Attach the init script to your cluster or job configuration.
+
+> If you use PerfGazer [via code](setup_code.md) instead, you can include it as a dependency in your fat JAR and skip the init script entirely.
+
+
+
+---
+
+# Driver Resources
+
+PerfGazer runs entirely on the Spark driver: reports are collected, buffered, and written there. In HDFS mode (a remote `destination` URI), the driver also stages files on its local disk and copies them to remote storage. Keep the following in mind so PerfGazer does not put undue pressure on the driver.
+
+## Local staging disk (HDFS mode)
+
+In HDFS mode, reports are first written to a local staging directory on the driver before being promoted to the remote destination. Size `spark.perfgazer.sink.json.fileSizeLimit` (or `JsonSink.Config(fileSizeLimit = ...)` in code) so staged files cannot fill the driver's local disk: at any moment the staging area holds roughly one file per enabled report type up to this limit, plus any files retained after a failed promotion.
+
+## Storage locality (HDFS mode)
+
+Promotion copies each completed file over the network to the remote destination. To keep these copies fast, pick a destination that is network-close to the driver — ideally in the same region or zone (for example, the same virtual network or resource group as the cluster). A distant destination increases copy time and can slow down the writer threads.
+
+## Driver CPU
+
+Reports are written asynchronously, with one dedicated writer thread per enabled report type (SQL, jobs, stages, tasks). Make sure the driver has enough CPU headroom so this background work does not compete with your application. This applies in both POSIX and HDFS mode; in HDFS mode the writer threads additionally perform the network copy, so the headroom matters more. Disabling report types you don't need (for example `spark.perfgazer.tasks.enabled=false`, or `PerfGazerConfig(tasksEnabled = false)` in code) reduces the number of writer threads.
+
+
+---
+
+# Analyze using SQL
+
+## Create PerfGazer views 
+
+PerfGazer exposes SQL queries (called `snippets`) to create temporary views to access the PerfGazer data produced by the Spark application. 
+You can run those snippets to perform analytics on the SQL queries, jobs, etc.
+
+Within the Spark application, you can access such snippets by doing: 
+
+```scala
+import com.amadeus.perfgazer.PerfGazer
+val perfGazer = PerfGazer.instance.getOrElse(throw new RuntimeException("Oops"))
+
+val snippets: Set[String] = perfGazer.getSnippets
+// snippets.foreach(println) // print them
+// snippets.foreach(spark.sql) // launch them
+```
+
+Additionally, at Spark application shutdown, PerfGazer will display those snippets in the logs (info log level). You can copy and paste them in a notebook to start performing investigations. 
+
+```sql
+-- Copy and paste the snippets shown in the logs by Perfgazer during shutdown (info level)
+CREATE OR REPLACE TEMPORARY VIEW sql ...
+CREATE OR REPLACE TEMPORARY VIEW job ...
+CREATE OR REPLACE TEMPORARY VIEW stage ...
+CREATE OR REPLACE TEMPORARY VIEW task ...
+
+```
+
+## Query across all runs
+
+The snippets above point to the current run. To create a view spanning all runs available, you can use `**` with a `basePath`. 
+For example:
+
+```sql
+CREATE OR REPLACE TEMPORARY VIEW [sql|job|stage|...]
+USING json
+OPTIONS (
+  path "<base_path>/**/[sql|job|stage|...]-reports-*.json",
+  basePath "<base_path>/"
+);
+```
+
+Replace `<base_path>` with your actual base destination. 
+
+The `basePath` option indicates Spark from which point start performing auto-discover of partition columns (e.g. `applicationId`).
+
+Mind that if you use `basePath` and new partitions are discovered, the joins between the views will have to take into account partition columns if meaningful to associate correctly jobs/stages/... from different runs.
+
+## Analyze PerfGazer data
+
+The SQL queries below are available as constants in `com.amadeus.perfgazer.AnalysisQueries`. That class is the definitive source of truth for these queries and is tested in the integration test suite.
+
+You can start deep diving into all tasks with their parent stage and job with a query like the following:
+
+```sql
+SELECT *
+  FROM job j
+  JOIN stage s ON ARRAY_CONTAINS(j.stages, s.stageId)
+  JOIN task t ON t.stageId = s.stageId;
+```
+
+Below we provide a collection of queries you can run to explore various performance aspects of your Spark application.
+
+### Jobs by CPU usage
+
+Aggregates executor CPU time across all stages of each job, converted from nanoseconds to seconds.
+
+Code reference: `AnalysisQueries.JobsByCpuUsage`
+
+```sql
+SELECT j.jobId,
+       j.jobName,
+       ROUND(SUM(s.execCpuNs) / 1e9, 2) AS cpuTimeSec
+  FROM job j
+  JOIN stage s ON ARRAY_CONTAINS(j.stages, s.stageId)
+ GROUP BY j.jobId, j.jobName
+ ORDER BY cpuTimeSec DESC;
+```
+
+??? example "Sample output"
+
+    | jobId | jobName              | cpuTimeSec |
+    |------:|----------------------|-----------:|
+    |     2 | save at MyApp.scala:42 |    1782.43 |
+    |     1 | count at MyApp.scala:28 |     624.18 |
+    |     0 | read at MyApp.scala:15  |      84.92 |
+
+### Jobs by I/O volumes
+
+Shows input, output, shuffle read/write and total I/O per job, all in MB.
+
+Code reference: `AnalysisQueries.JobsByIoVolumes`
+
+```sql
+SELECT j.jobId,
+       j.jobName,
+       ROUND(SUM(s.readBytes)         / 1048576, 2) AS inputMb,
+       ROUND(SUM(s.writeBytes)        / 1048576, 2) AS outputMb,
+       ROUND(SUM(s.shuffleReadBytes)  / 1048576, 2) AS shuffleReadMb,
+       ROUND(SUM(s.shuffleWriteBytes) / 1048576, 2) AS shuffleWriteMb,
+       ROUND(SUM(s.readBytes + s.writeBytes
+               + s.shuffleReadBytes + s.shuffleWriteBytes) / 1048576, 2) AS totalIoMb
+  FROM job j
+  JOIN stage s ON ARRAY_CONTAINS(j.stages, s.stageId)
+ GROUP BY j.jobId, j.jobName
+ ORDER BY totalIoMb DESC;
+```
+
+??? example "Sample output"
+
+    | jobId | jobName              | inputMb | outputMb | shuffleReadMb | shuffleWriteMb | totalIoMb |
+    |------:|----------------------|--------:|---------:|--------------:|---------------:|----------:|
+    |     2 | save at MyApp.scala:42 | 1024.00 |   512.34 |        256.78 |         248.91 |   2042.03 |
+    |     1 | count at MyApp.scala:28 |  512.00 |     0.00 |        128.45 |         130.12 |    770.57 |
+    |     0 | read at MyApp.scala:15  |  256.00 |     0.00 |          0.00 |           0.00 |    256.00 |
+
+### Jobs with spill
+
+Lists only jobs where memory or disk spill occurred, in MB.
+
+Code reference: `AnalysisQueries.JobsWithSpill`
+
+```sql
+SELECT j.jobId,
+       j.jobName,
+       ROUND(SUM(s.memoryBytesSpilled) / 1048576, 2) AS memorySpillMb,
+       ROUND(SUM(s.diskBytesSpilled)   / 1048576, 2) AS diskSpillMb
+  FROM job j
+  JOIN stage s ON ARRAY_CONTAINS(j.stages, s.stageId)
+ GROUP BY j.jobId, j.jobName
+HAVING SUM(s.memoryBytesSpilled) > 0
+    OR SUM(s.diskBytesSpilled)   > 0
+ ORDER BY diskSpillMb DESC;
+```
+
+??? example "Sample output"
+
+    | jobId | jobName              | memorySpillMb | diskSpillMb |
+    |------:|----------------------|--------------:|------------:|
+    |     2 | save at MyApp.scala:42 |       2048.00 |      384.56 |
+    |     1 | count at MyApp.scala:28 |        512.00 |       64.12 |
+
+### All joins with CPU and I/O from their job
+
+Explodes the SQL plan nodes to find join operators, then enriches them with the aggregated CPU time and I/O volumes of the parent job.
+
+```sql
+WITH job_stats AS (
+  SELECT j.jobId,
+         j.jobName,
+         j.sqlId,
+         ROUND(SUM(s.execCpuNs) / 1e9, 2) AS cpuTimeSec,
+         ROUND(SUM(s.readBytes + s.writeBytes
+                 + s.shuffleReadBytes + s.shuffleWriteBytes) / 1048576, 2) AS totalIoMb
+    FROM job j
+    JOIN stage s ON ARRAY_CONTAINS(j.stages, s.stageId)
+   GROUP BY j.jobId, j.jobName, j.sqlId
+)
+SELECT sq.sqlId,
+       sq.description,
+       n.nodeName   AS joinNode,
+       js.jobId,
+       js.cpuTimeSec,
+       js.totalIoMb
+  FROM sql sq
+  JOIN job_stats js ON js.sqlId = CAST(sq.sqlId AS STRING)
+       LATERAL VIEW EXPLODE(sq.nodes) AS n
+ WHERE n.nodeName LIKE '%Join%'
+ ORDER BY js.cpuTimeSec DESC;
+```
+
+??? example "Sample output"
+
+    | sqlId | description          | joinNode          | jobId | cpuTimeSec | totalIoMb |
+    |------:|----------------------|-------------------|------:|-----------:|----------:|
+    |     2 | Join orders with customers | SortMergeJoin     |     2 |     124.57 |   2042.03 |
+    |     1 | Enrich transactions  | BroadcastHashJoin |     1 |      58.23 |    770.57 |
+    |     0 | Aggregate daily totals | ShuffledHashJoin  |     0 |      32.11 |    256.00 |
+
+### Join node metrics
+
+Explodes SQL plan nodes and returns metrics for join operators. Useful for inspecting the number of output rows produced by each join.
+
+Code reference: `AnalysisQueries.JoinNodeMetrics`
+
+```sql
+SELECT sqlId,
+       node.nodeName,
+       node.jobName,
+       FROM_JSON(TO_JSON(node.metrics), 'MAP<STRING, STRING>') AS metrics
+  FROM (SELECT sqlId, EXPLODE(nodes) AS node FROM sql) subquery
+ WHERE node.nodeName LIKE '%Join%';
+```
+
+??? example "Sample output"
+
+    | sqlId | nodeName          | jobName | metrics                          |
+    |------:|-------------------|---------|----------------------------------|
+    |     1 | BroadcastHashJoin | jobjoin | {number of output rows -> 2}     |
+    |     2 | SortMergeJoin     | bigjoin | {number of output rows -> 10000} |
+
+### Scan node metrics
+
+Explodes SQL plan nodes and returns metrics for scan parquet operators. Useful for checking how many files and rows were read by each scan.
+
+Code reference: `AnalysisQueries.ScanNodeMetrics`
+
+```sql
+SELECT sqlId,
+       node.nodeName,
+       node.jobName,
+       FROM_JSON(TO_JSON(node.metrics), 'MAP<STRING, STRING>') AS metrics
+  FROM (SELECT sqlId, EXPLODE(nodes) AS node FROM sql) subquery
+ WHERE node.nodeName LIKE '%Scan parquet%';
+```
+
+??? example "Sample output"
+
+    | sqlId | nodeName                    | jobName | metrics                                                        |
+    |------:|-----------------------------|---------|----------------------------------------------------------------|
+    |     1 | Scan parquet delta.`/path`  | jobjoin | {number of files read -> 1, number of output rows -> 252}      |
+    |     1 | Scan parquet delta.`/path2` | jobjoin | {number of files read -> 4, number of output rows -> 9000}     |
+
+### Wall clock duration of jobs
+
+Computes the elapsed wall-clock time of each job in seconds.
+
+Code reference: `AnalysisQueries.WallClockDurationOfJobs`
+
+```sql
+SELECT j.jobId,
+       j.jobName,
+       ROUND((j.jobEndTime - j.jobStartTime) / 1000, 2) AS wallClockSec
+  FROM job j
+ ORDER BY wallClockSec DESC;
+```
+
+??? example "Sample output"
+
+    | jobId | jobName              | wallClockSec |
+    |------:|----------------------|-------------:|
+    |     2 | save at MyApp.scala:42 |       245.67 |
+    |     1 | count at MyApp.scala:28 |        98.34 |
+    |     0 | read at MyApp.scala:15  |        15.21 |
+
+### Skew detection
+
+Detects task-level skew per job/stage using statistical thresholds. Reports stages where the maximum task duration exceeds 1.5x the 75th percentile, indicating that a few tasks are significantly slower than the rest. The `skewFactor` column quantifies how much the slowest task deviates from the pack.
+
+Code reference: `AnalysisQueries.SkewDetection`
+
+```sql
+SELECT j.jobId,
+       j.jobName,
+       t.stageId,
+       COUNT(1) AS taskCount,
+       ROUND(MAX(t.executorRunTime) / 1000, 2) AS maxDurationSec,
+       ROUND(PERCENTILE(t.executorRunTime, 0.5) / 1000, 2) AS medianDurationSec,
+       ROUND(PERCENTILE(t.executorRunTime, 0.75) / 1000, 2) AS p75DurationSec,
+       ROUND(STDDEV(t.executorRunTime) / 1000, 2) AS stddevDurationSec,
+       ROUND(MAX(t.executorRunTime) / PERCENTILE(t.executorRunTime, 0.75), 2) AS skewFactor
+  FROM job j
+  JOIN stage s ON ARRAY_CONTAINS(j.stages, s.stageId)
+  JOIN task t ON t.stageId = s.stageId
+ GROUP BY j.jobId, j.jobName, t.stageId
+HAVING MAX(t.executorRunTime) > 1.5 * PERCENTILE(t.executorRunTime, 0.75)
+ ORDER BY skewFactor DESC;
+```
+
+??? example "Sample output"
+
+    | jobId | jobName              | stageId | taskCount | maxDurationSec | medianDurationSec | p75DurationSec | stddevDurationSec | skewFactor |
+    |------:|----------------------|--------:|----------:|---------------:|------------------:|---------------:|------------------:|-----------:|
+    |     2 | save at MyApp.scala:42 |       3 |       200 |          45.20 |              2.10 |           3.50 |             8.42 |      12.91 |
+    |     1 | count at MyApp.scala:28 |       1 |       100 |          12.80 |              1.50 |           2.00 |             3.21 |       6.40 |
+
+
+
+---
+
+# Data Model Reference
+
+PerfGazer writes reports as JSON files. Each report type maps to a SQL temporary view.
+The schemas below describe the structure of each view.
+
+## `job` view
+
+Job-level execution report. One row per completed Spark job.
+
+| Column | SQL Type | Unit | Description |
+|--------|----------|------|-------------|
+| jobId | `BIGINT` |  | Unique job identifier |
+| groupId | `STRING` |  | Job group identifier |
+| jobName | `STRING` |  | Name of the job |
+| jobStartTime | `BIGINT` | ms | Epoch timestamp when the job started |
+| jobEndTime | `BIGINT` | ms | Epoch timestamp when the job ended |
+| sqlId | `STRING` |  | Associated SQL execution identifier |
+| stages | `ARRAY<INT>` |  | List of stage IDs in this job |
+
+## `sql` view
+
+SQL query execution report with SQL plans (logical, physical, ...) and their node metrics. One row per completed SQL execution.
+
+| Column | SQL Type | Unit | Description |
+|--------|----------|------|-------------|
+| sqlId | `BIGINT` |  | Unique SQL execution identifier |
+| description | `STRING` |  | SQL query description |
+| details | `STRING` |  | Extended query execution plan |
+| nodes | `ARRAY<STRUCT<sqlId: BIGINT, jobName: STRING, nodeName: STRING, coordinates: STRING, metrics: MAP<STRING, STRING>, isLeaf: BOOLEAN, parentNodeName: STRING>>` |  | Physical plan nodes with execution metrics |
+
+### `SqlNode`
+
+| Column | SQL Type | Unit | Description |
+|--------|----------|------|-------------|
+| sqlId | `BIGINT` |  | SQL execution this node belongs to |
+| jobName | `STRING` |  | Name of the job that triggered this SQL |
+| nodeName | `STRING` |  | Spark physical plan operator name |
+| coordinates | `STRING` |  | Dot-separated position in the plan tree, e.g. '0.1.2' |
+| metrics | `MAP<STRING, STRING>` |  | Operator metrics as key-value pairs |
+| isLeaf | `BOOLEAN` |  | True if this node has no children in the plan tree |
+| parentNodeName | `STRING` |  | Name of the parent operator in the plan tree |
+
+## `stage` view
+
+Stage-level execution report. One row per completed Spark stage.
+
+| Column | SQL Type | Unit | Description |
+|--------|----------|------|-------------|
+| stageId | `INT` |  | Unique stage identifier |
+| stageSubmissionTime | `BIGINT` | ms | Epoch timestamp when the stage was submitted |
+| stageCompletionTime | `BIGINT` | ms | Epoch timestamp when the stage completed |
+| readBytes | `BIGINT` | bytes | Total input bytes read |
+| writeBytes | `BIGINT` | bytes | Total output bytes written |
+| shuffleReadBytes | `BIGINT` | bytes | Total shuffle bytes read |
+| shuffleWriteBytes | `BIGINT` | bytes | Total shuffle bytes written |
+| execCpuNs | `BIGINT` | ns | Executor CPU time |
+| execRunNs | `BIGINT` | ns | Executor run time |
+| execJvmGcNs | `BIGINT` | ns | Executor JVM garbage collection time |
+| attempt | `INT` |  | Stage attempt number |
+| memoryBytesSpilled | `BIGINT` | bytes | Bytes spilled to memory |
+| diskBytesSpilled | `BIGINT` | bytes | Bytes spilled to disk |
+
+## `task` view
+
+Task-level execution metrics. One row per completed Spark task.
+
+| Column | SQL Type | Unit | Description |
+|--------|----------|------|-------------|
+| stageId | `INT` |  | Stage this task belongs to |
+| taskId | `BIGINT` |  | Unique task identifier |
+| taskDuration | `BIGINT` | ms | Wall-clock duration of the task |
+| taskLaunchTime | `BIGINT` | ms | Epoch timestamp when the task was launched |
+| taskFinishTime | `BIGINT` | ms | Epoch timestamp when the task finished |
+| executorRunTime | `BIGINT` | ms | Time spent running the task on the executor |
+| executorCpuTime | `BIGINT` | ns | CPU time consumed by the executor |
+| executorDeserializeTime | `BIGINT` | ms | Time to deserialize the task on the executor |
+| executorDeserializeCpuTime | `BIGINT` | ns | CPU time spent deserializing the task |
+| resultSize | `BIGINT` | bytes | Size of the serialized task result |
+| diskBytesSpilled | `BIGINT` | bytes | Bytes spilled to disk |
+| memoryBytesSpilled | `BIGINT` | bytes | Bytes spilled to memory |
+| bytesRead | `BIGINT` | bytes | Input bytes read |
+| recordsRead | `BIGINT` |  | Input records read |
+| jvmGCTime | `BIGINT` | ms | Time spent in JVM garbage collection |
+| bytesWritten | `BIGINT` | bytes | Output bytes written |
+| recordsWritten | `BIGINT` |  | Output records written |
+| peakExecutionMemory | `BIGINT` | bytes | Peak execution memory used |
+| resultSerializationTime | `BIGINT` | ms | Time spent serializing the result |
+| fetchWaitTime | `BIGINT` | ms | Time spent waiting for shuffle fetch |
+| localBlocksFetched | `BIGINT` |  | Number of local blocks fetched during shuffle |
+| localBytesRead | `BIGINT` | bytes | Bytes read from local shuffle blocks |
+| remoteBlocksFetched | `BIGINT` |  | Number of remote blocks fetched during shuffle |
+| remoteBytesRead | `BIGINT` | bytes | Bytes read from remote shuffle blocks |
+| remoteBytesReadToDisk | `BIGINT` | bytes | Remote shuffle bytes read to disk |
+| totalRecordsRead | `BIGINT` |  | Total records read including shuffle |
+| remoteRequestsDuration | `BIGINT` | ms | Time spent on remote shuffle requests |
+| shuffleBytesWritten | `BIGINT` | bytes | Shuffle bytes written |
+| shuffleRecordsWritten | `BIGINT` |  | Shuffle records written |
+| shuffleWriteTime | `BIGINT` | ns | Time spent writing shuffle data |
+
+
+
+---
+
+# Contributor Guide
+
+## Technical overview
+
+Once registered, PerfGazer will listen to multiple events coming from `Spark`.
+
+Some event objects at query/job/stage level are stored in memory for later processing.
+Those events are wrapped by subtypes of `Event`. They are mostly start events, with some exceptions.
+These are preserved in a `CappedConcurrentHashMap` that has a maximum size so that memory usage is limited.
+The Spark events wrapped are related to classes like: 
+
+- `org.apache.spark...StageInfo`
+- `org.apache.spark...SparkListenerJobEnd`
+- ...
+
+When a SQL query, a job, a stage, or a task finishes, it triggers a callback mechanism. 
+
+When the inputs are requested to `PerfGazer`, all collected `Event`s are inspected and transformed into `Report`s at the end
+of the query/job/stage execution enriched with some extra information only available then, according
+to the type of `Event`.
+
+A `Report` is a type that represents the report unit shared with the end-user.
+Report case classes are annotated with `@TableDoc` and `@ColumnDoc` to serve as the single source of truth
+for the data model documentation (see [Data model documentation](#data-model-documentation) below).
+
+## Sink architecture
+
+Once reports are produced, they are handed to a **`Sink`** for persistence. The `Sink` trait
+(`core/.../Sink.scala`) is the extension point for output backends. Implementations must be
+thread-safe — `write` and `close` are invoked from the Spark `ListenerBus` thread. The trait also
+exposes `generateViewSnippet` so each backend can describe how to query its output (e.g. a SQL view).
+
+Two implementations ship today: `LogSink` (writes reports to the logger, mainly for debugging) and
+`JsonSink`, the default production sink.
+
+### JsonSink
+
+`JsonSink` never writes inline. To keep the `ListenerBus` thread free, it creates one `ReportWriter`
+per report type, each owning a queue and a single daemon thread; `write` just routes a report to the
+matching writer. The daemon thread drains the queue into a `BufferedReportWriter`, the only component
+that touches the filesystem. It buffers reports and flushes them as newline-delimited JSON when
+`writeBatchSize` is reached (or on a periodic flush), rolling to a new file once `fileSizeLimit`
+is exceeded. Each completed file is handed to a `FilePromoter`, which moves it to its final location
+("promotes" it) — what that involves depends on the destination (see below). On close (triggered by
+an explicit `close()` or the auto-registered JVM shutdown hook), the final partial file is flushed and
+promoted — no new file is rolled.
+
+How a completed file reaches its final location depends on the destination scheme, detected by
+`DestinationMode.detect`:
+
+- **POSIX mode** (path starts with `/`) — files are written directly to the destination. The
+  `NoOpFilePromoter` does nothing because the file is already in place.
+- **HDFS mode** (remote URI: `s3://`, `s3a://`, `abfss://`, `gs://`, `dbfs:/`, `hdfs://`) — files are
+  written to a local staging directory first, then the `HadoopFilePromoter` copies each completed
+  file to the remote destination via the Hadoop `FileSystem` API and deletes the local copy. On copy
+  failure the local file is retained for recovery, so staging doubles as a durability buffer. The
+  Hadoop `FileSystem` is initialized lazily (sinks are constructed during `spark.extraListeners`
+  init, before the `SparkContext` is ready), and `fs.*` credential keys are propagated from
+  `SparkConf` into the Hadoop `Configuration`.
+
+Any other scheme throws `IllegalArgumentException`.
+
+### Adding a new sink
+
+Implement the `Sink` trait and provide a constructor taking a `SparkConf` so it can be instantiated
+from the `spark.perfgazer.sink.class` configuration. Keep `write` non-blocking if the backend is slow
+— follow the `ReportWriter` async-queue pattern rather than doing I/O on the calling thread.
+
+## Build
+
+The project uses `sbt`. 
+
+```sh
+sbt test                           # run tests
+sbt coverageOn test coverageReport # run tests with coverage checks on
+```
+
+## Dev environment
+
+We use IntelliJ IDEA, you can update the ScalaTest Configuration Template to avoid manual settings.
+
+```
+Go to Run -> Edit Configurations -> Edit configuration templates -> ScalaTest 
+```
+
+For code formatting setup: 
+
+```
+Settings -> Editor -> Code Style -> Scala -> Formatter: ScalaFMT
+```
+
+## Run
+
+You can run a local `spark-shell` with the listener as follows:
+
+```bash
+# publish a local snapshot version
+export VERSION=0.0.0-$RANDOM-$RANDOM
+sbt "set ThisBuild / version := \"$VERSION\"" publishLocal
+# run spark shell with the listener (change the version accordingly) using the snippet provided above
+spark-shell \
+  --packages io.github.amadeusitgroup:perfgazer_spark_3-5-2_2.12:$VERSION \
+  --conf spark.extraListeners=com.amadeus.perfgazer.PerfGazer \
+  --conf spark.perfgazer.sink.class=com.amadeus.perfgazer.JsonSink \
+  --conf spark.perfgazer.sink.json.destination=/tmp/perfgazer/applicationId={{spark.app.id}}/ \
+  --conf "spark.driver.bindAddress=127.0.0.1" --conf "spark.driver.host=127.0.0.1"
+```
+
+Then you can run something like this in the shell to see logs from the listener:
+
+```scala
+sc.setLogLevel("INFO") // to change the log level
+spark.sql("select 1").show()
+:quit
+```
+
+## Documentation
+
+The project uses [MkDocs](https://www.mkdocs.org/) with the [Material theme](https://squidfunk.github.io/mkdocs-material/).
+
+### Data model documentation
+
+The data model (SQL view schemas) is documented via custom annotations on the report case classes in `core/.../reports/`.
+A build-time generator (`doc-generator/`) reads these annotations and produces:
+
+- `docs/user_guide/data_model.md` — human-friendly Markdown tables with SQL types
+- `docs/schema/perfgazer-schema.json` — agent-friendly structured JSON
+
+When adding or modifying fields in a report case class, annotate them with `@ColumnDoc`:
+
+```scala
+@ColumnDoc(description = "Wall-clock duration of the task", unit = "ms")
+taskDuration: Long,
+```
+
+When adding a new report case class, annotate the class with `@TableDoc`:
+
+```scala
+@TableDoc(name = "task", description = "Task-level execution metrics. One row per completed Spark task.")
+case class TaskReport(
+  ...
+```
+
+Both generated files are gitignored — they are produced by CI and by the local preview script.
+
+### Local preview
+
+First, generate the data model schemas from the annotated case classes:
+
+```bash
+sbt docGenerator/run
+```
+
+Then serve the site locally:
+
+```bash
+pip install mkdocs mkdocs-material
+mkdocs serve
+```
+
+Open http://127.0.0.1:8000 in your browser.
+
+Alternatively, `./scripts/docs-serve-local.sh` runs both steps in sequence.
+
+### Full build
+
+To reproduce the full CI documentation build (including `llms.txt` for AI agents):
+
+```bash
+./scripts/docs-build.sh
+```
+
+This runs schema generation, `mkdocs build`, and `generate-llms-txt.sh`. Output goes to `site/`.
+
+### Deployment
+
+Documentation is versioned using [mike](https://github.com/jimporter/mike) and deployed to GitHub Pages automatically under the following conditions:
+
+- When pushing to `main` with changes in `docs/`, `mkdocs.yml`, report classes, or `doc-generator/`, the `dev` version is deployed.
+- When publishing a GitHub Release, a versioned copy (e.g. `v0.1.0`) is deployed and the `latest` alias is updated.
+
+The doc site is available at [amadeusitgroup.github.io/spark-perf-gazer](https://amadeusitgroup.github.io/spark-perf-gazer/).
+
+#### Removing a published version
+
+Deleting a GitHub Release does **not** remove the version from the docs site — versioned docs live as static files on the `gh-pages` branch, independent of GitHub Releases.
+
+To remove a version from the docs site:
+
+```bash
+mike delete <version>   # e.g. mike delete v0.1.0
+git push origin gh-pages
+```
+
+If you also want to clean up the GitHub Release and its tag, do that separately via the GitHub UI or CLI.
+
+### Scripts reference
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/docs-serve-local.sh` | Full local docs build + live preview server (`mkdocs serve`) |
+| `scripts/docs-build.sh` | Full docs build (schemas + MkDocs + llms.txt), same as CI |
+| `scripts/generate-llms-txt.sh` | Generate `llms.txt` and `llms-full.txt` in `docs/` for agent consumption |
+
+## Contributing
+
+To contribute to this project, see [CONTRIBUTING.md](https://github.com/AmadeusITGroup/spark-perf-gazer/blob/main/CONTRIBUTING.md).
+
+## Releasing
+
+To release a new version of this project, see [RELEASING.md](https://github.com/AmadeusITGroup/spark-perf-gazer/blob/main/RELEASING.md).
+
+
+---
+
+# Data Model Schema (JSON)
+
+```json
+{
+  "project": "PerfGazer",
+  "description": "Schema reference for PerfGazer report views. Each view corresponds to a SQL temporary view created by JsonSink.",
+  "views": [
+    {
+      "name": "job",
+      "description": "Job-level execution report. One row per completed Spark job.",
+      "fields": [
+        { "name": "jobId", "type": "BIGINT", "description": "Unique job identifier" },
+        { "name": "groupId", "type": "STRING", "description": "Job group identifier" },
+        { "name": "jobName", "type": "STRING", "description": "Name of the job" },
+        { "name": "jobStartTime", "type": "BIGINT", "unit": "ms", "description": "Epoch timestamp when the job started" },
+        { "name": "jobEndTime", "type": "BIGINT", "unit": "ms", "description": "Epoch timestamp when the job ended" },
+        { "name": "sqlId", "type": "STRING", "description": "Associated SQL execution identifier" },
+        { "name": "stages", "type": "ARRAY<INT>", "description": "List of stage IDs in this job" }
+      ]
+    },
+    {
+      "name": "sql",
+      "description": "SQL query execution report with SQL plans (logical, physical, ...) and their node metrics. One row per completed SQL execution.",
+      "fields": [
+        { "name": "sqlId", "type": "BIGINT", "description": "Unique SQL execution identifier" },
+        { "name": "description", "type": "STRING", "description": "SQL query description" },
+        { "name": "details", "type": "STRING", "description": "Extended query execution plan" },
+        { "name": "nodes", "type": "ARRAY<STRUCT<sqlId: BIGINT, jobName: STRING, nodeName: STRING, coordinates: STRING, metrics: MAP<STRING, STRING>, isLeaf: BOOLEAN, parentNodeName: STRING>>", "description": "Physical plan nodes with execution metrics",
+          "nestedSchema": {
+            "name": "SqlNode",
+            "fields": [
+              { "name": "sqlId", "type": "BIGINT", "description": "SQL execution this node belongs to" },
+              { "name": "jobName", "type": "STRING", "description": "Name of the job that triggered this SQL" },
+              { "name": "nodeName", "type": "STRING", "description": "Spark physical plan operator name" },
+              { "name": "coordinates", "type": "STRING", "description": "Dot-separated position in the plan tree, e.g. '0.1.2'" },
+              { "name": "metrics", "type": "MAP<STRING, STRING>", "description": "Operator metrics as key-value pairs" },
+              { "name": "isLeaf", "type": "BOOLEAN", "description": "True if this node has no children in the plan tree" },
+              { "name": "parentNodeName", "type": "STRING", "description": "Name of the parent operator in the plan tree" }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "stage",
+      "description": "Stage-level execution report. One row per completed Spark stage.",
+      "fields": [
+        { "name": "stageId", "type": "INT", "description": "Unique stage identifier" },
+        { "name": "stageSubmissionTime", "type": "BIGINT", "unit": "ms", "description": "Epoch timestamp when the stage was submitted" },
+        { "name": "stageCompletionTime", "type": "BIGINT", "unit": "ms", "description": "Epoch timestamp when the stage completed" },
+        { "name": "readBytes", "type": "BIGINT", "unit": "bytes", "description": "Total input bytes read" },
+        { "name": "writeBytes", "type": "BIGINT", "unit": "bytes", "description": "Total output bytes written" },
+        { "name": "shuffleReadBytes", "type": "BIGINT", "unit": "bytes", "description": "Total shuffle bytes read" },
+        { "name": "shuffleWriteBytes", "type": "BIGINT", "unit": "bytes", "description": "Total shuffle bytes written" },
+        { "name": "execCpuNs", "type": "BIGINT", "unit": "ns", "description": "Executor CPU time" },
+        { "name": "execRunNs", "type": "BIGINT", "unit": "ns", "description": "Executor run time" },
+        { "name": "execJvmGcNs", "type": "BIGINT", "unit": "ns", "description": "Executor JVM garbage collection time" },
+        { "name": "attempt", "type": "INT", "description": "Stage attempt number" },
+        { "name": "memoryBytesSpilled", "type": "BIGINT", "unit": "bytes", "description": "Bytes spilled to memory" },
+        { "name": "diskBytesSpilled", "type": "BIGINT", "unit": "bytes", "description": "Bytes spilled to disk" }
+      ]
+    },
+    {
+      "name": "task",
+      "description": "Task-level execution metrics. One row per completed Spark task.",
+      "fields": [
+        { "name": "stageId", "type": "INT", "description": "Stage this task belongs to" },
+        { "name": "taskId", "type": "BIGINT", "description": "Unique task identifier" },
+        { "name": "taskDuration", "type": "BIGINT", "unit": "ms", "description": "Wall-clock duration of the task" },
+        { "name": "taskLaunchTime", "type": "BIGINT", "unit": "ms", "description": "Epoch timestamp when the task was launched" },
+        { "name": "taskFinishTime", "type": "BIGINT", "unit": "ms", "description": "Epoch timestamp when the task finished" },
+        { "name": "executorRunTime", "type": "BIGINT", "unit": "ms", "description": "Time spent running the task on the executor" },
+        { "name": "executorCpuTime", "type": "BIGINT", "unit": "ns", "description": "CPU time consumed by the executor" },
+        { "name": "executorDeserializeTime", "type": "BIGINT", "unit": "ms", "description": "Time to deserialize the task on the executor" },
+        { "name": "executorDeserializeCpuTime", "type": "BIGINT", "unit": "ns", "description": "CPU time spent deserializing the task" },
+        { "name": "resultSize", "type": "BIGINT", "unit": "bytes", "description": "Size of the serialized task result" },
+        { "name": "diskBytesSpilled", "type": "BIGINT", "unit": "bytes", "description": "Bytes spilled to disk" },
+        { "name": "memoryBytesSpilled", "type": "BIGINT", "unit": "bytes", "description": "Bytes spilled to memory" },
+        { "name": "bytesRead", "type": "BIGINT", "unit": "bytes", "description": "Input bytes read" },
+        { "name": "recordsRead", "type": "BIGINT", "description": "Input records read" },
+        { "name": "jvmGCTime", "type": "BIGINT", "unit": "ms", "description": "Time spent in JVM garbage collection" },
+        { "name": "bytesWritten", "type": "BIGINT", "unit": "bytes", "description": "Output bytes written" },
+        { "name": "recordsWritten", "type": "BIGINT", "description": "Output records written" },
+        { "name": "peakExecutionMemory", "type": "BIGINT", "unit": "bytes", "description": "Peak execution memory used" },
+        { "name": "resultSerializationTime", "type": "BIGINT", "unit": "ms", "description": "Time spent serializing the result" },
+        { "name": "fetchWaitTime", "type": "BIGINT", "unit": "ms", "description": "Time spent waiting for shuffle fetch" },
+        { "name": "localBlocksFetched", "type": "BIGINT", "description": "Number of local blocks fetched during shuffle" },
+        { "name": "localBytesRead", "type": "BIGINT", "unit": "bytes", "description": "Bytes read from local shuffle blocks" },
+        { "name": "remoteBlocksFetched", "type": "BIGINT", "description": "Number of remote blocks fetched during shuffle" },
+        { "name": "remoteBytesRead", "type": "BIGINT", "unit": "bytes", "description": "Bytes read from remote shuffle blocks" },
+        { "name": "remoteBytesReadToDisk", "type": "BIGINT", "unit": "bytes", "description": "Remote shuffle bytes read to disk" },
+        { "name": "totalRecordsRead", "type": "BIGINT", "description": "Total records read including shuffle" },
+        { "name": "remoteRequestsDuration", "type": "BIGINT", "unit": "ms", "description": "Time spent on remote shuffle requests" },
+        { "name": "shuffleBytesWritten", "type": "BIGINT", "unit": "bytes", "description": "Shuffle bytes written" },
+        { "name": "shuffleRecordsWritten", "type": "BIGINT", "description": "Shuffle records written" },
+        { "name": "shuffleWriteTime", "type": "BIGINT", "unit": "ns", "description": "Time spent writing shuffle data" }
+      ]
+    }
+  ]
+}
+```
