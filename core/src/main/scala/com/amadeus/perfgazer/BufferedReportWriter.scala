@@ -19,9 +19,15 @@ object BufferedReportWriter {
 /**
  * This class is not thread-safe.
  */
-class BufferedReportWriter(config: Config, reportType: ReportType, dir: String) {
+class BufferedReportWriter(config: Config, reportType: ReportType, dir: String, filePromoter: FilePromoter) {
   val logger: Logger = LoggerFactory.getLogger(getClass.getName)
   private val formats: AnyRef with Formats = Serialization.formats(NoTypeHints)
+
+  // ensure the local staging directory exists before opening any file
+  {
+    val folder = new File(dir)
+    if (!folder.exists()) folder.mkdirs()
+  }
 
   // mutable variables
   private var currentFile = newFilePrintWriter()
@@ -53,6 +59,7 @@ class BufferedReportWriter(config: Config, reportType: ReportType, dir: String) 
   def close(): Unit = {
     flush()
     currentFile.writer.close()
+    filePromoter.promote(currentFile.file)
     logger.trace("Closed buffer '{}'", reportType)
   }
 
@@ -60,13 +67,12 @@ class BufferedReportWriter(config: Config, reportType: ReportType, dir: String) 
     logger.trace("Rolling file {} has reached the fileSizeLimit threshold ({} bytes)...",
       currentFile.file.getPath, currentFile.file.length())
     currentFile.writer.close()
+    filePromoter.promote(currentFile.file)
     currentFile = newFilePrintWriter()
     logger.trace("Switched to new rolling file {}.", currentFile.file.getPath)
   }
 
   private def newFilePrintWriter(): FilePrintWriter = {
-    val folder = new File(dir)
-    if (!folder.exists()) folder.mkdirs()
     val path = s"$dir/${reportType.name}-reports-${UUID.randomUUID()}.json"
     val file = new File(path)
     val writer = new PrintWriter(new FileWriter(file, true))

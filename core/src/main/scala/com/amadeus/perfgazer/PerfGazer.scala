@@ -50,6 +50,16 @@ class PerfGazer(val c: PerfGazerConfig, val sink: Sink) extends SparkListener {
   /** LISTENERS
     */
 
+  /** Called once when the Spark application starts.
+    *
+    * Initializes the sink so that any misconfiguration (e.g. an unreachable remote
+    * destination) surfaces at application start rather than later during report writing.
+    */
+  override def onApplicationStart(applicationStart: SparkListenerApplicationStart): Unit = {
+    logger.trace("onApplicationStart: start={}", applicationStart.time)
+    sink.init()
+  }
+
   /** This is the listener method for stage end
     *
     * It is NOT a trigger for automatic purge of stages (job end will purge stages).

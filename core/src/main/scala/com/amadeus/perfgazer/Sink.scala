@@ -12,6 +12,15 @@ import com.amadeus.perfgazer.reports.{Report, ReportType}
   */
 trait Sink {
 
+  /** Initialize the sink.
+    *
+    * Called once when the Spark application starts (from the listener's
+    * onApplicationStart callback). Implementations may use this hook to perform
+    * eager initialization so that misconfiguration fails fast at application start
+    * rather than later during report writing. The default implementation does nothing.
+    */
+  def init(): Unit = ()
+
   /** Write a report to the sink
     *
     * @param report Report to write

@@ -21,6 +21,7 @@ nav:
       - Setup via Spark Properties: user_guide/setup_spark_properties.md
       - Setup via Code: user_guide/setup_code.md
       - Databricks: user_guide/databricks.md
+      - Driver Resources: user_guide/driver_resources.md
       - Analyze with SQL: user_guide/analyze_sql.md
       - Data Model Reference: user_guide/data_model.md
   - Contributor Guide: contributor_guide.md

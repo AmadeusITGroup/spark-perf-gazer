@@ -23,13 +23,3 @@ If you configure PerfGazer via `spark.extraListeners` (i.e. not bundled in your 
 
 > If you use PerfGazer [via code](setup_code.md) instead, you can include it as a dependency in your fat JAR and skip the init script entirely.
 
-## Output Destination
-
-As of the latest release, PerfGazer uses the POSIX file interface on the driver to write its output. On Databricks this means you need a POSIX-compatible path, which currently limits you to a **DBFS mount point**:
-
-```
---conf spark.perfgazer.sink.json.destination=/dbfs/mnt/<your_mount>/<path>/applicationId={{spark.app.id}}/
-```
-
-> Support for writing directly to cloud storage without a mount point is planned for a future release.
-

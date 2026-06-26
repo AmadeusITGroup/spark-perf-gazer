@@ -73,3 +73,6 @@ docs/schema/
 docs/llms.txt
 docs/llms-full.txt
 docs/artifacts.md
+
+# Kiro
+.kiro/

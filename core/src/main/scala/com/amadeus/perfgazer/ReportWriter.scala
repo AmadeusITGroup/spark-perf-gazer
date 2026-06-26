@@ -9,7 +9,7 @@ import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.util._
 
-class ReportWriter(val config: Config, val reportType: ReportType, val dir: String) {
+class ReportWriter(val config: Config, val reportType: ReportType, val dir: String, val filePromoter: FilePromoter = new NoOpFilePromoter) {
   private val logger: Logger = LoggerFactory.getLogger(getClass.getName)
 
   // Queue of messages/requests to be processed asynchronously by the executor thread
@@ -19,7 +19,7 @@ class ReportWriter(val config: Config, val reportType: ReportType, val dir: Stri
   private val executorActive = new AtomicBoolean(true)
 
   // Buffered writer used by the executor thread
-  private val bufferedWriter = new BufferedReportWriter(config, reportType, dir)
+  private val bufferedWriter = new BufferedReportWriter(config, reportType, dir, filePromoter)
 
   // Indicates if the writer has been closed via close() method
   private val writerClosed = new AtomicBoolean(false)

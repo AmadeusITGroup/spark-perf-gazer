@@ -3,8 +3,10 @@ package com.amadeus.perfgazer
 import com.amadeus.perfgazer.JsonSink._
 import com.amadeus.perfgazer.reports._
 import com.amadeus.perfgazer.PathBuilder._
-import org.apache.spark.SparkConf
+import org.apache.spark.{SparkConf, SparkContext}
 import org.slf4j.{Logger, LoggerFactory}
+
+import scala.util.{Failure, Success}
 
 /** Sink of a collection of reports to JSON files.
   *
@@ -29,7 +31,8 @@ class JsonSink(
         writeBatchSize = sparkConf.getInt(WriteBatchSizeKey, DefaultWriteBatchSize),
         fileSizeLimit = sparkConf.getLong(FileSizeLimitKey, DefaultFileSizeLimit),
         asyncFlushTimeoutMillisecs = sparkConf.getLong(AsyncFlushTimeoutMillisecsKey, DefaultAsyncFlushTimeoutMillisecs),
-        waitForGracefulCloseMillisecs = sparkConf.getLong(WaitForCloseTimeoutMillisecsKey, DefaultWaitForGracefulCloseMillisecs)
+        waitForGracefulCloseMillisecs = sparkConf.getLong(WaitForCloseTimeoutMillisecsKey, DefaultWaitForGracefulCloseMillisecs),
+        stagingDir = sparkConf.get(StagingDirKey, DefaultStagingDir)
       ),
       sparkConf
     )
@@ -37,10 +40,42 @@ class JsonSink(
 
   override def supportedReportTypes: Set[ReportType] = reportTypes
 
+  /** Eagerly initialize the file promoter so that a misconfigured remote
+    * destination fails fast at application start rather than during report writing.
+    */
+  override def init(): Unit = filePromoter.init()
+
   val destination: String = config.destination.resolveProperties(sparkConf)
 
+  // Detection parses and validates the destination, failing fast on a malformed value.
+  val mode: DestinationMode = DestinationMode.detect(destination) match {
+    case Success(m) => m
+    case Failure(e) =>
+      throw new IllegalArgumentException(s"Invalid destination '$destination': not a valid path or URI", e)
+  }
+
+  private val (writeDir, filePromoter): (String, FilePromoter) = mode match {
+    case DestinationMode.Posix =>
+      (destination, new NoOpFilePromoter())
+    case DestinationMode.Hdfs =>
+      val stagingDir = config.stagingDir.resolveProperties(sparkConf)
+      val confSnapshot = sparkConf.getAll
+      (stagingDir, new HadoopFilePromoter(destination, () => {
+        val hadoopConf = SparkContext.getOrCreate().hadoopConfiguration
+        // Propagate fs.* keys from SparkConf into Hadoop Configuration.
+        // This ensures storage credentials (fs.azure.*, fs.s3a.*, fs.gs.*, etc.)
+        // are available even when set without the spark.hadoop. prefix.
+        confSnapshot.foreach { case (key, value) =>
+          if (key.startsWith("fs.") && hadoopConf.get(key) == null) {
+            hadoopConf.set(key, value)
+          }
+        }
+        hadoopConf
+      }))
+  }
+
   val queues: Set[ReportWriter] = supportedReportTypes.map(
-    new ReportWriter(config, _, destination)
+    new ReportWriter(config, _, writeDir, filePromoter)
   )
 
   override def write(r: Report): Unit =
@@ -70,11 +105,13 @@ object JsonSink {
   val FileSizeLimitKey = "spark.perfgazer.sink.json.fileSizeLimit"
   val AsyncFlushTimeoutMillisecsKey = "spark.perfgazer.sink.json.asyncFlushTimeoutMillisecsKey"
   val WaitForCloseTimeoutMillisecsKey = "spark.perfgazer.sink.json.waitForCloseTimeoutMillisecsKey"
+  val StagingDirKey = "spark.perfgazer.sink.json.stagingDir"
 
   val DefaultWriteBatchSize: Int = 100
   val DefaultFileSizeLimit: Long = 200L * 1024 * 1024 // 200 MB
   val DefaultAsyncFlushTimeoutMillisecs: Long = 10 * 1000L
   val DefaultWaitForGracefulCloseMillisecs: Long = 10 * 1000L
+  val DefaultStagingDir: String = "/tmp/perfgazer/{{spark.app.id}}/"
 
   /** Configuration object for JsonSink
     *
@@ -85,13 +122,17 @@ object JsonSink {
     * @param fileSizeLimit file size to reach before switching to a new file (in bytes)
     * @param asyncFlushTimeoutMillisecs Maximum time to wait regularly before flushing reports to disk (in milliseconds)
     * @param waitForGracefulCloseMillisecs Maximum time to wait for graceful close of the sink (in milliseconds)
+    * @param stagingDir Local staging directory used in HDFS mode (remote destination URI). Completed files are
+    *                   written here via POSIX I/O before being promoted to the remote destination. Supports the
+    *                   same placeholders as `destination` (e.g. `{{spark.app.id}}`). Ignored in POSIX mode.
     */
   case class Config(
      destination: String,
      writeBatchSize: Int = DefaultWriteBatchSize,
      fileSizeLimit: Long = DefaultFileSizeLimit,
      asyncFlushTimeoutMillisecs: Long = DefaultAsyncFlushTimeoutMillisecs,
-     waitForGracefulCloseMillisecs: Long = DefaultWaitForGracefulCloseMillisecs
+     waitForGracefulCloseMillisecs: Long = DefaultWaitForGracefulCloseMillisecs,
+     stagingDir: String = DefaultStagingDir
   )
 
   trait JsonViewDDLGenerator {
