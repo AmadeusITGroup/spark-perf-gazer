@@ -303,6 +303,8 @@
       
         
       
+        
+      
     
     
     
@@ -433,6 +435,34 @@
     
   
     Databricks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../driver_resources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Driver Resources
   
 
     
@@ -608,8 +638,15 @@
 <span class="n">perfGazer</span><span class="p">.</span><span class="n">close</span><span class="p">()</span>
 </code></pre></div>
 <blockquote>
-<p>Note: the destination should include a partition that uniquely identifies the application run (e.g. <code>applicationId={{spark.app.id}}</code> or <code>runId={{perfgazer.runid}}</code>) so that data from different runs does not get mixed. See <a href="../setup_spark_properties/#destination-placeholders">destination placeholders</a> for available placeholders.</p>
 <p>Note: a shutdown hook is registered automatically on construction, so the listener will be closed on JVM termination even if you omit the explicit <code>removeSparkListener</code>/<code>close()</code> calls. That said, calling them explicitly at the end of your application is still good practice to ensure a clean, predictable teardown.</p>
+<p>Note: the destination should include a partition that uniquely identifies the application run (e.g. <code>applicationId={{spark.app.id}}</code> or <code>runId={{perfgazer.runid}}</code>) so that data from different runs does not get mixed. See <a href="../setup_spark_properties/#destination-placeholders">destination placeholders</a> for available placeholders.</p>
+<p>Note: when <code>destination</code> is a remote URI (<code>s3a://</code>, <code>abfss://</code>, <code>gs://</code>, <code>dbfs:/</code>, <code>hdfs://</code>, …), the sink first writes files to a local staging directory and then promotes them to the remote destination. The staging directory defaults to <code>/tmp/perfgazer/{{spark.app.id}}/</code> and can be overridden via the <code>stagingDir</code> field of <code>JsonSink.Config</code> (it supports the same <a href="../setup_spark_properties/#destination-placeholders">placeholders</a> as <code>destination</code>):</p>
+<div class="highlight"><pre><span></span><code><span class="nc">JsonSink</span><span class="p">.</span><span class="nc">Config</span><span class="p">(</span>
+<span class="w">  </span><span class="n">destination</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;abfss://container@account.dfs.core.windows.net/perfgazer/v1/applicationId={{spark.app.id}}/&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="n">stagingDir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/local/ssd/perfgazer/{{spark.app.id}}/&quot;</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>Note: when writing to a remote <code>destination</code>, see <a href="../driver_resources/">Driver Resource Considerations</a> for guidance on staging disk usage, storage locality, and driver CPU.</p>
 </blockquote>
 
 

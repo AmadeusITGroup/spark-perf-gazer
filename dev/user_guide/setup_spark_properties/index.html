@@ -303,6 +303,8 @@
       
         
       
+        
+      
     
     
     
@@ -520,6 +522,34 @@
     
   
     Databricks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../driver_resources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Driver Resources
   
 
     
@@ -790,7 +820,7 @@ Use the latest release version: <img alt="GitHub Release" src="https://img.shiel
 <tr>
 <td><code>spark.perfgazer.sink.json.destination</code></td>
 <td>—</td>
-<td>Destination path for JSON output. Should include a partition that uniquely identifies the run (e.g. <code>applicationId</code> or <code>runId</code>) so that data from different runs does not get mixed.</td>
+<td>Destination path for JSON output. Either a local POSIX path (written directly by the driver) or a remote URI (<code>s3a://</code>, <code>abfss://</code>, <code>gs://</code>, <code>dbfs:/</code>, <code>hdfs://</code>, …), in which case files are first written to a local staging directory on the driver and then promoted to the remote destination (see <code>spark.perfgazer.sink.json.stagingDir</code>). Should include a partition that uniquely identifies the run (e.g. <code>applicationId</code> or <code>runId</code>) so that data from different runs does not get mixed.</td>
 </tr>
 <tr>
 <td><code>spark.perfgazer.sink.json.writeBatchSize</code></td>
@@ -811,6 +841,11 @@ Use the latest release version: <img alt="GitHub Release" src="https://img.shiel
 <td><code>spark.perfgazer.sink.json.waitForCloseTimeoutMillisecsKey</code></td>
 <td>—</td>
 <td>Max time to wait for graceful sink close (ms)</td>
+</tr>
+<tr>
+<td><code>spark.perfgazer.sink.json.stagingDir</code></td>
+<td><code>/tmp/perfgazer/{{spark.app.id}}/</code></td>
+<td>Local staging directory used in HDFS mode (remote <code>destination</code> URI). Ignored when <code>destination</code> is a local POSIX path. Supports the same placeholders as <code>destination</code>.</td>
 </tr>
 </tbody>
 </table>
@@ -860,7 +895,7 @@ Use the latest release version: <img alt="GitHub Release" src="https://img.shiel
 </table>
 <p>Date, time, and runId values are captured once at JVM startup and remain stable across multiple resolutions.</p>
 <blockquote>
-<p>Note: <code>JsonSink</code> uses the POSIX interface on the driver to write JSON files.</p>
+<p>Note: when writing to a remote <code>destination</code>, see <a href="../driver_resources/">Driver Resources</a> for guidance on staging disk usage, storage locality, and driver CPU.</p>
 </blockquote>
 
 

@@ -280,11 +280,12 @@ spark-shell \
 
 | Property | Default | Description |
 |---|---|---|
-| `spark.perfgazer.sink.json.destination` | — | Destination path for JSON output. Should include a partition that uniquely identifies the run (e.g. `applicationId` or `runId`) so that data from different runs does not get mixed. |
+| `spark.perfgazer.sink.json.destination` | — | Destination path for JSON output. Either a local POSIX path (written directly by the driver) or a remote URI (`s3a://`, `abfss://`, `gs://`, `dbfs:/`, `hdfs://`, …), in which case files are first written to a local staging directory on the driver and then promoted to the remote destination (see `spark.perfgazer.sink.json.stagingDir`). Should include a partition that uniquely identifies the run (e.g. `applicationId` or `runId`) so that data from different runs does not get mixed. |
 | `spark.perfgazer.sink.json.writeBatchSize` | `100` | Number of records to accumulate before writing to disk |
 | `spark.perfgazer.sink.json.fileSizeLimit` | `209715200` (200 MB) | File size threshold before rolling to a new file |
 | `spark.perfgazer.sink.json.asyncFlushTimeoutMillisecsKey` | — | Max time between periodic flushes (ms) |
 | `spark.perfgazer.sink.json.waitForCloseTimeoutMillisecsKey` | — | Max time to wait for graceful sink close (ms) |
+| `spark.perfgazer.sink.json.stagingDir` | `/tmp/perfgazer/{{spark.app.id}}/` | Local staging directory used in HDFS mode (remote `destination` URI). Ignored when `destination` is a local POSIX path. Supports the same placeholders as `destination`. |
 
 ### Destination placeholders
 
@@ -303,7 +304,7 @@ The destination path supports `{{key}}` placeholders resolved at runtime:
 
 Date, time, and runId values are captured once at JVM startup and remain stable across multiple resolutions.
 
-> Note: `JsonSink` uses the POSIX interface on the driver to write JSON files.
+> Note: when writing to a remote `destination`, see [Driver Resources](driver_resources.md) for guidance on staging disk usage, storage locality, and driver CPU.
 
 
 ---
@@ -346,9 +347,23 @@ spark.sparkContext.removeSparkListener(perfGazer)
 perfGazer.close()
 ```
 
+> Note: a shutdown hook is registered automatically on construction, so the listener will be closed on JVM termination even if you omit the explicit `removeSparkListener`/`close()` calls. That said, calling them explicitly at the end of your application is still good practice to ensure a clean, predictable teardown.
+
+
 > Note: the destination should include a partition that uniquely identifies the application run (e.g. `applicationId={{spark.app.id}}` or `runId={{perfgazer.runid}}`) so that data from different runs does not get mixed. See [destination placeholders](setup_spark_properties.md#destination-placeholders) for available placeholders.
 
-> Note: a shutdown hook is registered automatically on construction, so the listener will be closed on JVM termination even if you omit the explicit `removeSparkListener`/`close()` calls. That said, calling them explicitly at the end of your application is still good practice to ensure a clean, predictable teardown.
+
+> Note: when `destination` is a remote URI (`s3a://`, `abfss://`, `gs://`, `dbfs:/`, `hdfs://`, …), the sink first writes files to a local staging directory and then promotes them to the remote destination. The staging directory defaults to `/tmp/perfgazer/{{spark.app.id}}/` and can be overridden via the `stagingDir` field of `JsonSink.Config` (it supports the same [placeholders](setup_spark_properties.md#destination-placeholders) as `destination`):
+>
+> ```scala
+> JsonSink.Config(
+>   destination = "abfss://container@account.dfs.core.windows.net/perfgazer/v1/applicationId={{spark.app.id}}/",
+>   stagingDir = "/local/ssd/perfgazer/{{spark.app.id}}/"
+> )
+> ```
+
+
+> Note: when writing to a remote `destination`, see [Driver Resource Considerations](driver_resources.md) for guidance on staging disk usage, storage locality, and driver CPU.
 
 
 ---
@@ -378,16 +393,25 @@ If you configure PerfGazer via `spark.extraListeners` (i.e. not bundled in your 
 
 > If you use PerfGazer [via code](setup_code.md) instead, you can include it as a dependency in your fat JAR and skip the init script entirely.
 
-## Output Destination
 
-As of the latest release, PerfGazer uses the POSIX file interface on the driver to write its output. On Databricks this means you need a POSIX-compatible path, which currently limits you to a **DBFS mount point**:
 
-```
---conf spark.perfgazer.sink.json.destination=/dbfs/mnt/<your_mount>/<path>/applicationId={{spark.app.id}}/
-```
+---
 
-> Support for writing directly to cloud storage without a mount point is planned for a future release.
+# Driver Resources
 
+PerfGazer runs entirely on the Spark driver: reports are collected, buffered, and written there. In HDFS mode (a remote `destination` URI), the driver also stages files on its local disk and copies them to remote storage. Keep the following in mind so PerfGazer does not put undue pressure on the driver.
+
+## Local staging disk (HDFS mode)
+
+In HDFS mode, reports are first written to a local staging directory on the driver before being promoted to the remote destination. Size `spark.perfgazer.sink.json.fileSizeLimit` (or `JsonSink.Config(fileSizeLimit = ...)` in code) so staged files cannot fill the driver's local disk: at any moment the staging area holds roughly one file per enabled report type up to this limit, plus any files retained after a failed promotion.
+
+## Storage locality (HDFS mode)
+
+Promotion copies each completed file over the network to the remote destination. To keep these copies fast, pick a destination that is network-close to the driver — ideally in the same region or zone (for example, the same virtual network or resource group as the cluster). A distant destination increases copy time and can slow down the writer threads.
+
+## Driver CPU
+
+Reports are written asynchronously, with one dedicated writer thread per enabled report type (SQL, jobs, stages, tasks). Make sure the driver has enough CPU headroom so this background work does not compete with your application. This applies in both POSIX and HDFS mode; in HDFS mode the writer threads additionally perform the network copy, so the headroom matters more. Disabling report types you don't need (for example `spark.perfgazer.tasks.enabled=false`, or `PerfGazerConfig(tasksEnabled = false)` in code) reduces the number of writer threads.
 
 
 ---
@@ -800,6 +824,49 @@ to the type of `Event`.
 A `Report` is a type that represents the report unit shared with the end-user.
 Report case classes are annotated with `@TableDoc` and `@ColumnDoc` to serve as the single source of truth
 for the data model documentation (see [Data model documentation](#data-model-documentation) below).
+
+## Sink architecture
+
+Once reports are produced, they are handed to a **`Sink`** for persistence. The `Sink` trait
+(`core/.../Sink.scala`) is the extension point for output backends. Implementations must be
+thread-safe — `write` and `close` are invoked from the Spark `ListenerBus` thread. The trait also
+exposes `generateViewSnippet` so each backend can describe how to query its output (e.g. a SQL view).
+
+Two implementations ship today: `LogSink` (writes reports to the logger, mainly for debugging) and
+`JsonSink`, the default production sink.
+
+### JsonSink
+
+`JsonSink` never writes inline. To keep the `ListenerBus` thread free, it creates one `ReportWriter`
+per report type, each owning a queue and a single daemon thread; `write` just routes a report to the
+matching writer. The daemon thread drains the queue into a `BufferedReportWriter`, the only component
+that touches the filesystem. It buffers reports and flushes them as newline-delimited JSON when
+`writeBatchSize` is reached (or on a periodic flush), rolling to a new file once `fileSizeLimit`
+is exceeded. Each completed file is handed to a `FilePromoter`, which moves it to its final location
+("promotes" it) — what that involves depends on the destination (see below). On close (triggered by
+an explicit `close()` or the auto-registered JVM shutdown hook), the final partial file is flushed and
+promoted — no new file is rolled.
+
+How a completed file reaches its final location depends on the destination scheme, detected by
+`DestinationMode.detect`:
+
+- **POSIX mode** (path starts with `/`) — files are written directly to the destination. The
+  `NoOpFilePromoter` does nothing because the file is already in place.
+- **HDFS mode** (remote URI: `s3://`, `s3a://`, `abfss://`, `gs://`, `dbfs:/`, `hdfs://`) — files are
+  written to a local staging directory first, then the `HadoopFilePromoter` copies each completed
+  file to the remote destination via the Hadoop `FileSystem` API and deletes the local copy. On copy
+  failure the local file is retained for recovery, so staging doubles as a durability buffer. The
+  Hadoop `FileSystem` is initialized lazily (sinks are constructed during `spark.extraListeners`
+  init, before the `SparkContext` is ready), and `fs.*` credential keys are propagated from
+  `SparkConf` into the Hadoop `Configuration`.
+
+Any other scheme throws `IllegalArgumentException`.
+
+### Adding a new sink
+
+Implement the `Sink` trait and provide a constructor taking a `SparkConf` so it can be instantiated
+from the `spark.perfgazer.sink.class` configuration. Keep `write` non-blocking if the backend is slow
+— follow the `ReportWriter` async-queue pattern rather than doing I/O on the calling thread.
 
 ## Build
 

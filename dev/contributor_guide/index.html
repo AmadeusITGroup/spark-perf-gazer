@@ -299,6 +299,8 @@
       
         
       
+        
+      
     
     
     
@@ -419,6 +421,34 @@
     
   
     Databricks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user_guide/driver_resources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Driver Resources
   
 
     
@@ -569,6 +599,45 @@
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sink-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sink architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sink architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#jsonsink" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JsonSink
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-new-sink" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a new sink
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -762,6 +831,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#sink-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sink architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sink architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#jsonsink" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JsonSink
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-new-sink" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a new sink
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#build" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -944,6 +1052,41 @@ to the type of <code>Event</code>.</p>
 <p>A <code>Report</code> is a type that represents the report unit shared with the end-user.
 Report case classes are annotated with <code>@TableDoc</code> and <code>@ColumnDoc</code> to serve as the single source of truth
 for the data model documentation (see <a href="#data-model-documentation">Data model documentation</a> below).</p>
+<h2 id="sink-architecture">Sink architecture</h2>
+<p>Once reports are produced, they are handed to a <strong><code>Sink</code></strong> for persistence. The <code>Sink</code> trait
+(<code>core/.../Sink.scala</code>) is the extension point for output backends. Implementations must be
+thread-safe — <code>write</code> and <code>close</code> are invoked from the Spark <code>ListenerBus</code> thread. The trait also
+exposes <code>generateViewSnippet</code> so each backend can describe how to query its output (e.g. a SQL view).</p>
+<p>Two implementations ship today: <code>LogSink</code> (writes reports to the logger, mainly for debugging) and
+<code>JsonSink</code>, the default production sink.</p>
+<h3 id="jsonsink">JsonSink</h3>
+<p><code>JsonSink</code> never writes inline. To keep the <code>ListenerBus</code> thread free, it creates one <code>ReportWriter</code>
+per report type, each owning a queue and a single daemon thread; <code>write</code> just routes a report to the
+matching writer. The daemon thread drains the queue into a <code>BufferedReportWriter</code>, the only component
+that touches the filesystem. It buffers reports and flushes them as newline-delimited JSON when
+<code>writeBatchSize</code> is reached (or on a periodic flush), rolling to a new file once <code>fileSizeLimit</code>
+is exceeded. Each completed file is handed to a <code>FilePromoter</code>, which moves it to its final location
+("promotes" it) — what that involves depends on the destination (see below). On close (triggered by
+an explicit <code>close()</code> or the auto-registered JVM shutdown hook), the final partial file is flushed and
+promoted — no new file is rolled.</p>
+<p>How a completed file reaches its final location depends on the destination scheme, detected by
+<code>DestinationMode.detect</code>:</p>
+<ul>
+<li><strong>POSIX mode</strong> (path starts with <code>/</code>) — files are written directly to the destination. The
+  <code>NoOpFilePromoter</code> does nothing because the file is already in place.</li>
+<li><strong>HDFS mode</strong> (remote URI: <code>s3://</code>, <code>s3a://</code>, <code>abfss://</code>, <code>gs://</code>, <code>dbfs:/</code>, <code>hdfs://</code>) — files are
+  written to a local staging directory first, then the <code>HadoopFilePromoter</code> copies each completed
+  file to the remote destination via the Hadoop <code>FileSystem</code> API and deletes the local copy. On copy
+  failure the local file is retained for recovery, so staging doubles as a durability buffer. The
+  Hadoop <code>FileSystem</code> is initialized lazily (sinks are constructed during <code>spark.extraListeners</code>
+  init, before the <code>SparkContext</code> is ready), and <code>fs.*</code> credential keys are propagated from
+  <code>SparkConf</code> into the Hadoop <code>Configuration</code>.</li>
+</ul>
+<p>Any other scheme throws <code>IllegalArgumentException</code>.</p>
+<h3 id="adding-a-new-sink">Adding a new sink</h3>
+<p>Implement the <code>Sink</code> trait and provide a constructor taking a <code>SparkConf</code> so it can be instantiated
+from the <code>spark.perfgazer.sink.class</code> configuration. Keep <code>write</code> non-blocking if the backend is slow
+— follow the <code>ReportWriter</code> async-queue pattern rather than doing I/O on the calling thread.</p>
 <h2 id="build">Build</h2>
 <p>The project uses <code>sbt</code>. </p>
 <div class="highlight"><pre><span></span><code>sbt<span class="w"> </span><span class="nb">test</span><span class="w">                           </span><span class="c1"># run tests</span>

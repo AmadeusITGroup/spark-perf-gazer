@@ -10,26 +10,28 @@
       
       
       
-        <link rel="canonical" href="https://AmadeusITGroup.github.io/spark-perf-gazer/dev/">
+        <link rel="canonical" href="https://AmadeusITGroup.github.io/spark-perf-gazer/dev/user_guide/driver_resources/">
       
       
+        <link rel="prev" href="../databricks/">
       
-        <link rel="next" href="artifacts/">
+      
+        <link rel="next" href="../analyze_sql/">
       
       
         
       
       
-      <link rel="icon" href="assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>PerfGazer</title>
+        <title>Driver Resources - PerfGazer</title>
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
       
 
@@ -48,7 +50,7 @@
       
     
     
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -69,7 +71,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#perfgazer" class="md-skip">
+        <a href="#driver-resources" class="md-skip">
           Skip to content
         </a>
       
@@ -89,7 +91,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="PerfGazer" class="md-header__button md-logo" aria-label="PerfGazer" data-md-component="logo">
+    <a href="../.." title="PerfGazer" class="md-header__button md-logo" aria-label="PerfGazer" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -109,7 +111,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Home
+              Driver Resources
             
           </span>
         </div>
@@ -199,7 +201,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="PerfGazer" class="md-nav__button md-logo" aria-label="PerfGazer" data-md-component="logo">
+    <a href="../.." title="PerfGazer" class="md-nav__button md-logo" aria-label="PerfGazer" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -226,37 +228,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Home
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="." class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -272,70 +247,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Architecture
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#why-perfgazer" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why PerfGazer?
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#features" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Features
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next Steps
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -347,7 +258,7 @@
   
   
     <li class="md-nav__item">
-      <a href="artifacts/" class="md-nav__link">
+      <a href="../../artifacts/" class="md-nav__link">
         
   
   
@@ -371,6 +282,8 @@
       
   
   
+    
+  
   
   
     
@@ -396,15 +309,15 @@
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="user_guide/" class="md-nav__link ">
+            <a href="../" class="md-nav__link ">
               
   
   
@@ -428,7 +341,7 @@
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -448,7 +361,7 @@
   
   
     <li class="md-nav__item">
-      <a href="user_guide/setup_spark_properties/" class="md-nav__link">
+      <a href="../setup_spark_properties/" class="md-nav__link">
         
   
   
@@ -476,7 +389,7 @@
   
   
     <li class="md-nav__item">
-      <a href="user_guide/setup_code/" class="md-nav__link">
+      <a href="../setup_code/" class="md-nav__link">
         
   
   
@@ -504,7 +417,7 @@
   
   
     <li class="md-nav__item">
-      <a href="user_guide/databricks/" class="md-nav__link">
+      <a href="../databricks/" class="md-nav__link">
         
   
   
@@ -529,10 +442,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="user_guide/driver_resources/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Driver Resources
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -548,6 +488,59 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#local-staging-disk-hdfs-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local staging disk (HDFS mode)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#storage-locality-hdfs-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Storage locality (HDFS mode)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#driver-cpu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Driver CPU
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -560,7 +553,7 @@
   
   
     <li class="md-nav__item">
-      <a href="user_guide/analyze_sql/" class="md-nav__link">
+      <a href="../analyze_sql/" class="md-nav__link">
         
   
   
@@ -588,7 +581,7 @@
   
   
     <li class="md-nav__item">
-      <a href="user_guide/data_model/" class="md-nav__link">
+      <a href="../data_model/" class="md-nav__link">
         
   
   
@@ -623,7 +616,7 @@
   
   
     <li class="md-nav__item">
-      <a href="contributor_guide/" class="md-nav__link">
+      <a href="../../contributor_guide/" class="md-nav__link">
         
   
   
@@ -670,10 +663,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
+  <a href="#local-staging-disk-hdfs-mode" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Architecture
+        Local staging disk (HDFS mode)
       
     </span>
   </a>
@@ -681,10 +674,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#why-perfgazer" class="md-nav__link">
+  <a href="#storage-locality-hdfs-mode" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why PerfGazer?
+        Storage locality (HDFS mode)
       
     </span>
   </a>
@@ -692,21 +685,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#features" class="md-nav__link">
+  <a href="#driver-cpu" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Features
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next Steps
+        Driver CPU
       
     </span>
   </a>
@@ -733,37 +715,14 @@
   
 
 
-<h1 id="perfgazer">PerfGazer</h1>
-<p>Performance Gazer for Apache Spark.</p>
-<p>PerfGazer is a configurable Spark Listener that allows you to retrieve important stats about Spark SQL queries, jobs, and stages in a post-mortem way.</p>
-<h2 id="architecture">Architecture</h2>
-<p><img alt="PerfGazer Architecture" src="sparklear-archi.drawio.svg" /></p>
-<p>PerfGazer plugs into the Spark Driver as a <strong>SparkListener</strong>, alongside built-in listeners like <code>JobProgressListener</code> or <code>AppStatusListener</code>. The Spark <strong>ListenerBus</strong> dispatches execution events to all registered listeners. While the standard listeners feed the Spark UI, PerfGazer captures the same events and routes them through a configurable <strong>Sink</strong> to produce structured reports (SQL, Jobs, Stages, Tasks) that can be queried and analyzed programmatically — no UI navigation required.</p>
-<h2 id="why-perfgazer">Why PerfGazer?</h2>
-<p>The Spark UI has limitations:</p>
-<ul>
-<li>Manual process (UI navigation)</li>
-<li>Often slow to load</li>
-<li>Limited retention (stats data is often purged)</li>
-<li>Not made for analytics</li>
-</ul>
-<p>PerfGazer solves these problems by providing programmatic access to execution statistics.</p>
-<h2 id="features">Features</h2>
-<ul>
-<li>Reports at every level: SQL queries, jobs, stages, and tasks</li>
-<li>Full physical plan extraction with per-operator metrics</li>
-<li>Stage-level I/O, shuffle, CPU time, and spill tracking</li>
-<li>Task-level granularity: detect skew, GC pressure, and shuffle bottlenecks</li>
-<li>JSON output queryable directly with Spark SQL (views auto-generated)</li>
-<li>Configurable: enable or disable each report level independently</li>
-<li>Pluggable sink architecture via the <code>Sink</code> trait</li>
-<li>Zero-code setup through <code>spark.extraListeners</code> configuration</li>
-</ul>
-<h2 id="next-steps">Next Steps</h2>
-<ul>
-<li><a href="user_guide/">User Guide</a> - Setup, configuration, and data analysis examples</li>
-<li><a href="contributor_guide/">Contributor Guide</a> - Build and development</li>
-</ul>
+<h1 id="driver-resources">Driver Resources</h1>
+<p>PerfGazer runs entirely on the Spark driver: reports are collected, buffered, and written there. In HDFS mode (a remote <code>destination</code> URI), the driver also stages files on its local disk and copies them to remote storage. Keep the following in mind so PerfGazer does not put undue pressure on the driver.</p>
+<h2 id="local-staging-disk-hdfs-mode">Local staging disk (HDFS mode)</h2>
+<p>In HDFS mode, reports are first written to a local staging directory on the driver before being promoted to the remote destination. Size <code>spark.perfgazer.sink.json.fileSizeLimit</code> (or <code>JsonSink.Config(fileSizeLimit = ...)</code> in code) so staged files cannot fill the driver's local disk: at any moment the staging area holds roughly one file per enabled report type up to this limit, plus any files retained after a failed promotion.</p>
+<h2 id="storage-locality-hdfs-mode">Storage locality (HDFS mode)</h2>
+<p>Promotion copies each completed file over the network to the remote destination. To keep these copies fast, pick a destination that is network-close to the driver — ideally in the same region or zone (for example, the same virtual network or resource group as the cluster). A distant destination increases copy time and can slow down the writer threads.</p>
+<h2 id="driver-cpu">Driver CPU</h2>
+<p>Reports are written asynchronously, with one dedicated writer thread per enabled report type (SQL, jobs, stages, tasks). Make sure the driver has enough CPU headroom so this background work does not compete with your application. This applies in both POSIX and HDFS mode; in HDFS mode the writer threads additionally perform the network copy, so the headroom matters more. Disabling report types you don't need (for example <code>spark.perfgazer.tasks.enabled=false</code>, or <code>PerfGazerConfig(tasksEnabled = false)</code> in code) reduces the number of writer threads.</p>
 
 
 
@@ -813,10 +772,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.instant", "navigation.indexes", "content.code.copy"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.indexes", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
